@@ -21,7 +21,7 @@ jobs:
 
       - name: va_0_0_0_0 start at zero test
         id: va_0_0_0_0
-        uses: dist/apps/version-autopilot
+        uses: ./dist/apps/version-autopilot
         with:
           major: 0
           minor: 0
