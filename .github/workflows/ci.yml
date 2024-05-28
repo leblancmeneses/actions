@@ -11,6 +11,10 @@ permissions:
   actions: read
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -37,3 +41,8 @@ jobs:
       # - run: npx nx-cloud record -- echo Hello World
       # - run: npx nx affected -t lint test build
       - run: npx nx affected -t lint build
+
+
+  version-autopilot-tests:
+    needs: [main]
+    uses: ./.github/workflows/tests.version-autopilot.yml
