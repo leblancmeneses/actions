@@ -27,6 +27,7 @@ jobs:
 
       - name: echo output
         run: |
+          echo "github.run_number: ${{ github.run_number }}"
           echo "version_autopilot_string_recommended: ${{ steps.version-autopilot.outputs.version_autopilot_string_recommended }}"
           echo "version_autopilot_string: ${{ steps.version-autopilot.outputs.version_autopilot_string }}"
           echo "version_autopilot_code: ${{ steps.version-autopilot.outputs.version_autopilot_code }}"
