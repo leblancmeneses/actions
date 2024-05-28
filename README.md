@@ -7,8 +7,6 @@ where semantic versioning is not required.
 
 This will automatically increment the version on every "run" of your github action pipeline.
 
-Example of where we use this publicly: [k8s packages](https://console.cloud.google.com/artifacts/docker/wwwrobusthavencom/us-central1/public-dev?project=wwwrobusthavencom)
-
 
 ```yaml
 steps:
@@ -16,14 +14,15 @@ steps:
     id: checkout
     uses: actions/checkout@v4
 
-  - id: version-autopilot
+  - name: example in README.md task
+    id: version-autopilot
     uses: leblancmeneses/actions/dist/apps/version-autopilot@main
     with:
       major: 0
       minor: 0
       shift: 50 # remove if this is a brand new application. Otherwise, use this to match your current version.
 
-  - name: echo output
+  - name: example in README.md output
     run: |
       echo "github.run_number: ${{ github.run_number }}"
       echo "version_autopilot_string_recommended: ${{ steps.version-autopilot.outputs.version_autopilot_string_recommended }}"
@@ -40,3 +39,5 @@ If you are looking for semantic versioning use a [release pipeline](https://docs
 ## Need help with your continuous delivery or k8s clusters?
 
 We can help you with that. Contact us at [improvingstartups.com](https://improvingstartups.com) for more information.
+
+Example of where we use this publicly: [k8s packages](https://console.cloud.google.com/artifacts/docker/wwwrobusthavencom/us-central1/public-dev?project=wwwrobusthavencom)
