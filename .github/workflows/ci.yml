@@ -3,9 +3,9 @@ name: ci
 on:
   push:
     branches:
-      - leblanc/actions-setup
       - main
   pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   actions: read
