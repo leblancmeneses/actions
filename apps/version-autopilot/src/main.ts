@@ -19,7 +19,8 @@ async function run() {
     const minor = parseInt(core.getInput('minor') || '0', 10);
     const shift = parseInt(core.getInput('shift') || '0', 10);
 
-    const patch = core.getInput('patch')? parseInt(core.getInput('patch') || '0', 10) : github.context.runNumber;
+    // PATCH_OVERRIDE is used for testing purposes.
+    const patch = process.env['PATCH_OVERRIDE']? parseInt(process.env['PATCH_OVERRIDE'] || '0', 10) : github.context.runNumber;
     const version = getVersion(major, minor, patch, shift);
     console.log(`version: ${JSON.stringify(version, null, 2)}!`);
     const shortSha = `${github.context.sha}`.substring(0, 12);

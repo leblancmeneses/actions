@@ -7,9 +7,6 @@ inputs:
   minor:
     description: 'The initial "minor" part of the version number'
     required: true
-  patch:
-    description: 'Most often should be ${{github.run_number}}.'
-    required: false
   shift:
     description: 'Number to help align current app version # with future generated version-autopilot numbers'
     required: false

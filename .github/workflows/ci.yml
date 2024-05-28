@@ -44,6 +44,8 @@ jobs:
 
       - run: npx nx run version-autopilot:build:production
 
+      - run: git diff --exit-code -- ./dist
+
   version-autopilot-tests:
     needs: [main]
     uses: ./.github/workflows/tests.version-autopilot.yml
