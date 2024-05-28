@@ -35,17 +35,17 @@ jobs:
 
           echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
 
-          if [[ "${version_autopilot_code}" -ne 0 ]]; then
+          if [[ "${version_autopilot_code}" != '0' ]]; then
             echo "${version_autopilot_code} is not 0"
             exit 1
           fi
-          if [[ "${version_autopilot_string}" -ne '0.0.0' ]]; then
+          if [[ "${version_autopilot_string}" != "0.0.0" ]]; then
             echo "${version_autopilot_string} is not 0.0.0"
             exit 1
           fi
 
       - name: va_0_0_50 shift test
-        id: va_0_0_50_shift
+        id: va_0_0_50
         uses: ./dist/apps/version-autopilot
         env:
           PATCH_OVERRIDE: 0
@@ -54,26 +54,105 @@ jobs:
           minor: 0
           shift: 50
 
-      - name: assert_va_0_0_50_shift
+      - name: assert_va_0_0_50 shift test
         run: |
           set -ex
-          version_autopilot_string_recommended=${{ steps.va_0_0_50_shift.outputs.version_autopilot_string_recommended }}
-          version_autopilot_string=${{ steps.va_0_0_50_shift.outputs.version_autopilot_string }}
-          version_autopilot_code=${{ steps.va_0_0_50_shift.outputs.version_autopilot_code }}
+          version_autopilot_string_recommended=${{ steps.va_0_0_50.outputs.version_autopilot_string_recommended }}
+          version_autopilot_string=${{ steps.va_0_0_50.outputs.version_autopilot_string }}
+          version_autopilot_code=${{ steps.va_0_0_50.outputs.version_autopilot_code }}
 
           echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
 
-          if [[ "${version_autopilot_code}" == "50" ]]; then
+          if [[ "${version_autopilot_code}" != "50" ]]; then
             echo "${version_autopilot_code} is not 50"
             exit 1
           fi
-          if [[ "${version_autopilot_string}" == "0.0.50" ]]; then
+          if [[ "${version_autopilot_string}" != "0.0.50" ]]; then
             echo "${version_autopilot_string} is not 0.0.50"
             exit 1
           fi
 
-      - name: debug
-        if: failure()
+
+      - name: va_0_0_51 patch incrementor test
+        id: va_0_0_51
+        uses: ./dist/apps/version-autopilot
+        env:
+          PATCH_OVERRIDE: 1
+        with:
+          major: 0
+          minor: 0
+          shift: 50
+
+      - name: assert_va_0_0_51 patch incrementor test
         run: |
-          pwd
-          tree
+          set -ex
+          version_autopilot_string_recommended=${{ steps.va_0_0_51.outputs.version_autopilot_string_recommended }}
+          version_autopilot_string=${{ steps.va_0_0_51.outputs.version_autopilot_string }}
+          version_autopilot_code=${{ steps.va_0_0_51.outputs.version_autopilot_code }}
+
+          echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
+
+          if [[ "${version_autopilot_code}" != "51" ]]; then
+            echo "${version_autopilot_code} is not 51"
+            exit 1
+          fi
+          if [[ "${version_autopilot_string}" != "0.0.51" ]]; then
+            echo "${version_autopilot_string} is not 0.0.51"
+            exit 1
+          fi
+
+      - name: va_0_1_0 patch minor rollover
+        id: va_0_1_0
+        uses: ./dist/apps/version-autopilot
+        env:
+          PATCH_OVERRIDE: 51
+        with:
+          major: 0
+          minor: 0
+          shift: 50
+
+      - name: assert_va_0_1_0 patch minor rollover
+        run: |
+          set -ex
+          version_autopilot_string_recommended=${{ steps.va_0_1_0.outputs.version_autopilot_string_recommended }}
+          version_autopilot_string=${{ steps.va_0_1_0.outputs.version_autopilot_string }}
+          version_autopilot_code=${{ steps.va_0_1_0.outputs.version_autopilot_code }}
+
+          echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
+
+          if [[ "${version_autopilot_code}" != "101" ]]; then
+            echo "${version_autopilot_code} is not 101"
+            exit 1
+          fi
+          if [[ "${version_autopilot_string}" != "0.1.0" ]]; then
+            echo "${version_autopilot_string} is not 0.1.0"
+            exit 1
+          fi
+
+      - name: va_1_0_0 patch major rollover
+        id: va_1_0_0
+        uses: ./dist/apps/version-autopilot
+        env:
+          PATCH_OVERRIDE: 51
+        with:
+          major: 0
+          minor: 99
+          shift: 50
+
+      - name: assert_va_1_0_0 patch major rollover
+        run: |
+          set -ex
+          version_autopilot_string_recommended=${{ steps.va_1_0_0.outputs.version_autopilot_string_recommended }}
+          version_autopilot_string=${{ steps.va_1_0_0.outputs.version_autopilot_string }}
+          version_autopilot_code=${{ steps.va_1_0_0.outputs.version_autopilot_code }}
+
+          echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
+
+          if [[ "${version_autopilot_code}" != "10001" ]]; then
+            echo "${version_autopilot_code} is not 10001"
+            exit 1
+          fi
+          if [[ "${version_autopilot_string}" != "1.0.0" ]]; then
+            echo "${version_autopilot_string} is not 1.0.0"
+            exit 1
+          fi
