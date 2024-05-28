@@ -42,6 +42,7 @@ jobs:
       # - run: npx nx affected -t lint test build
       - run: npx nx affected -t lint build
 
+      - run: npx nx run version-autopilot:build:production
 
   version-autopilot-tests:
     needs: [main]
