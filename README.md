@@ -30,6 +30,8 @@ steps:
       echo "version_autopilot_code: ${{ steps.version-autopilot.outputs.version_autopilot_code }}"
 ```
 
+![exampe output](./github/example-output.png)
+
 If you have an existing application you can modify the `major`.`minor` and `shift` inputs to match the current version of your application.
 See our [.github/workflows/tests.version-autopilot.yml](.github/workflows/tests.version-autopilot.yml) for how rollover works. We leverage `${{github.run_number}}` internally to increment the version.
 
