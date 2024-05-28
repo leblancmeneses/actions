@@ -2,7 +2,9 @@
   "name": "@./actions/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "build": "npx nx run-many -t build"
+  },
   "private": true,
   "devDependencies": {
     "@nx/esbuild": "19.1.0",
