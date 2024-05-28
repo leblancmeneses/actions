@@ -4,13 +4,13 @@ on:
   workflow_call:
 
 jobs:
-  version-autopilot-tests:
+  tests:
     runs-on: 'ubuntu-latest'
     steps:
       - name: checkout code
         uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
@@ -19,7 +19,7 @@ jobs:
 
       - name: va_0_0_0_0 start at zero test
         id: va_0_0_0_0
-        uses: ./dist/apps/version-autopilot
+        uses: ./dist/apps/version-autopilot/actions.yml
         with:
           major: 0
           minor: 0
@@ -67,3 +67,9 @@ jobs:
             echo "${version_autopilot_string} is not 0.0.0.50"
             exit 1
           fi
+
+      - name: debug
+        if: failure()
+        run: |
+          pwd
+          tree
