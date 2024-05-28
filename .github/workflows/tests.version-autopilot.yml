@@ -33,8 +33,6 @@ jobs:
           version_autopilot_string=${{ steps.va_0_0_0.outputs.version_autopilot_string }}
           version_autopilot_code=${{ steps.va_0_0_0.outputs.version_autopilot_code }}
 
-          echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
-
           if [[ "${version_autopilot_code}" != '0' ]]; then
             echo "${version_autopilot_code} is not 0"
             exit 1
@@ -60,8 +58,6 @@ jobs:
           version_autopilot_string_recommended=${{ steps.va_0_0_50.outputs.version_autopilot_string_recommended }}
           version_autopilot_string=${{ steps.va_0_0_50.outputs.version_autopilot_string }}
           version_autopilot_code=${{ steps.va_0_0_50.outputs.version_autopilot_code }}
-
-          echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
 
           if [[ "${version_autopilot_code}" != "50" ]]; then
             echo "${version_autopilot_code} is not 50"
@@ -90,8 +86,6 @@ jobs:
           version_autopilot_string=${{ steps.va_0_0_51.outputs.version_autopilot_string }}
           version_autopilot_code=${{ steps.va_0_0_51.outputs.version_autopilot_code }}
 
-          echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
-
           if [[ "${version_autopilot_code}" != "51" ]]; then
             echo "${version_autopilot_code} is not 51"
             exit 1
@@ -118,8 +112,6 @@ jobs:
           version_autopilot_string=${{ steps.va_0_1_0.outputs.version_autopilot_string }}
           version_autopilot_code=${{ steps.va_0_1_0.outputs.version_autopilot_code }}
 
-          echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
-
           if [[ "${version_autopilot_code}" != "101" ]]; then
             echo "${version_autopilot_code} is not 101"
             exit 1
@@ -145,8 +137,6 @@ jobs:
           version_autopilot_string_recommended=${{ steps.va_1_0_0.outputs.version_autopilot_string_recommended }}
           version_autopilot_string=${{ steps.va_1_0_0.outputs.version_autopilot_string }}
           version_autopilot_code=${{ steps.va_1_0_0.outputs.version_autopilot_code }}
-
-          echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
 
           if [[ "${version_autopilot_code}" != "10001" ]]; then
             echo "${version_autopilot_code} is not 10001"
