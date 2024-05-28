@@ -124,8 +124,8 @@ jobs:
             echo "${version_autopilot_code} is not 101"
             exit 1
           fi
-          if [[ "${version_autopilot_string}" != "0.1.0" ]]; then
-            echo "${version_autopilot_string} is not 0.1.0"
+          if [[ "${version_autopilot_string}" != "0.1.1" ]]; then
+            echo "${version_autopilot_string} is not 0.1.1"
             exit 1
           fi
 
@@ -152,7 +152,7 @@ jobs:
             echo "${version_autopilot_code} is not 10001"
             exit 1
           fi
-          if [[ "${version_autopilot_string}" != "1.0.0" ]]; then
-            echo "${version_autopilot_string} is not 1.0.0"
+          if [[ "${version_autopilot_string}" != "1.0.1" ]]; then
+            echo "${version_autopilot_string} is not 1.0.1"
             exit 1
           fi
