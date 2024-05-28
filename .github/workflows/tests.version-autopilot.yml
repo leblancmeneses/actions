@@ -19,13 +19,13 @@ jobs:
 
       - run: npx nx run version-autopilot:build:production
 
-      # - name: va_0_0_0_0 start at zero test
-      #   id: va_0_0_0_0
-      #   uses: dist/apps/version-autopilot
-      #   with:
-      #     major: 0
-      #     minor: 0
-      #     patch: 0
+      - name: va_0_0_0_0 start at zero test
+        id: va_0_0_0_0
+        uses: dist/apps/version-autopilot
+        with:
+          major: 0
+          minor: 0
+          patch: 0
 
       # - name: assert_va_0_0_0_0
       #   run: |
