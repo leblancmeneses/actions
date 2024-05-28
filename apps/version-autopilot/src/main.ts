@@ -5,11 +5,11 @@ function getVersion(versionMajor, versionMinor, versionPatch, versionShift) {
   const patch = (versionPatch + versionShift)%100;
   const minor = (versionMinor + Math.floor((versionPatch + versionShift)/100)) % 100;
   const major = versionMajor + Math.floor((versionMinor + Math.floor((versionPatch + versionShift)/100))/100);
-  const appVersionString = `${major}.${minor}.${patch}`;
-  const appVersionCode= major*10000 + minor*100 + patch;
+  const versionString = `${major}.${minor}.${patch}`;
+  const versionCode= major*10000 + minor*100 + patch;
   return {
-    appVersionString,
-    appVersionCode
+    versionString,
+    versionCode
   };
 }
 
@@ -25,10 +25,12 @@ async function run() {
     console.log(`version: ${JSON.stringify(version, null, 2)}!`);
     const shortSha = `${github.context.sha}`.substring(0, 12);
     if (github.context.eventName === 'pull_request') {
-      core.setOutput('version_autopilot_string_recommended', `${version.appVersionString}-pr-${github.context.payload.pull_request.number}-${shortSha}`);
+      core.setOutput('version_autopilot_string_recommended', `${version.versionString}-pr-${github.context.payload.pull_request.number}-${shortSha}`);
     } else {
-      core.setOutput('version_autopilot_string_recommended', `${version.appVersionString}-${github.context.ref}-${shortSha}`);
+      core.setOutput('version_autopilot_string_recommended', `${version.versionString}-${github.context.ref}-${shortSha}`);
     }
+    core.setOutput('version_autopilot_string', version.versionString);
+    core.setOutput('version_autopilot_code', version.versionCode);
   } catch (error) {
     core.setFailed(error.message);
   }
