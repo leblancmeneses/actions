@@ -1,0 +1,63 @@
+name: tests.version-autopilot
+
+on:
+  workflow_call:
+
+jobs:
+  version-autopilot-tests:
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 35
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: va_0_0_0_0 start at zero test
+        id: va_0_0_0_0
+        uses: dist/apps/version-autopilot
+        with:
+          major: 0
+          minor: 0
+          patch: 0
+
+      - name: assert_va_0_0_0_0
+        run: |
+          version_autopilot_string_recommended=${{ steps.va_0_0_0_0.outputs.version_autopilot_string_recommended }}
+          version_autopilot_string=${{ steps.va_0_0_0_0.outputs.version_autopilot_string }}
+          version_autopilot_code=${{ steps.va_0_0_0_0.outputs.version_autopilot_code }}
+
+          echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
+
+          if [[ "${version_autopilot_code}" -ne 0 ]]; then
+            echo "${version_autopilot_code} is not 0"
+            exit 1
+          fi
+          if [[ "${version_autopilot_string}" -ne '0.0.0.0' ]]; then
+            echo "${version_autopilot_string} is not 0.0.0.0"
+            exit 1
+          fi
+
+      - name: va_0_0_0_50 shift test
+        id: va_0_0_0_50_shift
+        uses: dist/apps/version-autopilot
+        with:
+          major: 0
+          minor: 0
+          patch: 0
+          shift: 50
+
+      - name: assert_va_0_0_0_50_shift
+        run: |
+          version_autopilot_string_recommended=${{ steps.va_0_0_0_50_shift.outputs.version_autopilot_string_recommended }}
+          version_autopilot_string=${{ steps.va_0_0_0_50_shift.outputs.version_autopilot_string }}
+          version_autopilot_code=${{ steps.va_0_0_0_50_shift.outputs.version_autopilot_code }}
+
+          echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
+
+          if [[ "${version_autopilot_code}" -ne 50 ]]; then
+            echo "${version_autopilot_code} is not 50"
+            exit 1
+          fi
+          if [[ "${version_autopilot_string}" -ne '0.0.0.50' ]]; then
+            echo "${version_autopilot_string} is not 0.0.0.50"
+            exit 1
+          fi

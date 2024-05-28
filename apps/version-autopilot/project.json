@@ -16,7 +16,7 @@
         "bundle": false,
         "main": "apps/version-autopilot/src/main.ts",
         "tsConfig": "apps/version-autopilot/tsconfig.app.json",
-        "assets": ["apps/version-autopilot/src/assets"],
+        "assets": ["apps/version-autopilot/actions.yml"],
         "generatePackageJson": true,
         "esbuildOptions": {
           "sourcemap": true,
