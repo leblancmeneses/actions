@@ -1,0 +1,22 @@
+name: 'Version Autopilot'
+description: 'Auto version incremental on build'
+inputs:
+  major:
+    description: 'The initial "major" part of the version number'
+    required: true
+  minor:
+    description: 'The initial "minor" part of the version number'
+    required: true
+  shift:
+    description: 'Number to help align current app version # with future generated version-autopilot numbers'
+    required: false
+outputs:
+  version_autopilot_string_recommended:
+    description: 'The recommended tag for creating image or package names'
+  version_autopilot_string:
+    description: 'A string representing the version'
+  version_autopilot_code:
+    description: 'a number representing the version'
+runs:
+  using: 'node20'
+  main: 'apps/version-autopilot/src/main.js'
