@@ -28,6 +28,7 @@ jobs:
 
       - name: assert_va_0_0_0
         run: |
+          set -ex
           version_autopilot_string_recommended=${{ steps.va_0_0_0.outputs.version_autopilot_string_recommended }}
           version_autopilot_string=${{ steps.va_0_0_0.outputs.version_autopilot_string }}
           version_autopilot_code=${{ steps.va_0_0_0.outputs.version_autopilot_code }}
@@ -55,17 +56,18 @@ jobs:
 
       - name: assert_va_0_0_50_shift
         run: |
+          set -ex
           version_autopilot_string_recommended=${{ steps.va_0_0_50_shift.outputs.version_autopilot_string_recommended }}
           version_autopilot_string=${{ steps.va_0_0_50_shift.outputs.version_autopilot_string }}
           version_autopilot_code=${{ steps.va_0_0_50_shift.outputs.version_autopilot_code }}
 
           echo "version_autopilot_string_recommended: ${version_autopilot_string_recommended}"
 
-          if [[ "${version_autopilot_code}" -ne 50 ]]; then
+          if [[ "${version_autopilot_code}" == "50" ]]; then
             echo "${version_autopilot_code} is not 50"
             exit 1
           fi
-          if [[ "${version_autopilot_string}" -ne '0.0.50' ]]; then
+          if [[ "${version_autopilot_string}" == "0.0.50" ]]; then
             echo "${version_autopilot_string} is not 0.0.50"
             exit 1
           fi
