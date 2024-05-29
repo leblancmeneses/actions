@@ -3,7 +3,7 @@
 ## Version Autopilot
 
 This is perfect for packages that are not meant to be **consumed** by other packages, like a website or a mobile app,
-where semantic versioning is not required.
+where semantic versioning is not required and are continuously deploying.
 
 This will automatically increment the version on every **run** of your github action pipeline.
 
@@ -41,7 +41,7 @@ steps:
 If you have an existing application you can modify the `major`.`minor` and `shift` inputs to match the current version of your application.
 See our [.github/workflows/tests.version-autopilot.yml](.github/workflows/tests.version-autopilot.yml) for how rollover works. We leverage `${{github.run_number}}` internally to increment the version.
 
-If you are looking for semantic versioning use a [release pipeline](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository) and git tags.
+If you are looking for semantic versioning research [release pipeline](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository) and git tags.
 
 
 ## Need help with your continuous delivery or k8s clusters?
