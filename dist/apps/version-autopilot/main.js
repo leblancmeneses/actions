@@ -23123,7 +23123,7 @@ async function run() {
     const patch = process.env["PATCH_OVERRIDE"] ? parseInt(process.env["PATCH_OVERRIDE"] || "0", 10) : github.context.runNumber;
     const version2 = getVersion(major, minor, patch, shift);
     const shortSha = `${github.context.sha}`.substring(0, 12);
-    let versionStringRecommended = `${version2.versionString}-${process.env["GITHUB_HEAD_REF"] || ""}-${shortSha}`;
+    let versionStringRecommended = `${version2.versionString}-${process.env["GITHUB_REF_NAME"] || ""}-${shortSha}`;
     if (github.context.eventName === "pull_request") {
       versionStringRecommended = `${version2.versionString}-pr-${github.context.payload.pull_request.number}-${shortSha}`;
     }

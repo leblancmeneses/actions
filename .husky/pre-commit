@@ -1,1 +1,8 @@
-npm run build
+if ! git diff --quiet --exit-code -- dist/apps/version-autopilot; then
+  npm run build
+
+  if git diff --quiet --exit-code -- dist/apps/version-autopilot; then
+    echo "Error: Recommit as there are changes in the dist/apps/version-autopilot folder."
+    exit 1
+  fi
+fi
