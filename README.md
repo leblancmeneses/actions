@@ -44,6 +44,16 @@ See our [.github/workflows/tests.version-autopilot.yml](.github/workflows/tests.
 If you are looking for semantic versioning research [release pipeline](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository) and git tags.
 
 
+### Example steps for a chrome extension:
+
+```yaml
+  - name: update manifest version
+    run: |
+      manifest=tabsift/extension/manifest.json
+      jq --arg version "${{ steps.version-autopilot.outputs.version_autopilot_string }}" '.version = $version' $manifest > tmp.json && mv tmp.json $manifest
+```
+
+
 ## Need help with your continuous delivery or k8s clusters?
 
 Large language models (LLMs) cannot solve your organization's people problems.
