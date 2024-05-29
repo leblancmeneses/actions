@@ -38,11 +38,10 @@ async function run() {
     const major = parseInt(core.getInput("major") || "0", 10);
     const minor = parseInt(core.getInput("minor") || "0", 10);
     const shift = parseInt(core.getInput("shift") || "0", 10);
-    console.log(github.context);
     const patch = process.env["PATCH_OVERRIDE"] ? parseInt(process.env["PATCH_OVERRIDE"] || "0", 10) : github.context.runNumber;
     const version = getVersion(major, minor, patch, shift);
     const shortSha = `${github.context.sha}`.substring(0, 12);
-    let versionStringRecommended = `${version.versionString}-${github.context.ref}-${shortSha}`;
+    let versionStringRecommended = `${version.versionString}-${process.env["GITHUB_HEAD_REF"] || ""}-${shortSha}`;
     if (github.context.eventName === "pull_request") {
       versionStringRecommended = `${version.versionString}-pr-${github.context.payload.pull_request.number}-${shortSha}`;
     }
