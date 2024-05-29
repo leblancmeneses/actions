@@ -38,6 +38,7 @@ async function run() {
     const major = parseInt(core.getInput("major") || "0", 10);
     const minor = parseInt(core.getInput("minor") || "0", 10);
     const shift = parseInt(core.getInput("shift") || "0", 10);
+    console.log(github.context);
     const patch = process.env["PATCH_OVERRIDE"] ? parseInt(process.env["PATCH_OVERRIDE"] || "0", 10) : github.context.runNumber;
     const version = getVersion(major, minor, patch, shift);
     const shortSha = `${github.context.sha}`.substring(0, 12);
