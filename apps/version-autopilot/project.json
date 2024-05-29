@@ -14,6 +14,7 @@
         "outputPath": "dist/apps/version-autopilot",
         "format": ["cjs"],
         "bundle": true,
+        "minify": true,
         "thirdParty": true,
         "main": "apps/version-autopilot/src/main.ts",
         "tsConfig": "apps/version-autopilot/tsconfig.app.json",
