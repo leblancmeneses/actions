@@ -58,5 +58,7 @@ jobs:
         run: git diff --exit-code -- ./dist
 
   version-autopilot-tests:
+    if: |
+      !failure() && !cancelled() && github.event_name == 'pull_request'
     needs: [main]
     uses: ./.github/workflows/tests.version-autopilot.yml
