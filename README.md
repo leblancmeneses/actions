@@ -3,7 +3,7 @@
 ## Version Autopilot
 
 This is perfect for packages that are not meant to be **consumed** by other packages, like a website or a mobile app,
-where semantic versioning is not required and are continuously deploying.
+where semantic versioning is not required and is continuously deployed.
 
 This will automatically increment the version on every **run** of your github action pipeline.
 
@@ -46,4 +46,7 @@ If you are looking for semantic versioning research [release pipeline](https://d
 
 ## Need help with your continuous delivery or k8s clusters?
 
-We can help you with that. Contact us at [improvingstartups.com](https://improvingstartups.com) for more information.
+LLMs cannot automate your dev people's problems with prompts.  If your software teams are struggling and falling behind,
+consider a real human who can help steer the ship away from danger.
+
+Contact us at [improvingstartups.com](https://improvingstartups.com) for more information.
