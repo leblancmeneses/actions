@@ -27,17 +27,6 @@ jobs:
       # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "build" targets have been requested
       # - run: npx nx-cloud start-ci-run --distribute-on="5 linux-medium-js" --stop-agents-after="build"
 
-      - name: debug
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-          GITHUB_INPUTS: ${{ toJson(inputs) }}
-        shell: bash
-        run: |
-          echo "Look at github outputs in prior command."
-          echo "$GITHUB_INPUTS"
-          echo "$GITHUB_CONTEXT"
-          printenv
-
       # Cache node_modules
       - uses: actions/setup-node@v4
         with:
@@ -56,6 +45,21 @@ jobs:
 
       - name: commit changes for npx nx run-many -t build
         run: git diff --exit-code -- ./dist
+
+      - name: example in README.md task
+        id: version-autopilot
+        uses: ./dist/apps/version-autopilot
+        with:
+          major: 0
+          minor: 0
+          shift: 50 # remove if this is a brand new application. Otherwise, use this to match your current version.
+
+      - name: example in README.md output
+        run: |
+          echo "github.run_number: ${{ github.run_number }}"
+          echo "version_autopilot_string_recommended: ${{ steps.version-autopilot.outputs.version_autopilot_string_recommended }}"
+          echo "version_autopilot_string: ${{ steps.version-autopilot.outputs.version_autopilot_string }}"
+          echo "version_autopilot_code: ${{ steps.version-autopilot.outputs.version_autopilot_code }}"
 
   version-autopilot-tests:
     if: |
