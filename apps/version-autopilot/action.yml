@@ -19,4 +19,4 @@ outputs:
     description: 'a number representing the version'
 runs:
   using: 'node20'
-  main: 'apps/version-autopilot/src/main.js'
+  main: 'main.js'
