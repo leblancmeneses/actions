@@ -46,7 +46,8 @@ If you are looking for semantic versioning research [release pipeline](https://d
 
 ## Need help with your continuous delivery or k8s clusters?
 
-LLMs cannot automate your dev people's problems with prompts.  If your software teams are struggling and falling behind,
-consider a real human who can help steer the ship away from danger.
+Large language models (LLMs) cannot solve your organization's people problems.
+If your software teams need help and are falling behind, consider an actual human
+who can spot and help steer the ship away from danger.
 
-Contact us at [improvingstartups.com](https://improvingstartups.com) for more information.
+Contact us at [improvingstartups.com](https://improvingstartups.com).
