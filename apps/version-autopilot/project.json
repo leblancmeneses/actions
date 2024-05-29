@@ -13,11 +13,12 @@
         "platform": "node",
         "outputPath": "dist/apps/version-autopilot",
         "format": ["cjs"],
-        "bundle": false,
+        "bundle": true,
+        "thirdParty": true,
         "main": "apps/version-autopilot/src/main.ts",
         "tsConfig": "apps/version-autopilot/tsconfig.app.json",
         "assets": ["apps/version-autopilot/action.yml"],
-        "generatePackageJson": true,
+        "generatePackageJson": false,
         "esbuildOptions": {
           "sourcemap": true,
           "outExtension": {
