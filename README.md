@@ -41,7 +41,7 @@ steps:
 If you have an existing application you can modify the `major`.`minor` and `shift` inputs to match the current version of your application.
 See our [.github/workflows/tests.version-autopilot.yml](.github/workflows/tests.version-autopilot.yml) for how rollover works. We leverage `${{github.run_number}}` internally to increment the version.
 
-If you are looking for semantic versioning research [release pipeline](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository) and git tags.
+If you are looking for semantic versioning research git tags and [release pipelines](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 
 
 ### Example steps for a chrome extension:
@@ -58,6 +58,6 @@ If you are looking for semantic versioning research [release pipeline](https://d
 
 Large language models (LLMs) cannot solve your organization's people problems. If your software teams are struggling and falling behind, consider engaging an actual human expert who can identify product and development issues and provide solutions.
 
-Common areas where we can assist include continuous delivery, cloud migrations, Kubernetes cluster cost optimizations, and GitHub Actions.
+Common areas where we can assist include continuous delivery, cloud migrations, Kubernetes cluster cost optimizations, and GitHub Actions and Codespaces.
 
 Contact us at [improvingstartups.com](https://improvingstartups.com).
