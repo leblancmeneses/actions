@@ -41,7 +41,7 @@ steps:
 If you have an existing application you can modify the `major`.`minor` and `shift` inputs to match the current version of your application.
 See our [.github/workflows/tests.version-autopilot.yml](.github/workflows/tests.version-autopilot.yml) for how rollover works. We leverage `${{github.run_number}}` internally to increment the version.
 
-If you are looking for semantic versioning research git tags and [release pipelines](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
+If you are looking for semantic versioning research `git tags` and [release pipelines](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 
 
 ### Example steps for a chrome extension:
