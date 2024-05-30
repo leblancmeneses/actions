@@ -54,10 +54,10 @@ If you are looking for semantic versioning research [release pipeline](https://d
 ```
 
 
-## Need help with your continuous delivery or k8s clusters?
+## Need Help?
 
-Large language models (LLMs) cannot solve your organization's people problems.
-If your software teams need help and are falling behind, consider an actual human
-who can spot and help steer the ship away from danger.
+Large language models (LLMs) cannot solve your organization's people problems. If your software teams are struggling and falling behind, consider engaging an actual human expert who can identify product and development issues and provide solutions.
+
+Common areas where we can assist include continuous delivery, cloud migrations, Kubernetes cluster cost optimizations, and GitHub Actions.
 
 Contact us at [improvingstartups.com](https://improvingstartups.com).
