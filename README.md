@@ -58,6 +58,6 @@ If you are looking for semantic versioning research git tags and [release pipeli
 
 Large language models (LLMs) cannot solve your organization's people problems. If your software teams are struggling and falling behind, consider engaging an actual human expert who can identify product and development issues and provide solutions.
 
-Common areas where we can assist include continuous delivery, cloud migrations, Kubernetes cluster cost optimizations, and GitHub Actions and Codespaces.
+Common areas where we can assist include continuous delivery, cloud migrations, Kubernetes cluster cost optimizations, GitHub Actions and GitHub Codespaces.
 
 Contact us at [improvingstartups.com](https://improvingstartups.com).
