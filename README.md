@@ -41,13 +41,23 @@ steps:
 If you have an existing application you can modify the `major`.`minor` and `shift` inputs to match the current version of your application.
 See our [.github/workflows/tests.version-autopilot.yml](.github/workflows/tests.version-autopilot.yml) for how rollover works. We leverage `${{github.run_number}}` internally to increment the version.
 
-If you are looking for semantic versioning research [release pipeline](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository) and git tags.
+If you are looking for semantic versioning research `git tags` and [release pipelines](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 
 
-## Need help with your continuous delivery or k8s clusters?
+### Example steps for a chrome extension:
 
-Large language models (LLMs) cannot solve your organization's people problems.
-If your software teams need help and are falling behind, consider an actual human
-who can spot and help steer the ship away from danger.
+```yaml
+  - name: update manifest version
+    run: |
+      manifest=tabsift/extension/manifest.json
+      jq --arg version "${{ steps.version-autopilot.outputs.version_autopilot_string }}" '.version = $version' $manifest > tmp.json && mv tmp.json $manifest
+```
+
+
+## Need Help?
+
+Large language models (LLMs) cannot solve your organization's people problems. If your software teams are struggling and falling behind, consider engaging an actual human expert who can identify product and development issues and provide solutions.
+
+Common areas where we can assist include continuous delivery, cloud migrations, Kubernetes cluster cost optimizations, GitHub Actions and GitHub Codespaces.
 
 Contact us at [improvingstartups.com](https://improvingstartups.com).
