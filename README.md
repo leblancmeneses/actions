@@ -16,7 +16,7 @@
 
 ## Affected
 
-This task generates 3 JSON objects to streamline your pipeline by skipping unnecessary steps and running only those affected by `affected_changes`. It also aligns git commits with images via `affected_images` and `affected_shas`, simplifying GitOps strategies.
+This task generates 3 JSON objects to streamline your pipeline by skipping unnecessary steps and running only those affected by `affected_changes`. It also aligns git commits with images via `affected_imagetags` and `affected_shas`, simplifying GitOps strategies.
 
 
 ```
@@ -44,8 +44,8 @@ jobs:
 These rules map a *project name*, its *directory*, and the *expression* to check for changes.
 
 * The left side of the colon `:` is the **rule key**, while the right side specifies the expression to match files.
-* **Rule keys with brackets** `[]` or `<>` will appear in the JSON object under `affected_images` or `affected_shas`, and `affected_changes`.
-* **Rule keys without brackets** will only appear in `affected_changes` but **not** in `affected_images` or `affected_shas`.
+* **Rule keys with brackets** `[]` or `<>` will appear in the JSON object under `affected_imagetags` or `affected_shas`, and `affected_changes`.
+* **Rule keys without brackets** will only appear in `affected_changes` but **not** in `affected_imagetags` or `affected_shas`.
 
 #### Rule Key Examples
 
@@ -87,15 +87,15 @@ The `affected` action will generate the following JSON objects:
     "project-dbmigrations": false,
     "project-e2e": false
   },
-  "affected_images": {
-    "project-ui": "sha256:1234",
-    "project-api": "sha256:5678",
-    "project-dbmigrations": "sha256:5678"
+  "affected_imagetags": {
+    "project-ui": "project-ui:dev-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+    "project-api": "project-api:dev-dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
+    "project-dbmigrations": "project-dbmigrations:dev-7b367954a3ca29a02e2b570112d85718e56429c9"
   },
   "affected_shas": {
-    "project-ui": "1234",
-    "project-api": "5678",
-    "project-dbmigrations": "0000"
+    "project-ui": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+    "project-api": "dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
+    "project-dbmigrations": "7b367954a3ca29a02e2b570112d85718e56429c9"
   }
 }
 ```

@@ -7,7 +7,7 @@ inputs:
 outputs:
   affected_changes:
     description: 'A JSON array representing the projects that have changes.'
-  affected_images:
+  affected_imagetags:
     description: 'A JSON array representing the images that need to be generated.'
   affected_shas:
     description: 'A JSON object representing the project commit SHA.'

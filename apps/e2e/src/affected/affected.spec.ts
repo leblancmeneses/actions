@@ -69,7 +69,7 @@ describe("affected", () => {
     });
 
     expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {"project-api": true, "project-dbmigrations": false, "project-e2e": false, "project-ui": true});
-    expect(core.setOutput).toHaveBeenCalledWith("affected_images", {
+    expect(core.setOutput).toHaveBeenCalledWith("affected_imagetags", {
       'project-api': 'image-project-api-true',
       "project-dbmigrations": "image-project-dbmigrations-false",
       'project-ui': 'image-project-ui-true',
