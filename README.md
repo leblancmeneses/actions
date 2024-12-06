@@ -1,4 +1,105 @@
+
+- [Actions](#actions)
+  - [Affected](#affected)
+    - [Rule DSL](#rule-dsl)
+      - [Rule Key Examples](#rule-key-examples)
+      - [Composing Rules](#composing-rules)
+      - [Exclusion Expression](#exclusion-expression)
+      - [Wrapping up example](#wrapping-up-example)
+  - [Version Autopilot](#version-autopilot)
+    - [Example usages](#example-usages)
+  - [Run locally:](#run-locally)
+  - [Publish dist version:](#publish-dist-version)
+  - [Need Help?](#need-help)
+
 # Actions
+
+## Affected
+
+This task generates 3 JSON objects to streamline your pipeline by skipping unnecessary steps and running only those affected by `affected_changes`. It also aligns git commits with images via `affected_images` and `affected_shas`, simplifying GitOps strategies.
+
+
+```
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: calculate affected
+        id: affected
+        uses: leblancmeneses/actions/dist/apps/affected@main
+        with:
+          rules: |
+            <project-ui>: 'project-ui/**';
+            <project-api>: 'project-api/**';
+            [project-dbmigrations](./databases/project): './databases/project/**';
+            project-e2e: project-ui project-api project-dbmigrations !'**/*.md';
+```
+### Rule DSL
+
+These rules map a *project name*, its *directory*, and the *expression* to check for changes.
+
+* The left side of the colon `:` is the **rule key**, while the right side specifies the expression to match files.
+* **Rule keys with brackets** `[]` or `<>` will appear in the JSON object under `affected_images` or `affected_shas`, and `affected_changes`.
+* **Rule keys without brackets** will only appear in `affected_changes` but **not** in `affected_images` or `affected_shas`.
+
+#### Rule Key Examples
+
+1. **Short Form**: `<project-ui>` The image name is `project-ui`, and the project directory is `project-ui`.
+2. **Long Form**: `[project-dbmigrations](./databases/project)` The image name is `project-dbmigrations`, and the project directory is `./databases/project`.
+
+#### Composing Rules
+
+The `project-e2e` rule includes `project-ui`, `project-api`, and `project-dbmigrations`. This allows referencing prior expressions and combining them.
+For example, **e2e** runs if files change in any of these projects but not for markdown-only changes.
+
+#### Exclusion Expression
+
+The `!` operator excludes files or directories.
+
+* For example, `**/*.md` excludes all markdown files.
+* Glob expressions use [picomatch](https://github.com/micromatch/picomatch) for matching.
+
+This structure provides flexibility and reusability for defining change-based rules across projects.
+
+#### Wrapping up example
+
+Assuming a change list containing:
+
+```json
+[
+  "project-ui/file1.js",
+  "project-api/readme.md",
+]
+```
+
+The `affected` action will generate the following JSON objects:
+
+```json
+{
+  "affected_changes": {
+    "project-api": true,
+    "project-ui": true,
+    "project-dbmigrations": false,
+    "project-e2e": false
+  },
+  "affected_images": {
+    "project-ui": "sha256:1234",
+    "project-api": "sha256:5678",
+    "project-dbmigrations": "sha256:5678"
+  },
+  "affected_shas": {
+    "project-ui": "1234",
+    "project-api": "5678",
+    "project-dbmigrations": "0000"
+  }
+}
+```
+
 
 ## Version Autopilot
 
@@ -14,7 +115,7 @@ steps:
     id: checkout
     uses: actions/checkout@v4
 
-  - name: example in README.md task
+  - name: calculate version autopilot
     id: version-autopilot
     uses: leblancmeneses/actions/dist/apps/version-autopilot@main
     with:
@@ -118,6 +219,6 @@ pnpm exec nx run version-autopilot:build:production
 
 Large language models (LLMs) cannot solve your organization's people problems. If your software teams are struggling and falling behind, consider engaging an actual human expert who can identify product and development issues and provide solutions.
 
-Common areas where we can assist include continuous delivery, cloud migrations, Kubernetes cluster cost optimizations, GitHub Actions and GitHub Codespaces.
+Common areas where we can assist include DSL development, continuous delivery, cloud migrations, Kubernetes cluster cost optimizations, GitHub Actions and GitHub Codespaces.
 
 Contact us at [improvingstartups.com](https://improvingstartups.com).

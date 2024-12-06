@@ -1,4 +1,4 @@
-name: 'Affected Changes Processor'
+name: 'Affected Processor'
 description: 'Determines affected components and generates corresponding SHA, image tags, and change status based on the provided rules.'
 inputs:
   rules:

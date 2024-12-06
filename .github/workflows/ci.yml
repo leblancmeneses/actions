@@ -27,25 +27,45 @@ jobs:
       # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "build" targets have been requested
       # - run: npx nx-cloud start-ci-run --distribute-on="5 linux-medium-js" --stop-agents-after="build"
 
-      # Cache node_modules
       - uses: actions/setup-node@v4
         with:
           node-version: 20
        
-      - run: npm ci
+      - name: install dependencies
+        run: |
+          npm install -g pnpm
+          pnpm install --frozen-lockfile
+
       - uses: nrwl/nx-set-shas@v4
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
-      # - run: npx nx affected -t lint test build
-      - run: npx nx affected -t lint build
+      - run: npx nx affected -t lint test build
 
-      - run: npx nx run version-autopilot:build:production
+      - run: |
+          npx nx run affected:build:production
+          npx nx run version-autopilot:build:production
 
       - name: commit changes for npx nx run-many -t build
         run: git diff --exit-code -- ./dist
 
-      - name: example in README.md task
+      - name: example affected
+        id: affected
+        uses: leblancmeneses/actions/dist/apps/affected@main
+        with:
+          rules: |
+            ci: './github/workflows/ci.yml'
+            [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**' ci;
+            [version-autopilot](./apps/version-autopilot): './apps/version-autopilot/**' './dist/apps/version-autopilot/**' ci;
+            e2e: affected version-autopilot !'**/*.md';
+
+      - name: example affected output
+        run: |
+          echo "affected_changes: ${{ steps.affected.outputs.affected_changes }}"
+          echo "affected_images: ${{ steps.affected.outputs.affected_images }}"
+          echo "affected_shas: ${{ steps.affected.outputs.affected_shas }}"
+
+      - name: example version-autopilot
         id: version-autopilot
         uses: ./dist/apps/version-autopilot
         with:
@@ -53,21 +73,9 @@ jobs:
           minor: 0
           shift: 50 # remove if this is a brand new application. Otherwise, use this to match your current version.
 
-      - name: example in README.md output
+      - name: example version-autopilot output
         run: |
           echo "github.run_number: ${{ github.run_number }}"
           echo "version_autopilot_string_recommended: ${{ steps.version-autopilot.outputs.version_autopilot_string_recommended }}"
           echo "version_autopilot_string: ${{ steps.version-autopilot.outputs.version_autopilot_string }}"
           echo "version_autopilot_code: ${{ steps.version-autopilot.outputs.version_autopilot_code }}"
-
-  version-autopilot-tests:
-    if: |
-      !failure() && !cancelled() && github.event_name == 'pull_request'
-    needs: [main]
-    uses: ./.github/workflows/tests.version-autopilot.yml
-
-  affected-tests:
-    if: |
-      !failure() && !cancelled() && github.event_name == 'pull_request'
-    needs: [main]
-    uses: ./.github/workflows/tests.affected.yml

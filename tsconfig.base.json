@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@affected/*": ["apps/affected/src/*"]
+      "@affected/*": ["apps/affected/src/*"],
+      "@version-autopilot/*": ["apps/version-autopilot/src/*"]
     }
   },
   "exclude": ["node_modules", "tmp"]
