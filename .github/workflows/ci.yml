@@ -51,7 +51,7 @@ jobs:
 
       - name: example affected
         id: affected
-        uses: leblancmeneses/actions/dist/apps/affected@main
+        uses: ./dist/apps/affected
         with:
           rules: |
             ci: './github/workflows/ci.yml'
