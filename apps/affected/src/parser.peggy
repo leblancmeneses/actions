@@ -35,7 +35,30 @@ Literal
   = chars:[a-zA-Z0-9_\-]+ { return { type: "STATEMENT_REF", value: chars.join('') }; }
 
 Key
-  = chars:[^:\s]+ ":" { return chars.join(''); }
+  = bracketedKey
+  / nestedKey
+  / simpleKey
+
+bracketedKey
+  = "[" name:validKeyName "](" path:[^)]* ")" ":" {
+      return { name: name, path: path.join('') };
+    }
+
+nestedKey
+  = "<" name:validKeyName ">" ":" {
+      return { name: name, path: name };
+    }
+
+simpleKey
+  = name:validKeyName ":" {
+      return { name: name };
+    }
+
+validKeyName
+  = ![0-9\-] first:[a-zA-Z_] rest:[a-zA-Z0-9_\-]* {
+      return first + rest.join('');
+    }
+
 
 _ "whitespace"
   = [ \t\n\r]*
