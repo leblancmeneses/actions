@@ -56,6 +56,7 @@ jobs:
 
       - name: example affected output
         run: |
+          set -ex
           echo "affected_changes: ${{ steps.affected.outputs.affected_changes }}"
           echo "affected_imagetags: ${{ steps.affected.outputs.affected_imagetags }}"
           echo "affected_shas: ${{ steps.affected.outputs.affected_shas }}"
