@@ -60,10 +60,22 @@ jobs:
           echo "affected_images: ${{ steps.affected.outputs.affected_images }}"
           echo "affected_shas: ${{ steps.affected.outputs.affected_shas }}"
 
-      - run: |
+          # You can use env values for naming complex expressions.
+          echo "AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected_changes }}' | jq -r .affected)" >> $GITHUB_ENV
+          echo "VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected_changes }}' | jq -r .version-autopilot)" >> $GITHUB_ENV
+
+
+      - name: build affected
+        if: ${{ fromJson(steps.affected.outputs.affected_changes).affected }}
+        run: |
+          set -ex
+          echo $AFFECTED_AFFECTED
           npx nx run affected:build:production
 
-      - run: |
+      - name: build version-autopilot
+        if: ${{ fromJson(steps.affected.outputs.affected_changes).version-autopilot }}
+        run: |
+          echo $VERSION_AUTOPILOT_AFFECTED
           npx nx run version-autopilot:build:production
 
       - name: commit changes for npx nx run-many -t build
