@@ -32,6 +32,7 @@ describe("version-autopilot", () => {
   afterEach(() => {
     jest.restoreAllMocks();
     delete process.env["PATCH_OVERRIDE"];
+    delete github.context.runNumber;
   });
 
   it("should start at version 0.0.0", async () => {
@@ -59,6 +60,7 @@ describe("version-autopilot", () => {
       return null;
     });
     const outputMock = jest.spyOn(core, "setOutput");
+    process.env["PATCH_OVERRIDE"] = "0";
 
     await run();
 

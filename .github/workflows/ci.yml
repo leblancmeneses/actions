@@ -62,7 +62,7 @@ jobs:
 
           # You can use env values for naming complex expressions.
           echo "AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected_changes }}' | jq -r .affected)" >> $GITHUB_ENV
-          echo "VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected_changes }}' | jq -r '.[""version-autopilot""]')" >> $GITHUB_ENV
+          echo "VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected_changes }}' | jq -r '.["version-autopilot"]')" >> $GITHUB_ENV
 
       - name: e2e tests
         if: ${{ fromJson(steps.affected.outputs.affected_changes).e2e }}
