@@ -52,7 +52,7 @@ jobs:
             ci: './github/workflows/ci.yml';
             [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**' ci;
             [version-autopilot](./apps/version-autopilot): './apps/version-autopilot/**' './dist/apps/version-autopilot/**' ci;
-            e2e: affected version-autopilot !'**/*.md';
+            e2e: './e2e/**' affected version-autopilot !'**/*.md';
 
       - name: example affected output
         run: |
