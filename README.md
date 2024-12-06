@@ -54,7 +54,7 @@ These rules map a *project name*, its *directory*, and the *expression* to check
 
 #### Composing Rules
 
-The `project-e2e` rule includes `project-ui`, `project-api`, and `project-dbmigrations`. This allows referencing prior expressions and combining them.
+The `project-e2e` rule includes `project-ui`, `project-api`, and `project-dbmigrations`. This allows referencing prior expressions and combining them using `OR` operator.
 For example, **e2e** runs if files change in any of these projects but not for markdown-only changes.
 
 #### Exclusion Expression

@@ -26,13 +26,6 @@ import * as core from "@actions/core";
 
 
 describe("affected", () => {
-  const mockRules = `
-    <project-ui>: 'project-ui/**';
-    <project-api>: 'project-api/**';
-    [project-dbmigrations](./databases/project): './databases/project/**';
-    project-e2e: project-ui project-api project-dbmigrations !'**/*.md';
-  `;
-
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
@@ -46,7 +39,12 @@ describe("affected", () => {
     const mockSetFailed = jest.spyOn(core, 'setFailed').mockImplementation(jest.fn());
 
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
-      if (inputName === "rules") return mockRules;
+      if (inputName === "rules") return `
+          <project-ui>: 'project-ui/**';
+          <project-api>: 'project-api/**';
+          [project-dbmigrations](./databases/project): './databases/project/**';
+          project-e2e: 'e2e/**' project-ui project-api project-dbmigrations !'**/*.md';
+        `;
       return "";
     });
 
@@ -68,7 +66,7 @@ describe("affected", () => {
       required: true,
     });
 
-    expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {"project-api": true, "project-dbmigrations": false, "project-e2e": false, "project-ui": true});
+    expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {"project-api": true, "project-dbmigrations": false, "project-e2e": true, "project-ui": true});
     expect(core.setOutput).toHaveBeenCalledWith("affected_imagetags", {
       'project-api': 'image-project-api-true',
       "project-dbmigrations": "image-project-dbmigrations-false",
@@ -81,5 +79,4 @@ describe("affected", () => {
     });
     expect(core.info).toHaveBeenCalled();
   });
-
 });

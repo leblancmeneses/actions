@@ -5,11 +5,10 @@ import { execSync } from 'child_process';
 import picomatch from 'picomatch';
 
 
-function evaluateStatements(statements, changedFiles) {
+function evaluateStatements(statements, originalChangedFiles) {
   const result = {};
-  const seen = new Set<string>();
 
-  function evaluateStatement(statementKey) {
+  function evaluateStatement(statementKey, changedFiles, seen = new Set<string>()) {
     if (seen.has(statementKey)) {
       throw new Error(`Recursive or circular reference detected for statement: ${statementKey}`);
     }
@@ -20,27 +19,37 @@ function evaluateStatements(statements, changedFiles) {
       throw new Error(`Referenced statement key '${statementKey}' does not exist.`);
     }
 
-    let matches = false;
+    let remainingFiles = [];
 
     for (const value of statement.value) {
+      let currentFiles = [...changedFiles]; // Start with original files for each value
+
       if (value.type === 'QUOTE_LITERAL') {
+        // Filter the files that match the QUOTE_LITERAL pattern
         const isMatch = picomatch(value.value);
-        matches = matches || changedFiles.some((file) => isMatch(file));
+        currentFiles = currentFiles.filter((file) => isMatch(file));
       } else if (value.type === 'STATEMENT_REF') {
-        matches = matches || evaluateStatement(value.value);
+        // Recursively evaluate the referenced statement and append new matches
+        const refMatches = evaluateStatement(value.value, originalChangedFiles, seen);
+        currentFiles = [...new Set([...currentFiles, ...(refMatches || [])])];
       } else if (value.type === 'INVERSE' && value.exp.type === 'QUOTE_LITERAL') {
+        // Filter out files that match the INVERSE pattern
         const isMatch = picomatch(value.exp.value);
-        matches = matches && !changedFiles.some((file) => isMatch(file));
+        currentFiles = currentFiles.filter((file) => !isMatch(file));
       }
+
+      // Append currentFiles to remainingFiles while avoiding duplicates
+      remainingFiles = [...new Set([...remainingFiles, ...currentFiles])];
     }
 
     seen.delete(statementKey);
-    return matches;
+    return remainingFiles;
   }
+
 
   for (const statement of statements) {
     if (statement.type === 'STATEMENT') {
-      result[statement.key.name] = evaluateStatement(statement.key.name);
+      result[statement.key.name] = evaluateStatement(statement.key.name, originalChangedFiles).length > 0;
     }
   }
 
@@ -178,7 +187,7 @@ export async function run() {
       }
     }
 
-    core.setOutput('affected_images', affectedImages);
+    core.setOutput('affected_imagetags', affectedImages);
     core.setOutput('affected_shas', affectedShas);
     core.setOutput('affected_changes', affectedChanges);
   } catch (error) {
