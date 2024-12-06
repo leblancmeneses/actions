@@ -56,13 +56,17 @@ jobs:
 
       - name: example affected output
         run: |
+          set -ex
           echo "affected_changes: ${{ steps.affected.outputs.affected_changes }}"
           echo "affected_imagetags: ${{ steps.affected.outputs.affected_imagetags }}"
           echo "affected_shas: ${{ steps.affected.outputs.affected_shas }}"
 
           # You can use env values for naming complex expressions.
-          echo "AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected_changes }}' | jq -r .affected)" >> $GITHUB_ENV
-          echo "VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected_changes }}' | jq -r '.["version-autopilot"]')" >> $GITHUB_ENV
+          AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected_changes }}' | jq -r .affected)
+          VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected_changes }}' | jq -r '.["version-autopilot"]')
+
+          echo "AFFECTED_AFFECTED=$AFFECTED_AFFECTED" >> $GITHUB_ENV
+          echo "VERSION_AUTOPILOT_AFFECTED=$VERSION_AUTOPILOT_AFFECTED" >> $GITHUB_ENV
 
       - name: e2e tests
         if: ${{ fromJson(steps.affected.outputs.affected_changes).e2e }}
@@ -70,19 +74,13 @@ jobs:
 
       - name: build affected
         if: ${{ fromJson(steps.affected.outputs.affected_changes).affected }}
-        run: |
-          set -ex
-          echo $AFFECTED_AFFECTED
-          npx nx run affected:build:production
+        run: npx nx run affected:build:production
 
       - name: build version-autopilot
         if: ${{ fromJson(steps.affected.outputs.affected_changes).version-autopilot }}
-        run: |
-          set -ex
-          echo $VERSION_AUTOPILOT_AFFECTED
-          npx nx run version-autopilot:build:production
+        run: npx nx run version-autopilot:build:production
 
-      - name: commit changes for npx nx run-many -t build
+      - name: assert dist is deterministic
         run: git diff --exit-code -- ./dist
 
       - name: example version-autopilot
