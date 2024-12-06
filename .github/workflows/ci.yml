@@ -40,14 +40,7 @@ jobs:
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
-      - run: npx nx affected -t lint test build
-
-      - run: |
-          npx nx run affected:build:production
-          npx nx run version-autopilot:build:production
-
-      - name: commit changes for npx nx run-many -t build
-        run: git diff --exit-code -- ./dist
+      # - run: npx nx affected -t lint test build
 
       - name: example affected
         id: affected
@@ -64,6 +57,15 @@ jobs:
           echo "affected_changes: ${{ steps.affected.outputs.affected_changes }}"
           echo "affected_images: ${{ steps.affected.outputs.affected_images }}"
           echo "affected_shas: ${{ steps.affected.outputs.affected_shas }}"
+
+      - run: |
+          npx nx run affected:build:production
+
+      - run: |
+          npx nx run version-autopilot:build:production
+
+      - name: commit changes for npx nx run-many -t build
+        run: git diff --exit-code -- ./dist
 
       - name: example version-autopilot
         id: version-autopilot
