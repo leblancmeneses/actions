@@ -30,9 +30,6 @@ describe("affected", () => {
     jest.clearAllMocks();
     jest.resetModules();
   });
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
 
   test("should parse valid YAML and set outputs", async () => {
     // Arrange
