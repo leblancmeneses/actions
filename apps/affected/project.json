@@ -1,7 +1,7 @@
 {
-  "name": "version-autopilot",
+  "name": "affected",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/version-autopilot/src",
+  "sourceRoot": "apps/affected/src",
   "projectType": "application",
   "tags": [],
   "targets": {
@@ -11,14 +11,14 @@
       "defaultConfiguration": "production",
       "options": {
         "platform": "node",
-        "outputPath": "dist/apps/version-autopilot",
+        "outputPath": "dist/apps/affected",
         "format": ["cjs"],
         "bundle": true,
         "minify": true,
         "thirdParty": true,
-        "main": "apps/version-autopilot/src/main.ts",
-        "tsConfig": "apps/version-autopilot/tsconfig.app.json",
-        "assets": ["apps/version-autopilot/action.yml"],
+        "main": "apps/affected/src/main.ts",
+        "tsConfig": "apps/affected/tsconfig.app.json",
+        "assets": ["apps/affected/action.yml"],
         "generatePackageJson": false,
         "esbuildOptions": {
           "sourcemap": true,
@@ -44,14 +44,14 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "version-autopilot:build"
+        "buildTarget": "affected:build"
       },
       "configurations": {
         "development": {
-          "buildTarget": "version-autopilot:build:development"
+          "buildTarget": "affected:build:development"
         },
         "production": {
-          "buildTarget": "version-autopilot:build:production"
+          "buildTarget": "affected:build:production"
         }
       }
     }

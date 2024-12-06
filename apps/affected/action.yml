@@ -1,0 +1,19 @@
+name: 'Affected Changes Processor'
+description: 'Determines affected components and generates corresponding SHA, image tags, and change status based on the provided rules.'
+inputs:
+  shaPaths:
+    description: 'Defines the mapping between project keys and their respective paths for generating commit SHAs and image tags.'
+    required: true
+  hasChangesRules:
+    description: 'Defines rules for determining whether a project has changes. Use syntax like `project-name: "path/**" !"path/*.md";`.'
+    required: true
+outputs:
+  affected_changes:
+    description: 'A JSON array representing the projects that have changes, following the hasChangesRules.'
+  affected_images:
+    description: 'A JSON array representing the images that need to be generated based on the projects with changes.'
+  affected_shas:
+    description: 'A JSON object representing the mapping of each affected project to its respective commit SHA.'
+runs:
+  using: 'node20'
+  main: 'main.js'

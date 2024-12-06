@@ -13,7 +13,7 @@ function getVersion(versionMajor, versionMinor, versionPatch, versionShift) {
   };
 }
 
-async function run() {
+export async function run() {
   try {
     const major = parseInt(core.getInput('major') || '0', 10);
     const minor = parseInt(core.getInput('minor') || '0', 10);
@@ -31,7 +31,7 @@ async function run() {
     core.setOutput('version_autopilot_string', version.versionString);
     core.setOutput('version_autopilot_code', version.versionCode);
 
-    console.log(`version: ${JSON.stringify({
+    core.info(`version: ${JSON.stringify({
       version_autopilot_string_recommended: versionStringRecommended,
       version_autopilot_string: version.versionString,
       version_autopilot_code: version.versionCode
@@ -41,4 +41,6 @@ async function run() {
   }
 }
 
-run();
+if (!process.env.JEST_WORKER_ID) {
+  run();
+}

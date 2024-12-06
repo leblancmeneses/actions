@@ -31,7 +31,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
        
       - run: npm ci
       - uses: nrwl/nx-set-shas@v4
@@ -66,3 +65,9 @@ jobs:
       !failure() && !cancelled() && github.event_name == 'pull_request'
     needs: [main]
     uses: ./.github/workflows/tests.version-autopilot.yml
+
+  affected-tests:
+    if: |
+      !failure() && !cancelled() && github.event_name == 'pull_request'
+    needs: [main]
+    uses: ./.github/workflows/tests.affected.yml
