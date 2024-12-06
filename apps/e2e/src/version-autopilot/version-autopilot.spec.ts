@@ -33,6 +33,8 @@ describe("version-autopilot", () => {
     jest.restoreAllMocks();
     delete process.env["PATCH_OVERRIDE"];
     delete github.context.runNumber;
+    delete github.context.eventName;
+    delete github.context.payload;
   });
 
   it("should start at version 0.0.0", async () => {
