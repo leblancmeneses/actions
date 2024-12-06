@@ -78,6 +78,7 @@ export const getChangedFiles = async () => {
         .filter(Boolean);
     }
 
+    core.info(`Changed Files: ${changedFiles.join('\n')}`);
     return changedFiles;
   } catch (error) {
     console.error('Error executing Git command:', error.message);
@@ -177,7 +178,7 @@ export async function run() {
       }
     }
 
-    core.setOutput('affected_imagetags', affectedImages);
+    core.setOutput('affected_images', affectedImages);
     core.setOutput('affected_shas', affectedShas);
     core.setOutput('affected_changes', affectedChanges);
   } catch (error) {
