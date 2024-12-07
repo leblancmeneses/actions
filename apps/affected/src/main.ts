@@ -140,18 +140,24 @@ export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, ap
       .trim();
   }
 
-  let imageName = `${appTarget}:dev-${sha}`;
+
+  let imageName1 = `${appTarget}:${baseRef}-${sha}`;
   if (commitShaBefore === commitShaAfter) {
-    imageName = `${appTarget}:prod-${sha}`;
+    imageName1 = `${appTarget}:prod-${sha}`;
   }
 
-  return imageName;
+  let imageName2 = `${appTarget}:latest`;
+  if (github.context.eventName === 'pull_request') {
+    imageName2 = `${appTarget}:pr-${github.context.payload.pull_request.number}`;
+  }
+
+  return [imageName1, imageName2];
 }
 
 
 export async function run() {
   try {
-    const affectedImages: Record<string, string> = {};
+    const affectedImageTags: Record<string, string[]> = {};
     const affectedShas: Record<string, string> = {};
     const affectedChanges: Record<string, boolean> = {};
 
@@ -178,7 +184,7 @@ export async function run() {
           affectedShas[key.name] = commitSha;
 
           const imageName = getDevOrProdPrefixImageName(affectedChanges[key.name], commitSha, key.name, key.path);
-          affectedImages[key.name] = imageName;
+          affectedImageTags[key.name] = imageName;
 
           core.info(
             `Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`
@@ -187,9 +193,11 @@ export async function run() {
       }
     }
 
-    core.setOutput('affected_imagetags', affectedImages);
-    core.setOutput('affected_shas', affectedShas);
-    core.setOutput('affected_changes', affectedChanges);
+    core.setOutput('affected', {
+      shas: affectedShas,
+      changes: affectedChanges,
+      recommended_imagetags: affectedImageTags,
+    });
   } catch (error) {
     core.setFailed(error.message);
   }

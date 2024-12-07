@@ -48,7 +48,7 @@ describe("affected", () => {
     jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
 
     jest.spyOn(affectedMain, "getCommitHash").mockImplementation((path: string, hasChanges: boolean) => `sha-${path}-${hasChanges}`);
-    jest.spyOn(affectedMain, "getDevOrProdPrefixImageName").mockImplementation((hasChanges: boolean, commitSha: string, appTarget: string, path: string) => `image-${appTarget}-${hasChanges}`);
+    jest.spyOn(affectedMain, "getDevOrProdPrefixImageName").mockImplementation((hasChanges: boolean, commitSha: string, appTarget: string, path: string) => [`imagetag1-${appTarget}-${hasChanges}`, `imagetag2-${appTarget}-${hasChanges}`]);
     jest.spyOn(affectedMain, "getChangedFiles").mockResolvedValue([
       "project-ui/file1.js",
       "project-api/readme.md",
@@ -63,16 +63,18 @@ describe("affected", () => {
       required: true,
     });
 
-    expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {"project-api": true, "project-dbmigrations": false, "project-e2e": true, "project-ui": true});
-    expect(core.setOutput).toHaveBeenCalledWith("affected_imagetags", {
-      'project-api': 'image-project-api-true',
-      "project-dbmigrations": "image-project-dbmigrations-false",
-      'project-ui': 'image-project-ui-true',
-    });
-    expect(core.setOutput).toHaveBeenCalledWith("affected_shas", {
-      'project-api': 'sha-project-api-true',
-      "project-dbmigrations": "sha-./databases/project-false",
-      'project-ui': 'sha-project-ui-true',
+    expect(core.setOutput).toHaveBeenCalledWith("affected", {
+      changes: {"project-api": true, "project-dbmigrations": false, "project-e2e": true, "project-ui": true},
+      shas: {
+        'project-api': 'sha-project-api-true',
+        "project-dbmigrations": "sha-./databases/project-false",
+        'project-ui': 'sha-project-ui-true',
+      },
+      recommended_imagetags: {
+        'project-api': ['imagetag1-project-api-true','imagetag2-project-api-true'],
+        "project-dbmigrations": ["imagetag1-project-dbmigrations-false", "imagetag2-project-dbmigrations-false"],
+        'project-ui': ['imagetag1-project-ui-true','imagetag2-project-ui-true'],
+      },
     });
     expect(core.info).toHaveBeenCalled();
   });
