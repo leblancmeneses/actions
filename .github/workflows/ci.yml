@@ -57,7 +57,8 @@ jobs:
       - name: example affected output
         run: |
           set -ex
-          echo "affected: ${{ steps.affected.outputs.affected }}"
+          echo "affected: "
+          echo '${{ steps.affected.outputs.affected }}' | jq .
 
           # You can use env values for naming complex expressions.
           AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r .changes.affected)
