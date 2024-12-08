@@ -138,7 +138,7 @@ The `affected` action will generate the following JSON objects:
           echo "VERSION_AUTOPILOT_AFFECTED=$VERSION_AUTOPILOT_AFFECTED" >> $GITHUB_ENV
 
       - name: e2e tests
-        if: ${{ fromJson(steps.affected.outputs.affected).changes.project-e2e }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.project-e2e }}
         run: npx nx run e2e:e2e
 ```
 
@@ -214,7 +214,7 @@ This will override the `LINT-APPNAME-UI` variable to skip the linting step.
 
 ```yaml
       - name: lint appname-ui
-        if: ${{ fromJson(steps.pragma.outputs.pragma).LINT-APPNAME-UI != 'skip' }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.pragma.outputs.pragma).LINT-APPNAME-UI != 'skip' }}
         run: npm run lint:appname-ui
 ```
 

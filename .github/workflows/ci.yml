@@ -77,15 +77,15 @@ jobs:
           echo "VERSION_AUTOPILOT_AFFECTED=$VERSION_AUTOPILOT_AFFECTED" >> $GITHUB_ENV
 
       - name: e2e tests
-        if: ${{ fromJson(steps.affected.outputs.affected).changes.e2e }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.e2e }}
         run: npx nx run e2e:e2e
 
       - name: build affected
-        if: ${{ fromJson(steps.affected.outputs.affected).changes.affected }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected }}
         run: npx nx run affected:build:production
 
       - name: build version-autopilot
-        if: ${{ fromJson(steps.affected.outputs.affected).changes.version-autopilot }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.version-autopilot }}
         run: npx nx run version-autopilot:build:production
 
       - name: assert dist is deterministic
