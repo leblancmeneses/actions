@@ -35,7 +35,7 @@ export async function run() {
       variablesObject[key] = convertValue(variablesObject[key]);
     });
     core.info(`pragma default variables: ${JSON.stringify(variablesObject, undefined, 2)}`);
-    console.log(JSON.stringify(github, undefined, 2));
+    core.info(JSON.stringify(github, undefined, 2));
     const description = (process.env['PR_BODY'] || github.context.payload?.event?.pull_request?.body || '');
     if (description) {
       const overrideVars = extractVariables(description);
