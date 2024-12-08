@@ -17,6 +17,7 @@
   - [Version Autopilot Action](#version-autopilot-action)
     - [Example usages](#example-usages)
 - [Run locally:](#run-locally)
+- [Contributing](#contributing)
 - [License](#license)
 - [Need Help?](#need-help)
 
@@ -328,7 +329,7 @@ pnpm i
 npx nx run e2e:e2e
 ```
 
-##Contributing
+# Contributing
 Contributions are welcome! Please open an issue or submit a pull request if you have suggestions or improvements.
 
 
