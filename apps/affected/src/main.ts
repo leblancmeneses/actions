@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { parse } from './parser';
 import { execSync } from 'child_process';
+import fs from 'fs';
 import picomatch from 'picomatch';
 
 
@@ -193,6 +194,9 @@ export async function run() {
 
         const { key } = statement;
         if (key.path) {
+          if (!fs.existsSync(key.path) || !fs.lstatSync(key.path).isDirectory()) {
+            throw new Error(`Invalid directory: ${key.path}`);
+          }
           const commitSha = getCommitHash(key.path, affectedChanges[key.name]);
           affectedShas[key.name] = commitSha;
 

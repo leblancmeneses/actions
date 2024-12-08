@@ -24,7 +24,7 @@
 
 ## Affected Action
 
-This task generates 3 JSON objects to streamline your pipeline by skipping unnecessary steps and running only those affected by `changes`. It also aligns git commits with images via `recommended_imagetags` and `shas`, simplifying GitOps strategies.
+This task generates a JSON object to streamline your pipeline by skipping unnecessary steps and running only those affected by `changes`. It also aligns git commits with images via `recommended_imagetags` and `shas`, simplifying GitOps strategies.
 
 
 ```yaml
@@ -45,6 +45,8 @@ jobs:
         id: affected
         uses: leblancmeneses/actions/dist/apps/affected@main
         with:
+          verbose: false # optional
+          gitflow-production-branch: '' # optional; used in recommended_imagetags.
           rules: |
             <project-ui>: 'project-ui/**';
             <project-api>: 'project-api/**';

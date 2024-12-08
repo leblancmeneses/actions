@@ -62,6 +62,7 @@ jobs:
             ci: './github/workflows/ci.yml';
             [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**' ci;
             [version-autopilot](./apps/version-autopilot): './apps/version-autopilot/**' './dist/apps/version-autopilot/**' ci;
+            [pragma](./apps/pragma): './apps/pragma/**' './dist/apps/pragma/**' ci;
             e2e: './e2e/**' affected version-autopilot !'**/*.md';
 
       - name: example affected output
@@ -87,6 +88,10 @@ jobs:
       - name: build version-autopilot
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.version-autopilot }}
         run: npx nx run version-autopilot:build:production
+
+      - name: build pragma
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.pragma }}
+        run: npx nx run pragma:build:production
 
       - name: assert dist is deterministic
         run: git diff --exit-code -- ./dist

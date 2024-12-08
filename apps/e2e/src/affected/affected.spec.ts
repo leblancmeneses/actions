@@ -19,10 +19,27 @@
 
 jest.mock("@actions/core");
 jest.mock("@actions/github");
+jest.mock('fs', () => {
+  const originalFs = jest.requireActual('fs'); // Preserve the original fs
+  return {
+    ...originalFs, // Spread original fs methods
+    existsSync: jest.fn(() => true), // Mock existsSync
+    lstatSync: jest.fn(() => ({
+      isDirectory: () => true, // Mock isDirectory to return true
+    })),
+    promises: {
+      access: jest.fn(), // Mock specific promises methods as needed
+      readFile: jest.fn(), // Example for readFile if used
+      writeFile: jest.fn(), // Example for writeFile if used
+    },
+  };
+});
 /* eslint-disable @nx/enforce-module-boundaries */
 import * as affectedMain from "@affected/main"; // Import everything
 import { run } from "@affected/main";
 import * as core from "@actions/core";
+import * as fs from 'fs';
+
 
 
 describe("affected action", () => {
@@ -54,6 +71,11 @@ describe("affected action", () => {
       "project-api/readme.md",
     ]);
 
+    jest.spyOn(fs, "existsSync").mockImplementation(() => true);
+    jest.spyOn(fs, "lstatSync").mockImplementation(() => ({
+      isDirectory: () => true,
+    }) as fs.Stats);
+
     // Act
     await run();
 
@@ -77,5 +99,37 @@ describe("affected action", () => {
       },
     });
     expect(core.info).toHaveBeenCalled();
+  });
+
+  it('should fail with "Invalid directory" when key.path is invalid', async () => {
+    jest.spyOn(core, 'getInput')
+      .mockImplementation((inputName) => {
+        switch (inputName) {
+          case 'rules':
+            return `
+              [key](./invalid/path): './databases/project/**';
+            `;
+          case 'verbose':
+            return 'false';
+          case 'gitflow-production-branch':
+            return '';
+          default:
+            return '';
+        }
+      });
+
+    jest.spyOn(fs, "existsSync").mockImplementation(() => false);
+    jest.spyOn(fs, "lstatSync").mockImplementation(() => ({
+      isDirectory: () => false,
+    }) as fs.Stats);
+
+    // Spy on core.setFailed
+    const setFailedSpy = jest.spyOn(core, 'setFailed');
+
+    // Run the function
+    await run();
+
+    // Assertions
+    expect(setFailedSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid directory: ./invalid/path'));
   });
 });
