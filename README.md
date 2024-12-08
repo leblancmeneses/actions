@@ -16,10 +16,9 @@
     - [Consuming the JSON object](#consuming-the-json-object-1)
   - [Version Autopilot Action](#version-autopilot-action)
     - [Example usages](#example-usages)
-  - [Run locally:](#run-locally)
-  - [Contributing](#contributing)
-  - [License](#license)
-  - [Need Help?](#need-help)
+- [Run locally:](#run-locally)
+- [License](#license)
+- [Need Help?](#need-help)
 
 # Actions
 
@@ -319,7 +318,7 @@ If you are looking for semantic versioning research `git tags` and [release pipe
       jq --arg version "${{ steps.version-autopilot.outputs.version_autopilot_string }}" '.version = $version' $manifest > tmp.json && mv tmp.json $manifest
 ```
 
-## Run locally:
+# Run locally:
 
 ```bash
 nvm use
@@ -327,15 +326,15 @@ pnpm i
 npx nx run e2e:e2e
 ```
 
-## Contributing
+##Contributing
 Contributions are welcome! Please open an issue or submit a pull request if you have suggestions or improvements.
 
 
-## License
+# License
 This project is licensed under the [MIT License](LICENSE).
 
 
-## Need Help?
+# Need Help?
 
 Large language models (LLMs) cannot solve your organization's people problems. If your software teams are struggling and falling behind, consider engaging an actual human expert who can identify product and development issues and provide solutions.
 
