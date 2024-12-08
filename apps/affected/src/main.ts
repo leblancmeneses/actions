@@ -87,7 +87,6 @@ export const getChangedFiles = async () => {
         .filter(Boolean);
     }
 
-    core.info(`Changed Files: ${changedFiles.join('\n')}`);
     return changedFiles;
   } catch (error) {
     console.error('Error executing Git command:', error.message);
@@ -118,7 +117,7 @@ export const getCommitHash = (path: string, hasChanges: boolean) => {
   return commitSha;
 }
 
-export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, appTarget: string, path?: string) => {
+export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, appTarget: string, path?: string, productionBranch?: string) => {
   const folderOfInterest = path? path.startsWith("./") ? path : `./${path}`: `./${appTarget}`;
 
   const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || github.context.ref;
@@ -143,7 +142,11 @@ export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, ap
 
   let imageName1 = `${appTarget}:${baseRef}-${sha}`;
   if (commitShaBefore === commitShaAfter) {
-    imageName1 = `${appTarget}:prod-${sha}`;
+    if (productionBranch) {
+      imageName1 = `${appTarget}:${productionBranch}-${sha}`;
+    } else {
+      imageName1 = `${appTarget}:${baseRef}-${sha}`;
+    }
   }
 
   let imageName2 = `${appTarget}:latest`;
@@ -154,6 +157,11 @@ export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, ap
   return [imageName1, imageName2];
 }
 
+export const log = (message: string, verbose: boolean) => {
+  if (verbose) {
+    core.info(message);
+  }
+};
 
 export async function run() {
   try {
@@ -162,6 +170,8 @@ export async function run() {
     const affectedChanges: Record<string, boolean> = {};
 
     const rulesInput = core.getInput('rules', { required: true });
+    const verbose = core.getInput('verbose', { required: false }) === 'true';
+    const productionBranch = core.getInput('gitflow-production-branch', { required: false }) || '';
 
     if (rulesInput) {
       const statements = parse(rulesInput, undefined);
@@ -170,7 +180,10 @@ export async function run() {
         throw new Error('Rules must be an array of statements');
       }
 
-      const affected = evaluateStatements(statements, await getChangedFiles()) as Record<string, boolean>;
+      const changedFiles = await getChangedFiles();
+      log(`Changed Files: ${changedFiles.join('\n')}`, verbose);
+
+      const affected = evaluateStatements(statements, changedFiles) as Record<string, boolean>;
       for (const [key, value] of Object.entries(affected)) {
         affectedChanges[key] = value;
       }
@@ -183,12 +196,10 @@ export async function run() {
           const commitSha = getCommitHash(key.path, affectedChanges[key.name]);
           affectedShas[key.name] = commitSha;
 
-          const imageName = getDevOrProdPrefixImageName(affectedChanges[key.name], commitSha, key.name, key.path);
+          const imageName = getDevOrProdPrefixImageName(affectedChanges[key.name], commitSha, key.name, key.path, productionBranch);
           affectedImageTags[key.name] = imageName;
 
-          core.info(
-            `Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`
-          );
+          log(`Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`, verbose);
         }
       }
     }

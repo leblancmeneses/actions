@@ -4,6 +4,14 @@ inputs:
   rules:
     description: 'Defines rules in DSL format specified in README.md.'
     required: true
+  gitflow-production-branch:
+    description: 'The name of the production branch in your GitFlow workflow (e.g., "main" or "prod").'
+    required: false
+    default: ''
+  verbose:
+    description: 'Enable verbose logging. Use "true" or "false".'
+    required: false
+    default: 'false'
 outputs:
   affected:
     description: 'A JSON array representing the projects that have changes, recommended_imagetags, and commit SHA.'

@@ -31,18 +31,24 @@ describe('pragma action', () => {
 
   test('should parse valid YAML and set outputs', async () => {
     // Arrange
-    const mockInput = `
-      var1=test
-      var2=42
-      var3=true
-    `;
-
     const mockPRBody = `
       x__var4 = "new value"
       x__var5 = "false"
     `;
 
-    (core.getInput as jest.Mock).mockReturnValue(mockInput);
+    (core.getInput as jest.Mock).mockImplementation((name: string) => {
+      if (name === 'variables') {
+        return `
+          var1=test
+          var2=42
+          var3=true
+        `;
+      }
+      if(name === 'verbose') {
+        return 'true';
+      }
+      return '';
+    });
 
     github.context.eventName = 'pull_request';
     github.context.payload = {
@@ -73,7 +79,7 @@ describe('pragma action', () => {
     };
 
     expect(core.info).toHaveBeenCalledWith(
-      `merged json: ${JSON.stringify(expectedOutput, undefined, 2)}`
+      `pragma: ${JSON.stringify(expectedOutput, undefined, 2)}`
     );
 
     expect(core.setOutput).toHaveBeenCalledWith("pragma", expectedOutput);
