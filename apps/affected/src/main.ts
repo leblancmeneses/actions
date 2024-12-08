@@ -193,11 +193,13 @@ export async function run() {
       }
     }
 
-    core.setOutput('affected', {
+    const affectedOutput = {
       shas: affectedShas,
       changes: affectedChanges,
       recommended_imagetags: affectedImageTags,
-    });
+    };
+    core.setOutput('affected',  affectedOutput);
+    core.info(JSON.stringify(affectedOutput, undefined, 2));
   } catch (error) {
     core.setFailed(error.message);
   }

@@ -25,7 +25,7 @@ import { run } from "@affected/main";
 import * as core from "@actions/core";
 
 
-describe("affected", () => {
+describe("affected action", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();

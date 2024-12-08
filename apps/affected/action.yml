@@ -1,16 +1,12 @@
 name: 'Affected Processor'
-description: 'Determines affected components and generates corresponding SHA, image tags, and change status based on the provided rules.'
+description: 'Determines affected components and generates corresponding SHA, recommended image tags, and change status based on the provided rules.'
 inputs:
   rules:
     description: 'Defines rules in DSL format specified in README.md.'
     required: true
 outputs:
-  affected_changes:
-    description: 'A JSON array representing the projects that have changes.'
-  affected_imagetags:
-    description: 'A JSON array representing the images that need to be generated.'
-  affected_shas:
-    description: 'A JSON object representing the project commit SHA.'
+  affected:
+    description: 'A JSON array representing the projects that have changes, recommended_imagetags, and commit SHA.'
 runs:
   using: 'node20'
   main: 'main.js'

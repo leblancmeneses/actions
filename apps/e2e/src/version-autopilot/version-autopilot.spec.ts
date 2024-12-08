@@ -21,7 +21,7 @@ import { run } from "@version-autopilot/main";
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 
-describe("version-autopilot", () => {
+describe("version-autopilot action", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();

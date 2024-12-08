@@ -16,6 +16,7 @@
     "baseUrl": ".",
     "paths": {
       "@affected/*": ["apps/affected/src/*"],
+      "@pragma/*": ["apps/pragma/src/*"],
       "@version-autopilot/*": ["apps/version-autopilot/src/*"]
     }
   },

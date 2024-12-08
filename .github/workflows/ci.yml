@@ -44,6 +44,16 @@ jobs:
       # - run: npx nx-cloud record -- echo Hello World
       # - run: npx nx affected -t lint test build
 
+      - name: example pragma
+        id: pragma
+        uses: ./dist/apps/pragma
+        with:
+          variables: |
+            lint-appname-ui: 'skip'
+            force: false
+            deploy: ${{ github.ref === 'refs/heads/dev' || github.ref === 'refs/heads/prod' }}
+
+
       - name: example affected
         id: affected
         uses: ./dist/apps/affected
@@ -56,7 +66,6 @@ jobs:
 
       - name: example affected output
         run: |
-          set -ex
           echo "affected: "
           echo '${{ steps.affected.outputs.affected }}' | jq .
 

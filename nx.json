@@ -33,7 +33,9 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/version-autopilot-e2e/**/*", "apps/e2e/**/*"]
+      "exclude": [
+        "apps/e2e/**/*"
+      ]
     }
   ]
 }
