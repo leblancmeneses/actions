@@ -10,7 +10,7 @@
   - [Pragma Action](#pragma-action)
     - [Features](#features)
     - [Inputs](#inputs)
-  - [Outputs](#outputs)
+    - [Outputs](#outputs)
     - [Pull Request Override Usage](#pull-request-override-usage)
     - [Merged Result](#merged-result)
     - [Consuming the JSON object](#consuming-the-json-object-1)
@@ -156,7 +156,7 @@ This GitHub Action allows pull requests to change behavior allowing builds to ac
 |------------|----------|--------------------------------------------------------------|
 | `variables`| Yes      | A string containing INI-formatted variables as default values. |
 
-## Outputs
+### Outputs
 
 | Name    | Description                                      |
 |---------|--------------------------------------------------|
