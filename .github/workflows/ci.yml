@@ -51,7 +51,7 @@ jobs:
           variables: |
             lint-appname-ui: 'skip'
             force: false
-            deploy: ${{ github.ref === 'refs/heads/dev' || github.ref === 'refs/heads/prod' }}
+            deploy: ${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/prod' }}
 
 
       - name: example affected
