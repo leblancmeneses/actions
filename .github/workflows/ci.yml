@@ -65,18 +65,6 @@ jobs:
             [pragma](./apps/pragma): './apps/pragma/**' './dist/apps/pragma/**' ci;
             e2e: './e2e/**' affected version-autopilot !'**/*.md';
 
-      - name: example affected output
-        run: |
-          echo "affected: "
-          echo '${{ steps.affected.outputs.affected }}' | jq .
-
-          # You can use env values for naming complex expressions.
-          AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r .changes.affected)
-          VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["version-autopilot"]')
-
-          echo "AFFECTED_AFFECTED=$AFFECTED_AFFECTED" >> $GITHUB_ENV
-          echo "VERSION_AUTOPILOT_AFFECTED=$VERSION_AUTOPILOT_AFFECTED" >> $GITHUB_ENV
-
       - name: e2e tests
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.e2e }}
         run: npx nx run e2e:e2e
