@@ -46,11 +46,9 @@ describe('pragma action', () => {
 
     github.context.eventName = 'pull_request';
     github.context.payload = {
-      event: {
-        pull_request: {
-          number: 100,
-          body: mockPRBody,
-        }
+      pull_request: {
+        number: 100,
+        body: mockPRBody,
       }
     };
 
