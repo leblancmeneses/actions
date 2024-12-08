@@ -49,9 +49,9 @@ jobs:
         uses: ./dist/apps/pragma
         with:
           variables: |
-            lint-appname-ui: 'skip'
-            force: false
-            deploy: ${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/prod' }}
+            lint-appname-ui = 'skip'
+            force = false
+            deploy = "${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/prod' }}"
 
 
       - name: example affected
