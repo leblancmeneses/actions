@@ -35,7 +35,6 @@ export async function run() {
       variablesObject[key] = convertValue(variablesObject[key]);
     });
     core.info(`pragma default variables: ${JSON.stringify(variablesObject, undefined, 2)}`);
-    core.info(JSON.stringify(github, undefined, 2));
     const description = (process.env['PR_BODY'] || github.context.payload?.pull_request?.body || '');
     if (description) {
       const overrideVars = extractVariables(description);
@@ -44,7 +43,7 @@ export async function run() {
       core.info(`merged json: ${JSON.stringify(variablesObject, undefined, 2)}`);
     }
 
-    core.setOutput('pragma', JSON.stringify(variablesObject));
+    core.setOutput('pragma', variablesObject);
   } catch (error) {
     core.setFailed(error.message);
   }

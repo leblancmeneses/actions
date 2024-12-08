@@ -76,7 +76,7 @@ describe('pragma action', () => {
       `merged json: ${JSON.stringify(expectedOutput, undefined, 2)}`
     );
 
-    expect(core.setOutput).toHaveBeenCalledWith("pragma", JSON.stringify(expectedOutput));
+    expect(core.setOutput).toHaveBeenCalledWith("pragma", expectedOutput);
   });
 
   test('should handle cases when no PR body is available', async () => {
@@ -105,6 +105,31 @@ describe('pragma action', () => {
       var3: true,
     };
 
-    expect(core.setOutput).toHaveBeenCalledWith('pragma', JSON.stringify(expectedOutput));
+    expect(core.setOutput).toHaveBeenCalledWith('pragma', expectedOutput);
+  });
+
+  test('should handle cases when last variable does not have a newline', async () => {
+    // Arrange
+    (core.getInput as jest.Mock).mockReturnValue('');
+
+    // Mock github.context for a non-pull_request event
+    github.context.eventName = 'pull_request';
+    github.context.payload = {
+      pull_request: {
+        number: 100,
+        body: "[affected][newfeature]: initial commit of affected action with tests\r\n\r\nx__pragma=testing",
+      }
+    };
+    jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
+
+    // Act
+    await run();
+
+    // Assert: Ensure the output is just the parsed input without any PR overrides
+    const expectedOutput = {
+      pragma: 'testing'
+    };
+
+    expect(core.setOutput).toHaveBeenCalledWith('pragma', expectedOutput);
   });
 });
