@@ -1,6 +1,6 @@
 
 - [Actions](#actions)
-  - [Affected](#affected)
+  - [Affected Action](#affected-action)
     - [Rule DSL](#rule-dsl)
       - [Rule Key Examples](#rule-key-examples)
       - [Composing Rules](#composing-rules)
@@ -14,7 +14,7 @@
     - [Pull Request Override Usage](#pull-request-override-usage)
     - [Merged Result](#merged-result)
     - [Consuming the JSON object](#consuming-the-json-object-1)
-  - [Version Autopilot](#version-autopilot)
+  - [Version Autopilot Action](#version-autopilot-action)
     - [Example usages](#example-usages)
   - [Run locally:](#run-locally)
   - [Contributing](#contributing)
@@ -23,7 +23,7 @@
 
 # Actions
 
-## Affected
+## Affected Action
 
 This task generates 3 JSON objects to streamline your pipeline by skipping unnecessary steps and running only those affected by `changes`. It also aligns git commits with images via `recommended_imagetags` and `shas`, simplifying GitOps strategies.
 
@@ -143,6 +143,11 @@ The `affected` action will generate the following JSON objects:
         run: npx nx run e2e:e2e
 ```
 
+<br>
+<br>
+<br>
+<br>
+
 ## Pragma Action
 
 This GitHub Action allows pull requests to change behavior allowing builds to accept `[skip,deploy,force]` flags.
@@ -215,7 +220,12 @@ This will override the `LINT-APPNAME-UI` variable to skip the linting step.
 ```
 
 
-## Version Autopilot
+<br>
+<br>
+<br>
+<br>
+
+## Version Autopilot Action
 
 This is perfect for packages that are not meant to be **consumed** by other packages, like a website or a mobile app,
 where semantic versioning is not required and is continuously deployed.
