@@ -6,20 +6,27 @@
       - [Composing Rules](#composing-rules)
       - [Exclusion Expression](#exclusion-expression)
       - [Wrapping up example](#wrapping-up-example)
+  - [Pragma Action](#pragma-action)
+    - [Features](#features)
+    - [Inputs](#inputs)
+  - [Outputs](#outputs)
+    - [Pull Request Override Usage](#pull-request-override-usage)
+    - [Merged Result](#merged-result)
   - [Version Autopilot](#version-autopilot)
     - [Example usages](#example-usages)
   - [Run locally:](#run-locally)
-  - [Publish dist version:](#publish-dist-version)
+  - [Contributing](#contributing)
+  - [License](#license)
   - [Need Help?](#need-help)
 
 # Actions
 
 ## Affected
 
-This task generates 3 JSON objects to streamline your pipeline by skipping unnecessary steps and running only those affected by `affected_changes`. It also aligns git commits with images via `affected_imagetags` and `affected_shas`, simplifying GitOps strategies.
+This task generates 3 JSON objects to streamline your pipeline by skipping unnecessary steps and running only those affected by `changes`. It also aligns git commits with images via `recommended_imagetags` and `shas`, simplifying GitOps strategies.
 
 
-```
+```yaml
 jobs:
   init:
     runs-on: ubuntu-latest
@@ -27,7 +34,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # fetch all history for accurate change detection
+          # if you have multi-job workflow add affected task to an init step to avoid redundant checkouts.
 
       - name: calculate affected
         id: affected
@@ -38,14 +46,30 @@ jobs:
             <project-api>: 'project-api/**';
             [project-dbmigrations](./databases/project): './databases/project/**';
             project-e2e: project-ui project-api project-dbmigrations !'**/*.md';
+
+      - name: example affected output
+        run: |
+          echo "affected: "
+          echo '${{ steps.affected.outputs.affected }}' | jq .
+
+          # You can use env values for naming complex expressions.
+          AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r .changes.affected)
+          VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["version-autopilot"]')
+
+          echo "AFFECTED_AFFECTED=$AFFECTED_AFFECTED" >> $GITHUB_ENV
+          echo "VERSION_AUTOPILOT_AFFECTED=$VERSION_AUTOPILOT_AFFECTED" >> $GITHUB_ENV
+
+      - name: e2e tests
+        if: ${{ fromJson(steps.affected.outputs.affected).changes.project-e2e }}
+        run: npx nx run e2e:e2e
 ```
 ### Rule DSL
 
 These rules map a *project name*, its *directory*, and the *expression* to check for changes.
 
 * The left side of the colon `:` is the **rule key**, while the right side specifies the expression to match files.
-* **Rule keys with brackets** `[]` or `<>` will appear in the JSON object under `affected_imagetags` or `affected_shas`, and `affected_changes`.
-* **Rule keys without brackets** will only appear in `affected_changes` but **not** in `affected_imagetags` or `affected_shas`.
+* **Rule keys with brackets** `[]` or `<>` will appear in the JSON object under `recommended_imagetags` or `shas`, and `changes`.
+* **Rule keys without brackets** will only appear in `changes` but **not** in `recommended_imagetags` or `shas`.
 
 #### Rule Key Examples
 
@@ -81,24 +105,101 @@ The `affected` action will generate the following JSON objects:
 
 ```json
 {
-  "affected_changes": {
+  "changes": {
     "project-api": true,
     "project-ui": true,
     "project-dbmigrations": false,
-    "project-e2e": false
+    "project-e2e": true
   },
-  "affected_imagetags": {
-    "project-ui": "project-ui:dev-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-    "project-api": "project-api:dev-dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
-    "project-dbmigrations": "project-dbmigrations:dev-7b367954a3ca29a02e2b570112d85718e56429c9"
-  },
-  "affected_shas": {
+  "shas": {
     "project-ui": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
     "project-api": "dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
     "project-dbmigrations": "7b367954a3ca29a02e2b570112d85718e56429c9"
+  },
+  "recommended_imagetags": {
+    "project-ui": [
+      "project-ui:dev-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+      "project-ui:pr-6"
+    ],
+    "project-api": [
+      "project-api:dev-dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
+      "project-api:pr-6"
+    ],
+    "project-dbmigrations": [
+      "project-dbmigrations:dev-7b367954a3ca29a02e2b570112d85718e56429c9",
+      "project-dbmigrations:pr-6"
+    ],
   }
 }
 ```
+
+## Pragma Action
+
+This GitHub Action allows pull requests to change behavior allowing builds to accept `[skip,deploy,force]` flags.
+
+### Features
+- **Pull Request Overrides**: Extracts variables from pull request descriptions using a specific pattern (`x__key=value`).
+- **Key Standardization**: Ensures all keys are converted to uppercase to avoid case-sensitivity issues.
+- **Merged Configuration**: Combines default variables with overrides, giving precedence to pull request variables.
+- **Flexible Value Types**: Automatically converts values to appropriate types (`boolean`, `number`, or `string`).
+
+### Inputs
+
+| Name       | Required | Description                                                  |
+|------------|----------|--------------------------------------------------------------|
+| `variables`| Yes      | A string containing INI-formatted variables as default values. |
+
+## Outputs
+
+| Name    | Description                                      |
+|---------|--------------------------------------------------|
+| `pragma`| A JSON object containing the merged configuration variables. |
+
+### Pull Request Override Usage
+
+Developers can override default variables by adding variables prefixed with `x__` to the pull request description.
+These variables will take precedence over the defaults specified in the variables input. For example:
+
+```yaml
+      - name: Run Pragma Action
+        id: pragma
+        uses: leblancmeneses/actions/dist/apps/pragma@main
+        with:
+          variables: | # INI format to initialize default variables
+            lint-appname-ui = ''
+            force = false
+            deploy = "${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/prod' }}"
+
+      - name: lint appname-ui
+        if: ${{ fromJson(steps.pragma.outputs.pragma).LINT-APPNAME-UI != 'skip' }}
+        run: npm run lint:appname-ui
+```
+
+Pull request description:
+
+```
+PR description
+
+...
+
+x__lint-appname-ui=skip
+```
+
+This will override the `LINT-APPNAME-UI` variable to skip the linting step.
+
+
+### Merged Result
+
+The final merged output for this example would be:
+
+```json
+{
+  "LINT-APPNAME-UI": "skip",
+  "FORCE": false,
+  "DEPLOY": false
+}
+```
+
 
 
 ## Version Autopilot
@@ -110,11 +211,6 @@ This will automatically increment the version on every **run** of your github ac
 
 
 ```yaml
-steps:
-  - name: Checkout
-    id: checkout
-    uses: actions/checkout@v4
-
   - name: calculate version autopilot
     id: version-autopilot
     uses: leblancmeneses/actions/dist/apps/version-autopilot@main
@@ -208,12 +304,13 @@ pnpm i
 npx nx run e2e:e2e
 ```
 
-## Publish dist version:
+## Contributing
+Contributions are welcome! Please open an issue or submit a pull request if you have suggestions or improvements.
 
-```bash
-pnpm exec nx run affected:build:production
-pnpm exec nx run version-autopilot:build:production
-```
+
+## License
+This project is licensed under the [MIT License](LICENSE).
+
 
 ## Need Help?
 

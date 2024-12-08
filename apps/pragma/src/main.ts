@@ -19,7 +19,7 @@ const extractVariables = (input: string) => {
   let match;
 
   while ((match = regex.exec(input)) !== null) {
-    const key = match[1]; // Remove the `x__` prefix
+    const key = match[1].toUpperCase(); // Remove the `x__` prefix
     result[key] = convertValue(match[2].trim());
   }
 
@@ -29,11 +29,11 @@ const extractVariables = (input: string) => {
 export async function run() {
   try {
     const variablesInput = core.getInput('variables');
-
-    let variablesObject = ini.parse(variablesInput) || {};
-    Object.keys(variablesObject).forEach((key) => {
-      variablesObject[key] = convertValue(variablesObject[key]);
-    });
+    const iniObject = ini.parse(variablesInput) || {};
+    let variablesObject = Object.keys(iniObject).reduce((agg, key) => {
+      agg[key.toUpperCase()] = convertValue(iniObject[key]);
+      return agg;
+    }, {} as Record<string, unknown>);
     core.info(`pragma default variables: ${JSON.stringify(variablesObject, undefined, 2)}`);
     const description = (process.env['PR_BODY'] || github.context.payload?.pull_request?.body || '');
     if (description) {

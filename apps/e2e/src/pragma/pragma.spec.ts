@@ -59,17 +59,17 @@ describe('pragma action', () => {
 
     // Assert
     expect(core.info).toHaveBeenCalledWith(
-      `pragma default variables: ${JSON.stringify({ var1: 'test', var2: 42, var3: true }, undefined, 2)}`
+      `pragma default variables: ${JSON.stringify({ VAR1: 'test', VAR2: 42, VAR3: true }, undefined, 2)}`
     );
     expect(core.info).toHaveBeenCalledWith(
-      `pragma override variables: ${JSON.stringify({ var4: 'new value', var5: false }, undefined, 2)}`
+      `pragma override variables: ${JSON.stringify({ VAR4: 'new value', VAR5: false }, undefined, 2)}`
     );
     const expectedOutput = {
-      var1: 'test',
-      var2: 42,
-      var3: true,
-      var4: 'new value',
-      var5: false,
+      VAR1: 'test',
+      VAR2: 42,
+      VAR3: true,
+      VAR4: 'new value',
+      VAR5: false,
     };
 
     expect(core.info).toHaveBeenCalledWith(
@@ -100,9 +100,9 @@ describe('pragma action', () => {
 
     // Assert: Ensure the output is just the parsed input without any PR overrides
     const expectedOutput = {
-      var1: 'test',
-      var2: 42,
-      var3: true,
+      VAR1: 'test',
+      VAR2: 42,
+      VAR3: true,
     };
 
     expect(core.setOutput).toHaveBeenCalledWith('pragma', expectedOutput);
@@ -127,7 +127,7 @@ describe('pragma action', () => {
 
     // Assert: Ensure the output is just the parsed input without any PR overrides
     const expectedOutput = {
-      pragma: 'testing'
+      PRAGMA: 'testing'
     };
 
     expect(core.setOutput).toHaveBeenCalledWith('pragma', expectedOutput);
