@@ -6,12 +6,14 @@
       - [Composing Rules](#composing-rules)
       - [Exclusion Expression](#exclusion-expression)
       - [Wrapping up example](#wrapping-up-example)
+    - [Consuming the JSON object](#consuming-the-json-object)
   - [Pragma Action](#pragma-action)
     - [Features](#features)
     - [Inputs](#inputs)
   - [Outputs](#outputs)
     - [Pull Request Override Usage](#pull-request-override-usage)
     - [Merged Result](#merged-result)
+    - [Consuming the JSON object](#consuming-the-json-object-1)
   - [Version Autopilot](#version-autopilot)
     - [Example usages](#example-usages)
   - [Run locally:](#run-locally)
@@ -47,21 +49,6 @@ jobs:
             [project-dbmigrations](./databases/project): './databases/project/**';
             project-e2e: project-ui project-api project-dbmigrations !'**/*.md';
 
-      - name: example affected output
-        run: |
-          echo "affected: "
-          echo '${{ steps.affected.outputs.affected }}' | jq .
-
-          # You can use env values for naming complex expressions.
-          AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r .changes.affected)
-          VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["version-autopilot"]')
-
-          echo "AFFECTED_AFFECTED=$AFFECTED_AFFECTED" >> $GITHUB_ENV
-          echo "VERSION_AUTOPILOT_AFFECTED=$VERSION_AUTOPILOT_AFFECTED" >> $GITHUB_ENV
-
-      - name: e2e tests
-        if: ${{ fromJson(steps.affected.outputs.affected).changes.project-e2e }}
-        run: npx nx run e2e:e2e
 ```
 ### Rule DSL
 
@@ -133,6 +120,26 @@ The `affected` action will generate the following JSON objects:
 }
 ```
 
+### Consuming the JSON object
+
+```yaml
+      - name: example affected output
+        run: |
+          echo "affected: "
+          echo '${{ steps.affected.outputs.affected }}' | jq .
+
+          # You can use env values for naming complex expressions.
+          AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r .changes.affected)
+          VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["version-autopilot"]')
+
+          echo "AFFECTED_AFFECTED=$AFFECTED_AFFECTED" >> $GITHUB_ENV
+          echo "VERSION_AUTOPILOT_AFFECTED=$VERSION_AUTOPILOT_AFFECTED" >> $GITHUB_ENV
+
+      - name: e2e tests
+        if: ${{ fromJson(steps.affected.outputs.affected).changes.project-e2e }}
+        run: npx nx run e2e:e2e
+```
+
 ## Pragma Action
 
 This GitHub Action allows pull requests to change behavior allowing builds to accept `[skip,deploy,force]` flags.
@@ -170,9 +177,6 @@ These variables will take precedence over the defaults specified in the variable
             force = false
             deploy = "${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/prod' }}"
 
-      - name: lint appname-ui
-        if: ${{ fromJson(steps.pragma.outputs.pragma).LINT-APPNAME-UI != 'skip' }}
-        run: npm run lint:appname-ui
 ```
 
 Pull request description:
@@ -184,9 +188,6 @@ PR description
 
 x__lint-appname-ui=skip
 ```
-
-This will override the `LINT-APPNAME-UI` variable to skip the linting step.
-
 
 ### Merged Result
 
@@ -200,6 +201,15 @@ The final merged output for this example would be:
 }
 ```
 
+### Consuming the JSON object
+
+This will override the `LINT-APPNAME-UI` variable to skip the linting step.
+
+```yaml
+      - name: lint appname-ui
+        if: ${{ fromJson(steps.pragma.outputs.pragma).LINT-APPNAME-UI != 'skip' }}
+        run: npm run lint:appname-ui
+```
 
 
 ## Version Autopilot
