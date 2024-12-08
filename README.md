@@ -37,7 +37,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # fetch all history for accurate change detection
-          # if you have multi-job workflow add affected task to an init step to avoid redundant checkouts.
+          # If you have multi-job workflow add affected task to an init step to avoid redundant checkouts.
+          # If you are using path triggers the diff is limited to 300 files.
+          # @see: https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#git-diff-comparisons
+          # With this task you can get all the changes.
 
       - name: calculate affected
         id: affected
