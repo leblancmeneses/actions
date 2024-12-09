@@ -49,6 +49,7 @@ jobs:
         with:
           verbose: false # optional
           gitflow-production-branch: '' # optional; used in recommended_imagetags.
+          recommended-imagetags-prefix: '' # optional; used in recommended_imagetags.
           rules: |
             <project-ui>: 'project-ui/**';
             <project-api>: 'project-api/**';
