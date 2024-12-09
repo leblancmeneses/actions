@@ -118,7 +118,7 @@ export const getCommitHash = (path: string, hasChanges: boolean) => {
   return commitSha;
 }
 
-export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, appTarget: string, path?: string, productionBranch?: string) => {
+export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, appTarget: string, path?: string, productionBranch?: string, imageTagPrefix?: string) => {
   const folderOfInterest = path? path.startsWith("./") ? path : `./${path}`: `./${appTarget}`;
 
   const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || github.context.ref;
@@ -153,7 +153,7 @@ export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, ap
     imageName2 = `${appTarget}:pr-${github.context.payload.pull_request.number}`;
   }
 
-  return [imageName1, imageName2];
+  return [imageName1, imageName2].map((imageName) => `${imageTagPrefix || ''}${imageName}`);
 }
 
 export const log = (message: string, verbose: boolean) => {
@@ -171,6 +171,7 @@ export async function run() {
     const rulesInput = core.getInput('rules', { required: true });
     const verbose = core.getInput('verbose', { required: false }) === 'true';
     const productionBranch = core.getInput('gitflow-production-branch', { required: false }) || '';
+    const imageTagPrefix = core.getInput('recommended-imagetags-prefix', { required: false }) || '';
 
     if (rulesInput) {
       const statements = parse(rulesInput, undefined);
@@ -198,7 +199,7 @@ export async function run() {
           const commitSha = getCommitHash(key.path, affectedChanges[key.name]);
           affectedShas[key.name] = commitSha;
 
-          const imageName = getDevOrProdPrefixImageName(affectedChanges[key.name], commitSha, key.name, key.path, productionBranch);
+          const imageName = getDevOrProdPrefixImageName(affectedChanges[key.name], commitSha, key.name, key.path, productionBranch, imageTagPrefix);
           affectedImageTags[key.name] = imageName;
 
           log(`Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`, verbose);

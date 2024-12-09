@@ -8,6 +8,10 @@ inputs:
     description: 'The name of the production branch in your GitFlow workflow (e.g., "main" or "prod").'
     required: false
     default: ''
+  recommended-imagetags-prefix:
+    description: 'The prefix to add to all image tags'
+    required: false
+    default: ''
   verbose:
     description: 'Enable verbose logging. Use "true" or "false".'
     required: false
