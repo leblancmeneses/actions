@@ -145,8 +145,6 @@ export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, ap
   if (commitShaBefore === commitShaAfter) {
     if (productionBranch) {
       imageName1 = `${appTarget}:${productionBranch}-${sha}`;
-    } else {
-      imageName1 = `${appTarget}:${baseRef}-${sha}`;
     }
   }
 
