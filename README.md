@@ -180,7 +180,7 @@ Developers can override default variables by adding variables prefixed with `x__
 These variables will take precedence over the defaults specified in the variables input. For example:
 
 ```yaml
-      - name: Run Pragma Action
+      - name: calculate pragma
         id: pragma
         uses: leblancmeneses/actions/dist/apps/pragma@main
         with:
