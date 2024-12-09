@@ -16,6 +16,7 @@
     - [Consuming the JSON object](#consuming-the-json-object-1)
   - [Version Autopilot Action](#version-autopilot-action)
     - [Example usages](#example-usages)
+- [Recommendations for multi-job pipeline](#recommendations-for-multi-job-pipeline)
 - [Run locally:](#run-locally)
 - [Contributing](#contributing)
 - [License](#license)
@@ -320,6 +321,90 @@ If you are looking for semantic versioning research `git tags` and [release pipe
       manifest=tabsift/extension/manifest.json
       jq --arg version "${{ steps.version-autopilot.outputs.version_autopilot_string }}" '.version = $version' $manifest > tmp.json && mv tmp.json $manifest
 ```
+
+# Recommendations for multi-job pipeline
+
+Create an init job to calculate variables needed across multiple jobs. This will avoid redundant checkouts and calculations across each job.
+
+Generate an init.yml file with the following content:
+
+```yaml
+name: template.job.init
+
+on:
+  workflow_call:
+    outputs:
+      affected:
+        value: ${{ jobs.init.outputs.affected }}
+      pragma:
+        value: ${{ jobs.init.outputs.pragma }}
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    outputs:
+      affected: ${{steps.affected.outputs.affected}}
+      pragma: ${{steps.pragma.outputs.pragma}}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: calculate pragma outputs
+        id: pragma
+        uses: leblancmeneses/actions/dist/apps/pragma@main
+        with:
+          variables: |
+            ...
+
+      - name: calculate affected outputs
+        id: affected
+        uses: leblancmeneses/actions/dist/apps/affected@main
+        with:
+          rules: |
+            ...
+
+      - name: calculate version-autopilot outputs
+        id: version-autopilot
+        uses: leblancmeneses/actions/dist/apps/version-autopilot@main
+        with:
+          major: 0
+          minor: 0
+          shift: 0
+
+      # Add more steps or calculations here to validate run.
+      # ...
+
+```
+
+```yaml
+name: build-milagro
+
+on:
+  push:
+    # ...
+  pull_request:
+    # ...
+  workflow_dispatch:
+    # ...
+
+jobs:
+  init:
+    uses: ./.github/workflows/template.job.init.yml
+
+  example:
+    needs: [init]
+    runs-on: ubuntu-latest
+    steps:
+      - name: example output
+        run: |
+          echo "affected: "
+          echo '${{ needs.init.outputs.affected }}' | jq .
+          echo "pragma: "
+          echo '${{ needs.init.outputs.pragma }}' | jq .
+```
+
 
 # Run locally:
 
