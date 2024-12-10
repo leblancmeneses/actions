@@ -75,7 +75,7 @@ jobs:
         with:
           verbose: true
           rules: |
-            ci: './github/workflows/ci.yml';
+            ci: '.github/workflows/ci.yml';
             [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**';
             [version-autopilot](./apps/version-autopilot): './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
             [pragma](./apps/pragma): './apps/pragma/**' './dist/apps/pragma/**';
