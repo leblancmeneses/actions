@@ -31,11 +31,14 @@ export async function run() {
     core.setOutput('version_autopilot_string', version.versionString);
     core.setOutput('version_autopilot_code', version.versionCode);
 
-    core.info(`version: ${JSON.stringify({
+    const versionAutopilot = {
       version_autopilot_string_recommended: versionStringRecommended,
       version_autopilot_string: version.versionString,
       version_autopilot_code: version.versionCode
-    }, null, 2)}!`);
+    };
+
+    core.setOutput('version_autopilot', versionAutopilot);
+    core.info(`version_autopilot: ${JSON.stringify(versionAutopilot, null, 2)}!`);
   } catch (error) {
     core.setFailed(error.message);
   }
