@@ -97,20 +97,15 @@ export const getChangedFiles = async () => {
 
 export const getCommitHash = (path: string, hasChanges: boolean) => {
   const folderOfInterest = path.startsWith("./") ? path : `./${path}`;
-  const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || github.context.ref;
-  const pragmaForceBuild = process.env.LATEST_EVEN_WITHOUT_CHANGES === 'true';
+  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha;
+  const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
 
   let commitSha = execSync(
-    `git log remotes/origin/${baseRef} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`
+    `git log ${baseSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`
   ).toString().trim();
 
-  if (pragmaForceBuild) {
-    // Force build, always take the latest commit hash
-    commitSha = execSync(`git log --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`)
-      .toString()
-      .trim();
-  } else if (hasChanges) {
-    commitSha = execSync(`git log --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`)
+  if (hasChanges) {
+    commitSha = execSync(`git log ${headSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`)
       .toString()
       .trim();
   }
@@ -119,23 +114,20 @@ export const getCommitHash = (path: string, hasChanges: boolean) => {
 }
 
 export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, appTarget: string, path?: string, productionBranch?: string, imageTagPrefix?: string) => {
-  const folderOfInterest = path? path.startsWith("./") ? path : `./${path}`: `./${appTarget}`;
+  const folderOfInterest = path ? path.startsWith("./") ? path : `./${path}` : `./${appTarget}`;
 
   const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || github.context.ref;
-  const pragmaForceBuild = process.env.LATEST_EVEN_WITHOUT_CHANGES === 'true';
+  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha;
+  const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
 
   const commitShaBefore = execSync(
-    `git log remotes/origin/${baseRef} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`
+    `git log ${baseSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`
   ).toString().trim();
 
   let commitShaAfter = commitShaBefore;
 
-  if (pragmaForceBuild) {
-    commitShaAfter = execSync(`git log --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`)
-      .toString()
-      .trim();
-  } else if(hasChanges) {
-    commitShaAfter = execSync(`git log --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`)
+  if (hasChanges) {
+    commitShaAfter = execSync(`git log ${headSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`)
       .toString()
       .trim();
   }
@@ -212,7 +204,7 @@ export async function run() {
       changes: affectedChanges,
       recommended_imagetags: affectedImageTags,
     };
-    core.setOutput('affected',  affectedOutput);
+    core.setOutput('affected', affectedOutput);
     core.info(JSON.stringify(affectedOutput, undefined, 2));
   } catch (error) {
     core.setFailed(error.message);

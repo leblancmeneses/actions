@@ -46,7 +46,7 @@ export async function run() {
     if (description) {
       const overrideVars = extractVariables(description);
       log(`pragma override variables: ${JSON.stringify(overrideVars, undefined, 2)}`, verbose);
-      variablesObject = {...variablesObject, ...overrideVars};
+      variablesObject = { ...variablesObject, ...overrideVars };
     }
 
     core.setOutput('pragma', variablesObject);
