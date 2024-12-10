@@ -99,3 +99,13 @@ jobs:
       - name: assert dist is deterministic
         run: git diff --exit-code -- ./dist
 
+      - name: debug
+        if: ${{ always() && !cancelled() }}
+        shell: bash
+        run: |
+          echo '============================'
+          echo '${{ toJson(github) }}' | jq .
+          echo '============================'
+          echo '${{ toJson(inputs) }}' | jq .
+          echo '============================'
+          printenv
