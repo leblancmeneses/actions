@@ -73,6 +73,7 @@ jobs:
         id: affected
         uses: ./dist/apps/affected
         with:
+          verbose: true
           rules: |
             ci: './github/workflows/ci.yml';
             [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**' ci;
