@@ -1,0 +1,24 @@
+name: 'Affected Processor'
+description: 'Determines affected components and generates corresponding SHA, recommended image tags, and change status based on the provided rules.'
+inputs:
+  rules:
+    description: 'Defines rules in DSL format specified in README.md.'
+    required: true
+  gitflow-production-branch:
+    description: 'The name of the production branch in your GitFlow workflow (e.g., "main" or "prod").'
+    required: false
+    default: ''
+  recommended-imagetags-prefix:
+    description: 'The prefix to add to all image tags'
+    required: false
+    default: ''
+  verbose:
+    description: 'Enable verbose logging. Use "true" or "false".'
+    required: false
+    default: 'false'
+outputs:
+  affected:
+    description: 'A JSON array representing the projects that have changes, recommended_imagetags, and commit SHA.'
+runs:
+  using: 'node20'
+  main: 'main.js'

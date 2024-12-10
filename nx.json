@@ -14,7 +14,6 @@
     ],
     "sharedGlobals": []
   },
-  "nxCloudAccessToken": "NTEyYWM1OTktZjJhYy00YjQ5LTkxYTQtMTI0YzQyMDcwMTE2fHJlYWQtd3JpdGU=",
   "targetDefaults": {
     "@nx/esbuild:esbuild": {
       "cache": true,
@@ -34,7 +33,9 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/version-autopilot-e2e/**/*"]
+      "exclude": [
+        "apps/e2e/**/*"
+      ]
     }
   ]
 }

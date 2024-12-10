@@ -1,0 +1,16 @@
+name: 'Pragma Action'
+description: 'Used to change the behavior of the build run using dynamic variables controlled by pull request description.'
+inputs:
+  variables:
+    description: 'INI-formatted list of key-value pairs (e.g., var1=value1\nvar2=value2)'
+    required: true
+  verbose:
+    description: 'Enable verbose logging. Use "true" or "false".'
+    required: false
+    default: 'false'
+outputs:
+  result:
+    description: 'A JSON object of the input variables and their values.'
+runs:
+  using: 'node20'
+  main: 'main.js'
