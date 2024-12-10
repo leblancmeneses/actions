@@ -166,12 +166,11 @@ jobs:
     if: |
       !failure() && !cancelled() && needs.lint-ui.result != 'failure'
     with:
-      CACHE_KEY: ${{fromJson(needs.vars.outputs.affected).recommended_imagetags.app-ui[0]}}
       ENABLED: ${{fromJson(needs.vars.outputs.affected).changes.app-ui}}
       FORCE_BUILD: ${{ github.event.inputs.MANUAL_FORCE_BUILD == 'true' ||
         fromJson(needs.vars.outputs.pragma).FORCE-BUILD == 'true' ||
         fromJson(needs.vars.outputs.pragma).APP-UI-FORCE-BUILD == 'true' }}
-      PRE_TASK_SCRIPT: .github/_prebuild.app-ui.sh
+      PRE_BUILD_HOOK: .github/_prebuild.app-ui.sh
       DOCKER_FILE: "./app-ui/Dockerfile"
       DOCKER_BUILD_ARGS: "ENV_TYPE=production"
       DOCKER_LABELS: ${{needs.vars.outputs.IMAGE_LABELS}}
