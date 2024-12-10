@@ -7,6 +7,7 @@
       - [Exclusion Expression](#exclusion-expression)
       - [Wrapping up example](#wrapping-up-example)
     - [Consuming the JSON object](#consuming-the-json-object)
+    - [Real world usage](#real-world-usage)
   - [Pragma Action](#pragma-action)
     - [Features](#features)
     - [Inputs](#inputs)
@@ -15,7 +16,7 @@
     - [Merged Result](#merged-result)
     - [Consuming the JSON object](#consuming-the-json-object-1)
   - [Version Autopilot Action](#version-autopilot-action)
-    - [Example usages](#example-usages)
+    - [Real world usage](#real-world-usage-1)
 - [Recommendations for multi-job pipeline](#recommendations-for-multi-job-pipeline)
 - [Run locally:](#run-locally)
 - [Contributing](#contributing)
@@ -147,6 +148,42 @@ The `affected` action will generate the following JSON objects:
         run: npx nx run e2e:e2e
 ```
 
+### Real world usage
+
+```yaml
+
+jobs:
+  vars:
+    uses: ./.github/workflows/template.job.init.yml
+    secrets:
+      GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
+
+  # ... uses pragma and affected tasks
+
+  build-ui:
+    needs: [vars, lint-ui, lint-api]
+    uses: ./.github/workflows/template.job.build.yml
+    if: |
+      !failure() && !cancelled() && needs.lint-ui.result != 'failure'
+    with:
+      CACHE_KEY: ${{fromJson(needs.vars.outputs.affected).recommended_imagetags.app-ui[0]}}
+      ENABLED: ${{fromJson(needs.vars.outputs.affected).changes.app-ui}}
+      FORCE_BUILD: ${{ github.event.inputs.MANUAL_FORCE_BUILD == 'true' ||
+        fromJson(needs.vars.outputs.pragma).FORCE-BUILD == 'true' ||
+        fromJson(needs.vars.outputs.pragma).APP-UI-FORCE-BUILD == 'true' }}
+      PRE_TASK_SCRIPT: .github/_prebuild.app-ui.sh
+      DOCKER_FILE: "./app-ui/Dockerfile"
+      DOCKER_BUILD_ARGS: "ENV_TYPE=production"
+      DOCKER_LABELS: ${{needs.vars.outputs.IMAGE_LABELS}}
+      DOCKER_IMAGE_TAGS: ${{ fromJson(needs.vars.outputs.affected).recommended_imagetags.app-ui &&
+           toJson(fromJson(needs.vars.outputs.affected).recommended_imagetags.app-ui) || '[]' }}
+      CHECKOUT_REF: ${{needs.vars.outputs.CHECKOUT_REF}}
+    secrets:
+      GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
+
+  # ...
+```
+
 <br>
 <br>
 <br>
@@ -268,7 +305,7 @@ See our [.github/workflows/tests.version-autopilot.yml](.github/workflows/tests.
 If you are looking for semantic versioning research `git tags` and [release pipelines](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 
 
-### Example usages
+### Real world usage
 
 1. For Docker image tagging
 
