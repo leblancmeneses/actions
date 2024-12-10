@@ -157,7 +157,6 @@ export const log = (message: string, verbose: boolean) => {
 
 export async function run() {
   try {
-    console.log(github.context);
     const affectedImageTags: Record<string, string[]> = {};
     const affectedShas: Record<string, string> = {};
     const affectedChanges: Record<string, boolean> = {};
@@ -166,6 +165,8 @@ export async function run() {
     const verbose = core.getInput('verbose', { required: false }) === 'true';
     const productionBranch = core.getInput('gitflow-production-branch', { required: false }) || '';
     const imageTagPrefix = core.getInput('recommended-imagetags-prefix', { required: false }) || '';
+
+    log(`github.context: ${JSON.stringify(github.context, undefined, 2)}`, verbose);
 
     if (rulesInput) {
       const statements = parse(rulesInput, undefined);
