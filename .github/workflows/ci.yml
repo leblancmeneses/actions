@@ -73,7 +73,6 @@ jobs:
         id: affected
         uses: ./dist/apps/affected
         with:
-          verbose: true
           rules: |
             ci: '.github/workflows/ci.yml';
             [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**';
@@ -101,7 +100,7 @@ jobs:
         run: git diff --exit-code -- ./dist
 
       - name: debug
-        if: ${{ always() && !cancelled() }}
+        if: ${{ failure() && !cancelled() }}
         shell: bash
         run: |
           echo ''
