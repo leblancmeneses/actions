@@ -205,7 +205,7 @@ export async function run() {
       recommended_imagetags: affectedImageTags,
     };
     core.setOutput('affected', affectedOutput);
-    core.info(JSON.stringify(affectedOutput, undefined, 2));
+    core.info(`affected: ${JSON.stringify(affectedOutput, null, 2)}!`);
   } catch (error) {
     core.setFailed(error.message);
   }
