@@ -116,7 +116,8 @@ export const getCommitHash = (path: string, hasChanges: boolean) => {
 export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, appTarget: string, path?: string, productionBranch?: string, imageTagPrefix?: string) => {
   const folderOfInterest = path ? path.startsWith("./") ? path : `./${path}` : `./${appTarget}`;
 
-  const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || github.context.ref;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || process.env.GITHUB_REF_NAME;
   const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
   const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
 
@@ -164,6 +165,8 @@ export async function run() {
     const verbose = core.getInput('verbose', { required: false }) === 'true';
     const productionBranch = core.getInput('gitflow-production-branch', { required: false }) || '';
     const imageTagPrefix = core.getInput('recommended-imagetags-prefix', { required: false }) || '';
+
+    log(`github.context: ${JSON.stringify(github.context, undefined, 2)}`, verbose);
 
     if (rulesInput) {
       const statements = parse(rulesInput, undefined);

@@ -73,6 +73,7 @@ jobs:
         id: affected
         uses: ./dist/apps/affected
         with:
+          verbose: true
           rules: |
             ci: './github/workflows/ci.yml';
             [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**' ci;
@@ -99,3 +100,15 @@ jobs:
       - name: assert dist is deterministic
         run: git diff --exit-code -- ./dist
 
+      - name: debug
+        if: ${{ always() && !cancelled() }}
+        shell: bash
+        run: |
+          echo ''
+          echo 'inputs:'
+          echo '${{ toJson(inputs) }}' | jq .
+          echo '============================'
+          echo 'github:'
+          echo '${{ toJson(github) }}' | jq .
+          echo '============================'
+          printenv
