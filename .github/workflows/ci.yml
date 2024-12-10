@@ -104,7 +104,7 @@ jobs:
         if: ${{ always() && !cancelled() }}
         shell: bash
         run: |
-          echo '============================'
+          echo ''
           echo 'inputs:'
           echo '${{ toJson(inputs) }}' | jq .
           echo '============================'
