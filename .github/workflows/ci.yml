@@ -76,10 +76,10 @@ jobs:
           verbose: true
           rules: |
             ci: './github/workflows/ci.yml';
-            [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**' ci;
-            [version-autopilot](./apps/version-autopilot): './apps/version-autopilot/**' './dist/apps/version-autopilot/**' ci;
-            [pragma](./apps/pragma): './apps/pragma/**' './dist/apps/pragma/**' ci;
-            e2e: './e2e/**' affected version-autopilot !'**/*.md';
+            [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**';
+            [version-autopilot](./apps/version-autopilot): './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
+            [pragma](./apps/pragma): './apps/pragma/**' './dist/apps/pragma/**';
+            e2e: './e2e/**' ci pragma affected version-autopilot !'**/*.md';
 
       - name: e2e tests
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.e2e }}
