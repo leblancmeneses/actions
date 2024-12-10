@@ -1,3 +1,4 @@
+![GitHub Actions](./docs/graphics/repository-open-graph-template.png)
 
 - [Actions](#actions)
   - [Affected Action](#affected-action)
