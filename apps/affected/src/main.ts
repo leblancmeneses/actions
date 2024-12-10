@@ -60,7 +60,7 @@ function evaluateStatements(statements, originalChangedFiles) {
 
 export const getChangedFiles = async () => {
   const eventName = github.context.eventName;
-  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha;
+  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
   const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
 
   let changedFiles = [];
@@ -97,7 +97,7 @@ export const getChangedFiles = async () => {
 
 export const getCommitHash = (path: string, hasChanges: boolean) => {
   const folderOfInterest = path.startsWith("./") ? path : `./${path}`;
-  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha;
+  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
   const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
 
   let commitSha = execSync(
@@ -117,7 +117,7 @@ export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, ap
   const folderOfInterest = path ? path.startsWith("./") ? path : `./${path}` : `./${appTarget}`;
 
   const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || github.context.ref;
-  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha;
+  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
   const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
 
   const commitShaBefore = execSync(
