@@ -116,7 +116,8 @@ export const getCommitHash = (path: string, hasChanges: boolean) => {
 export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, appTarget: string, path?: string, productionBranch?: string, imageTagPrefix?: string) => {
   const folderOfInterest = path ? path.startsWith("./") ? path : `./${path}` : `./${appTarget}`;
 
-  const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || github.context.ref;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || (github.context as any).ref_name;
   const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
   const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
 
@@ -156,6 +157,7 @@ export const log = (message: string, verbose: boolean) => {
 
 export async function run() {
   try {
+    console.log(github.context);
     const affectedImageTags: Record<string, string[]> = {};
     const affectedShas: Record<string, string> = {};
     const affectedChanges: Record<string, boolean> = {};

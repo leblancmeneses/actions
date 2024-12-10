@@ -104,8 +104,10 @@ jobs:
         shell: bash
         run: |
           echo '============================'
-          echo '${{ toJson(github) }}' | jq .
-          echo '============================'
+          echo 'inputs:'
           echo '${{ toJson(inputs) }}' | jq .
+          echo '============================'
+          echo 'github:'
+          echo '${{ toJson(github) }}' | jq .
           echo '============================'
           printenv
