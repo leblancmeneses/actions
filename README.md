@@ -19,7 +19,7 @@
   - [Version Autopilot Action](#version-autopilot-action)
     - [Real world usage](#real-world-usage-1)
 - [Recommendations for multi-job pipeline](#recommendations-for-multi-job-pipeline)
-- [Run locally:](#run-locally)
+- [Run locally](#run-locally)
 - [Contributing](#contributing)
 - [Need Help?](#need-help)
 - [License](#license)
@@ -453,7 +453,7 @@ jobs:
 ```
 
 
-# Run locally:
+# Run locally
 
 ```bash
 nvm use
