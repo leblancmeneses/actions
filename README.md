@@ -379,6 +379,8 @@ on:
         value: ${{ jobs.init.outputs.affected }}
       pragma:
         value: ${{ jobs.init.outputs.pragma }}
+      version-autopilot:
+        value: ${{ jobs.init.outputs.version-autopilot }}
 
 jobs:
   init:
