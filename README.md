@@ -20,8 +20,8 @@
 - [Recommendations for multi-job pipeline](#recommendations-for-multi-job-pipeline)
 - [Run locally:](#run-locally)
 - [Contributing](#contributing)
-- [License](#license)
 - [Need Help?](#need-help)
+- [License](#license)
 
 # Actions
 
@@ -456,10 +456,6 @@ npx nx run e2e:e2e
 Contributions are welcome! Please open an issue or submit a pull request if you have suggestions or improvements.
 
 
-# License
-This project is licensed under the [MIT License](LICENSE).
-
-
 # Need Help?
 
 Large language models (LLMs) cannot solve your organization's people problems. If your software teams are struggling and falling behind, consider engaging an actual human expert who can identify product and development issues and provide solutions.
@@ -467,3 +463,7 @@ Large language models (LLMs) cannot solve your organization's people problems. I
 Common areas where we can assist include DSL development, continuous delivery, cloud migrations, Kubernetes cluster cost optimizations, GitHub Actions and GitHub Codespaces.
 
 Contact us at [improvingstartups.com](https://improvingstartups.com).
+
+
+# License
+This project is licensed under the [MIT License](LICENSE).
