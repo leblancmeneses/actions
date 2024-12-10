@@ -117,7 +117,7 @@ export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, ap
   const folderOfInterest = path ? path.startsWith("./") ? path : `./${path}` : `./${appTarget}`;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || process.env.GITHUB_REF_NAME;
+  const refname = process.env.GITHUB_REF_NAME;
   const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
   const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
 
@@ -134,7 +134,7 @@ export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, ap
   }
 
 
-  let imageName1 = `${appTarget}:${baseRef}-${sha}`;
+  let imageName1 = `${appTarget}:${refname}-${sha}`;
   if (commitShaBefore === commitShaAfter) {
     if (productionBranch) {
       imageName1 = `${appTarget}:${productionBranch}-${sha}`;
