@@ -294,6 +294,10 @@ This will automatically increment the version on every **run** of your github ac
 
       # android and ios version codes
       echo "version_autopilot_code: ${{ steps.version-autopilot.outputs.version_autopilot_code }}"
+
+      # json object with all fields
+      echo '${{ steps.version-autopilot.outputs.version_autopilot }}' | jq .
+
 ```
 
 ![exampe output](./.github/example-output.png)
@@ -382,6 +386,7 @@ jobs:
     outputs:
       affected: ${{steps.affected.outputs.affected}}
       pragma: ${{steps.pragma.outputs.pragma}}
+      version-autopilot: ${{steps.version-autopilot.outputs.version_autopilot}}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -427,19 +432,21 @@ on:
     # ...
 
 jobs:
-  init:
+  vars:
     uses: ./.github/workflows/template.job.init.yml
 
   example:
-    needs: [init]
+    needs: [vars]
     runs-on: ubuntu-latest
     steps:
       - name: example output
         run: |
           echo "affected: "
-          echo '${{ needs.init.outputs.affected }}' | jq .
+          echo '${{ needs.vars.outputs.affected }}' | jq .
           echo "pragma: "
-          echo '${{ needs.init.outputs.pragma }}' | jq .
+          echo '${{ needs.vars.outputs.pragma }}' | jq .
+          echo "version-autopilot: "
+          echo '${{ needs.vars.outputs.version-autopilot }}' | jq .
 ```
 
 
