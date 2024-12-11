@@ -3,7 +3,6 @@
 - [Actions](#actions)
   - [Affected Action](#affected-action)
     - [Rule DSL](#rule-dsl)
-      - [Rule Key Examples](#rule-key-examples)
       - [Composing Rules](#composing-rules)
       - [Exclusion Expression](#exclusion-expression)
       - [Wrapping up example](#wrapping-up-example)
@@ -54,9 +53,15 @@ jobs:
           recommended-imagetags-prefix: '' # optional; used in recommended_imagetags.
           rules: |
             <project-ui>: 'project-ui/**';
+              # project-ui is the image name, directory to calculate the sha, and changes key.
             <project-api>: 'project-api/**';
+              # project-api is the image name, directory to calculate the sha, and changes key.
             [project-dbmigrations](./databases/project): './databases/project/**';
+              # project-dbmigrations is the image name.
+              # './databases/project' is the directory to calculate the sha.
+              # changes.project-dbmigrations is boolean of the evaluated expression.
             project-e2e: project-ui project-api project-dbmigrations !'**/*.md';
+              # changes.project-e2e is boolean of the evaluated expression.
 
 ```
 ### Rule DSL
@@ -67,21 +72,16 @@ These rules map a *project name*, its *directory*, and the *expression* to check
 * **Rule keys with brackets** `[]` or `<>` will appear in the JSON object under `recommended_imagetags` or `shas`, and `changes`.
 * **Rule keys without brackets** will only appear in `changes` but **not** in `recommended_imagetags` or `shas`.
 
-#### Rule Key Examples
-
-1. **Short Form**: `<project-ui>` The image name is `project-ui`, and the project directory is `project-ui`.
-2. **Long Form**: `[project-dbmigrations](./databases/project)` The image name is `project-dbmigrations`, and the project directory is `./databases/project`.
-
 #### Composing Rules
 
-The `project-e2e` rule includes `project-ui`, `project-api`, and `project-dbmigrations`. This allows referencing prior expressions and combining them using `OR` operator.
+The `project-e2e` rule includes `project-ui`, `project-api`, and `project-dbmigrations`. This allows referencing prior expressions and combining them.
 For example, **e2e** runs if files change in any of these projects but not for markdown-only changes.
 
 #### Exclusion Expression
 
 The `!` operator excludes files or directories.
 
-* For example, `**/*.md` excludes all markdown files.
+* For example, `!'**/*.md'` excludes all markdown files.
 * Glob expressions use [picomatch](https://github.com/micromatch/picomatch) for matching.
 
 This structure provides flexibility and reusability for defining change-based rules across projects.

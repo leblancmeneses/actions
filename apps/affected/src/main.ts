@@ -8,54 +8,75 @@ import picomatch from 'picomatch';
 
 function evaluateStatements(statements, originalChangedFiles) {
   const result = {};
+  const seen = new Map();
 
-  function evaluateStatement(statementKey, changedFiles, seen = new Set<string>()) {
+  function evaluateStatement(statementKey, changedFiles) {
+    // Check if the statementKey has already been evaluated
     if (seen.has(statementKey)) {
-      throw new Error(`Recursive or circular reference detected for statement: ${statementKey}`);
+      return seen.get(statementKey);
     }
-    seen.add(statementKey);
 
     const statement = statements.find((s) => s.key.name === statementKey);
     if (!statement) {
       throw new Error(`Referenced statement key '${statementKey}' does not exist.`);
     }
 
-    let remainingFiles = [];
+    let cumulativeFiles = [];
+    let excludedFiles = [];
 
     for (const value of statement.value) {
       let currentFiles = [...changedFiles]; // Start with original files for each value
 
       if (value.type === 'QUOTE_LITERAL') {
         // Filter the files that match the QUOTE_LITERAL pattern
-        const isMatch = picomatch(value.value);
+        const isMatch = picomatch(value.value, { dot: true });
         currentFiles = currentFiles.filter((file) => isMatch(file));
       } else if (value.type === 'STATEMENT_REF') {
         // Recursively evaluate the referenced statement and append new matches
-        const refMatches = evaluateStatement(value.value, originalChangedFiles, seen);
-        currentFiles = [...new Set([...currentFiles, ...(refMatches || [])])];
-      } else if (value.type === 'INVERSE' && value.exp.type === 'QUOTE_LITERAL') {
-        // Filter out files that match the INVERSE pattern
-        const isMatch = picomatch(value.exp.value);
-        currentFiles = currentFiles.filter((file) => !isMatch(file));
+        const refMatches = evaluateStatement(value.value, originalChangedFiles);
+        currentFiles = [...new Set([...currentFiles, ...(refMatches.cumulativeFiles || [])])];
+        excludedFiles = [...new Set([...excludedFiles, ...(refMatches.excludedFiles || [])])];
+      } else if (value.type === 'INVERSE') {
+        if (value.exp.type === 'QUOTE_LITERAL') {
+          // Filter out files that match the INVERSE pattern
+          const isMatch = picomatch(value.exp.value, { dot: true });
+          const inverseMatches = currentFiles.filter((file) => isMatch(file));
+          excludedFiles = [...new Set([...excludedFiles, ...inverseMatches])];
+          currentFiles = currentFiles.filter((file) => !isMatch(file));
+        } else if (value.exp.type === 'STATEMENT_REF') {
+          // Evaluate the referenced statement in INVERSE
+          const refMatches = evaluateStatement(value.exp.value, originalChangedFiles);
+          const inverseMatches = currentFiles.filter((file) =>
+            refMatches.cumulativeFiles.includes(file)
+          );
+          excludedFiles = [...new Set([...excludedFiles, ...inverseMatches])];
+          currentFiles = currentFiles.filter((file) => !inverseMatches.includes(file));
+        }
+      } else {
+        throw new Error(`Unsupported value type: ${value.type}`);
       }
-
-      // Append currentFiles to remainingFiles while avoiding duplicates
-      remainingFiles = [...new Set([...remainingFiles, ...currentFiles])];
+      cumulativeFiles = [...new Set([...cumulativeFiles, ...currentFiles])];
     }
 
-    seen.delete(statementKey);
-    return remainingFiles;
-  }
+    // Cache the result for the current statementKey
+    const evaluatedResult = { cumulativeFiles, excludedFiles };
+    seen.set(statementKey, evaluatedResult);
 
+    return evaluatedResult;
+  }
 
   for (const statement of statements) {
     if (statement.type === 'STATEMENT') {
-      result[statement.key.name] = evaluateStatement(statement.key.name, originalChangedFiles).length > 0;
+      const { cumulativeFiles, excludedFiles } = evaluateStatement(statement.key.name, originalChangedFiles);
+      const netFiles = cumulativeFiles.filter((file) => !excludedFiles.includes(file));
+      result[statement.key.name] = netFiles.length > 0;
     }
   }
 
   return result;
 }
+
+
 
 
 export const getChangedFiles = async () => {
@@ -116,7 +137,6 @@ export const getCommitHash = (path: string, hasChanges: boolean) => {
 export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, appTarget: string, path?: string, productionBranch?: string, imageTagPrefix?: string) => {
   const folderOfInterest = path ? path.startsWith("./") ? path : `./${path}` : `./${appTarget}`;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || process.env.GITHUB_REF_NAME;
   const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
   const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
@@ -208,6 +228,9 @@ export async function run() {
       recommended_imagetags: affectedImageTags,
     };
     core.setOutput('affected', affectedOutput);
+    core.setOutput('affected_shas', affectedShas);
+    core.setOutput('affected_changes', affectedChanges);
+    core.setOutput('affected_recommended_imagetags', affectedImageTags);
     core.info(`affected: ${JSON.stringify(affectedOutput, null, 2)}!`);
   } catch (error) {
     core.setFailed(error.message);
