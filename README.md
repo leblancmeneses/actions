@@ -54,15 +54,15 @@ jobs:
           recommended-imagetags-prefix: '' # optional; used in recommended_imagetags.
           rules: |
             <project-ui>: 'project-ui/**';
-              # project-ui is the image name, directory to calculate sha, and changes key.
+              # project-ui is the image name, directory to calculate the sha, and changes key.
             <project-api>: 'project-api/**';
-              # project-api is the image name, directory to calculate sha, and changes key.
+              # project-api is the image name, directory to calculate the sha, and changes key.
             [project-dbmigrations](./databases/project): './databases/project/**';
-              # project-dbmigrations is the image name
-              # './databases/project' is the directory to calculate sha
-              # changes.project-dbmigrations is boolean of evaluated expression.
+              # project-dbmigrations is the image name.
+              # './databases/project' is the directory to calculate the sha.
+              # changes.project-dbmigrations is boolean of the evaluated expression.
             project-e2e: project-ui project-api project-dbmigrations !'**/*.md';
-              # changes.project-e2e is boolean of evaluated expression.
+              # changes.project-e2e is boolean of the evaluated expression.
 
 ```
 ### Rule DSL

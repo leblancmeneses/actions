@@ -984,7 +984,10 @@ function peg$parse(input, options) {
     if (s1 === peg$FAILED) {
       s1 = peg$parseLineComment();
       if (s1 === peg$FAILED) {
-        s1 = peg$parseMultilineComment();
+        s1 = peg$parseLineCommentAlt();
+        if (s1 === peg$FAILED) {
+          s1 = peg$parseMultilineComment();
+        }
       }
     }
     while (s1 !== peg$FAILED) {
@@ -993,7 +996,10 @@ function peg$parse(input, options) {
       if (s1 === peg$FAILED) {
         s1 = peg$parseLineComment();
         if (s1 === peg$FAILED) {
-          s1 = peg$parseMultilineComment();
+          s1 = peg$parseLineCommentAlt();
+          if (s1 === peg$FAILED) {
+            s1 = peg$parseMultilineComment();
+          }
         }
       }
     }

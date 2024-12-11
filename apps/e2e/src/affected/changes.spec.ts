@@ -148,13 +148,13 @@ describe("affected action changes tests", () => {
     });
   });
 
-  test("should evaluate multiple expressions cumulatively with exclusion as composite", async () => {
+  test("should evaluate multiple expressions cumulatively with exclusion as composite and comments", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
           typescript: '**/*.ts'; // match all typescript files
-          ignoreYaml: !'**/*.yml'; // match all non yaml files
-          [affected](./apps/affected): ignoreYaml './apps/affected/**' './dist/apps/affected/**' !typescript; // the order of exclusion should not matter.
+          ignoreYaml: !'**/*.yml'; ## match all non yaml files
+          [affected](./apps/affected): ignoreYaml './apps/affected/**' './dist/apps/affected/**' !typescript; /* the order of exclusion should not matter.*/
         `;
       return "";
     });

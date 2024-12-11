@@ -60,7 +60,7 @@ validKeyName
     }
 
 _ "whitespace or comments"
-  = (Whitespace / LineComment / MultilineComment)*
+  = (Whitespace / LineComment / LineCommentAlt / MultilineComment)*
 
 Whitespace
   = [ \t\n\r]+

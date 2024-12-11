@@ -78,7 +78,7 @@ jobs:
             ci: '.github/workflows/ci.yml';
             [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**';
             [version-autopilot](./apps/version-autopilot): './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
-            [pragma](./apps/pragma): './apps/pragma/**' './dist/apps/pragma/**' !'**/*.md';
+            [pragma](./apps/pragma): './apps/pragma/**' './dist/apps/pragma/**';
             e2e: './e2e/**' ci pragma affected version-autopilot !'**/*.md';
 
       - name: e2e tests
