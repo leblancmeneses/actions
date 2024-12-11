@@ -68,12 +68,10 @@ jobs:
             force = false
             deploy = "${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/prod' }}"
 
-
       - name: example affected
         id: affected
         uses: ./dist/apps/affected
         with:
-          verbose: true
           rules: |
             ci: '.github/workflows/ci.yml';
             [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**';
