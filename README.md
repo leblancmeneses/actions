@@ -54,9 +54,15 @@ jobs:
           recommended-imagetags-prefix: '' # optional; used in recommended_imagetags.
           rules: |
             <project-ui>: 'project-ui/**';
+              # project-ui is the image name, directory to calculate sha, and changes key.
             <project-api>: 'project-api/**';
+              # project-api is the image name, directory to calculate sha, and changes key.
             [project-dbmigrations](./databases/project): './databases/project/**';
+              # project-dbmigrations is the image name
+              # './databases/project' is the directory to calculate sha
+              # changes.project-dbmigrations is boolean of evaluated expression.
             project-e2e: project-ui project-api project-dbmigrations !'**/*.md';
+              # changes.project-e2e is boolean of evaluated expression.
 
 ```
 ### Rule DSL
@@ -74,14 +80,14 @@ These rules map a *project name*, its *directory*, and the *expression* to check
 
 #### Composing Rules
 
-The `project-e2e` rule includes `project-ui`, `project-api`, and `project-dbmigrations`. This allows referencing prior expressions and combining them using `OR` operator.
+The `project-e2e` rule includes `project-ui`, `project-api`, and `project-dbmigrations`. This allows referencing prior expressions and combining them.
 For example, **e2e** runs if files change in any of these projects but not for markdown-only changes.
 
 #### Exclusion Expression
 
 The `!` operator excludes files or directories.
 
-* For example, `**/*.md` excludes all markdown files.
+* For example, `!'**/*.md'` excludes all markdown files.
 * Glob expressions use [picomatch](https://github.com/micromatch/picomatch) for matching.
 
 This structure provides flexibility and reusability for defining change-based rules across projects.

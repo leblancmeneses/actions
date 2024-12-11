@@ -59,6 +59,17 @@ validKeyName
       return first + rest.join('');
     }
 
+_ "whitespace or comments"
+  = (Whitespace / LineComment / MultilineComment)*
 
-_ "whitespace"
-  = [ \t\n\r]*
+Whitespace
+  = [ \t\n\r]+
+
+LineComment
+  = "//" [^\n\r]* ("\n" / "\r\n" / "\r" / !.)
+
+LineCommentAlt
+  = "#" [^\n\r]* ("\n" / "\r\n" / "\r" / !.)
+
+MultilineComment
+  = "/*" (!"*/" .)* "*/"

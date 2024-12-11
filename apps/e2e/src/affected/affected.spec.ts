@@ -19,6 +19,13 @@
 
 jest.mock("@actions/core");
 jest.mock("@actions/github");
+jest.mock('child_process', () => {
+  const originalModule = jest.requireActual('child_process');
+  return {
+    ...originalModule,
+    execSync: jest.fn(),
+  };
+});
 jest.mock('fs', () => {
   const originalFs = jest.requireActual('fs'); // Preserve the original fs
   return {
@@ -36,6 +43,7 @@ jest.mock('fs', () => {
 });
 /* eslint-disable @nx/enforce-module-boundaries */
 import * as affectedMain from "@affected/main"; // Import everything
+import * as github from '@actions/github';
 import { run } from "@affected/main";
 import * as core from "@actions/core";
 import * as fs from 'fs';
@@ -46,6 +54,12 @@ describe("affected action", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
+
+    delete github.context.eventName;
+    delete github.context.payload;
+    delete process.env.BASE_REF;
+    delete process.env.BASE_SHA;
+    delete process.env.HEAD_SHA;
   });
 
   test("should parse valid YAML and set outputs", async () => {
