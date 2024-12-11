@@ -3,7 +3,6 @@
 - [Actions](#actions)
   - [Affected Action](#affected-action)
     - [Rule DSL](#rule-dsl)
-      - [Rule Key Examples](#rule-key-examples)
       - [Composing Rules](#composing-rules)
       - [Exclusion Expression](#exclusion-expression)
       - [Wrapping up example](#wrapping-up-example)
@@ -72,11 +71,6 @@ These rules map a *project name*, its *directory*, and the *expression* to check
 * The left side of the colon `:` is the **rule key**, while the right side specifies the expression to match files.
 * **Rule keys with brackets** `[]` or `<>` will appear in the JSON object under `recommended_imagetags` or `shas`, and `changes`.
 * **Rule keys without brackets** will only appear in `changes` but **not** in `recommended_imagetags` or `shas`.
-
-#### Rule Key Examples
-
-1. **Short Form**: `<project-ui>` The image name is `project-ui`, and the project directory is `project-ui`.
-2. **Long Form**: `[project-dbmigrations](./databases/project)` The image name is `project-dbmigrations`, and the project directory is `./databases/project`.
 
 #### Composing Rules
 
