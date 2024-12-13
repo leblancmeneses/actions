@@ -2,23 +2,60 @@ start
   = oneOrMoreStatement
 
 oneOrMoreStatement
-  = _ first:Statement _ rest:(_ Statement)* _ {
-      return [first, ...rest.map(([_, stmt]) => stmt)];
+  = WS first:Statement WS rest:(WS Statement)* WS {
+      return [first, ...rest.map(([, stmt]) => stmt)];
     }
 
 Statement
-  = key:Key _ value:oneOrMorePrimary _ ";" {
+  = key:Key WS value:Expression WS ";" {
       return { type: "STATEMENT", key, value };
     }
 
-oneOrMorePrimary
-  = first:primary rest:(_ primary)* {
-      return [first, ...rest.map(([_, expr]) => expr)];
+Expression
+  = LogicalExpression
+
+LogicalExpression
+  = left:GroupingExpression tail:(WS op:Operator? WS right:GroupingExpression)* {
+      let expressions = [left];
+      let ops = [];
+
+      for (let i = 0; i < tail.length; i++) {
+        const [ , opMaybe, , expr] = tail[i];
+        const opStr = opMaybe ? opMaybe : "OR"; // Default operator if none
+        ops.push(opStr);
+        expressions.push(expr);
+      }
+
+      function buildExpressionChain(exps, operators) {
+        if (exps.length === 1) return exps[0];
+        let result = { type: operators[0], values: [exps[0], exps[1]] };
+        for (let i = 1; i < operators.length; i++) {
+          const o = operators[i];
+          const e = exps[i + 1];
+          if (o === result.type) {
+            result.values.push(e);
+          } else {
+            result = { type: o, values: [result, e] };
+          }
+        }
+        return result;
+      }
+
+      return buildExpressionChain(expressions, ops);
     }
+
+GroupingExpression
+  = "(" WS e:LogicalExpression WS ")" { return e; }
+  / primary
+
+Operator
+  = "and"i { return "AND"; }
+  / "or"i { return "OR"; }
+
 
 primary
   = val:ValueOfInterest { return val; }
-  / "!" _ exp:ValueOfInterest { return { type: "INVERSE", exp }; }
+  / "!" WS exp:ValueOfInterest { return { type: "INVERSE", exp }; }
 
 ValueOfInterest
   = SingleQuoteLiteral
@@ -26,23 +63,32 @@ ValueOfInterest
   / Literal
 
 SingleQuoteLiteral
-  = "'" chars:[^']* "'" { return { type: "QUOTE_LITERAL", value: chars.join('') }; }
+  = "'" chars:[^']* "'" suffix:[aAcCdDmMrRuU]? {
+      return {
+        type: "QUOTE_LITERAL",
+        value: chars.join(''),
+        ...(suffix ? {suffix: suffix.toUpperCase()}: {})
+      };
+    }
 
 DoubleQuoteLiteral
-  = '"' chars:[^"]* '"' { return { type: "QUOTE_LITERAL", value: chars.join('') }; }
+  = '"' chars:[^"]* '"' suffix:[aAcCdDmMrRuU]? {
+      return {
+        type: "QUOTE_LITERAL",
+        value: chars.join(''),
+        ...(suffix ? {suffix: suffix.toUpperCase()}: {})
+      };
+    }
 
 Literal
-  = chars:[a-zA-Z0-9_\-]+ { return { type: "STATEMENT_REF", value: chars.join('') }; }
+  = !("and"i / "or"i) chars:[a-zA-Z0-9_\-]+ {
+      return { type: "STATEMENT_REF", value: chars.join('') };
+    }
 
 Key
-  = bracketedKey
-  / nestedKey
+  = nestedKey
   / simpleKey
 
-bracketedKey
-  = "[" name:validKeyName "](" path:[^)]* ")" ":" {
-      return { name: name, path: path.join('') };
-    }
 
 nestedKey
   = "<" name:validKeyName ">" ":" {
@@ -59,7 +105,7 @@ validKeyName
       return first + rest.join('');
     }
 
-_ "whitespace or comments"
+WS "whitespace or comments"
   = (Whitespace / LineComment / LineCommentAlt / MultilineComment)*
 
 Whitespace
