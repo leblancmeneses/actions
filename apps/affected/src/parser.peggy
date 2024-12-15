@@ -89,17 +89,23 @@ Literal
     }
 
 Key
-  = nestedKey
+  = bracketedKey
+  / nestedKey
   / simpleKey
 
 
+bracketedKey
+  = "[" name:validKeyName "]" _ "(" path:[^)]* ")" _ ":" {
+      return { name: name, path: path.join('') };
+    }
+
 nestedKey
-  = "<" name:validKeyName ">" ":" {
+  = "<" name:validKeyName ">" _ ":" {
       return { name: name, path: name };
     }
 
 simpleKey
-  = name:validKeyName ":" {
+  = name:validKeyName _ ":" {
       return { name: name };
     }
 

@@ -9,10 +9,11 @@ interface EvaluationResult {
   excludedFiles: ChangedFile[];
 }
 
-export function evaluateStatements(statements: AST, originalChangedFiles: ChangedFile[]): Record<string, boolean> {
-  const result: Record<string, boolean> = {};
+export function evaluateStatements(statements: AST, originalChangedFiles: ChangedFile[]): {
+  changes: Record<string, boolean>;
+  netFiles: Record<string, ChangedFile[]>;
+} {
   const seen = new Map<string, EvaluationResult>();
-
   function uniqueFiles(files: ChangedFile[]): ChangedFile[] {
     const seenSet = new Set<string>();
     const unique: ChangedFile[] = [];
@@ -88,18 +89,16 @@ export function evaluateStatements(statements: AST, originalChangedFiles: Change
           const res = evaluateNode(child, changedFiles);
           const excludedSet = new Set(res.excludedFiles.map((f) => f.file));
           const childNetMatches = res.matchedFiles.filter((f) => !excludedSet.has(f.file));
-          const unMatchedFiles = res.unMatchedFiles;
 
           if (allNetMatches === null) {
             allNetMatches = childNetMatches;
           } else {
             // For AND, intersect the net matches
-            allNetMatches = intersectionFiles(changedFiles, childNetMatches).filter((f) => !excludedSet.has(f.file));
+            allNetMatches = unionFiles(allNetMatches, childNetMatches).filter((f) => !excludedSet.has(f.file));
           }
 
-
           // If at any point intersection is empty, no need to continue
-          if (allNetMatches.length === 0 && unMatchedFiles.length === 0) {
+          if (childNetMatches.length == 0) {
             return { unMatchedFiles: [], matchedFiles: [], excludedFiles: [] };
           }
         }
@@ -141,6 +140,9 @@ export function evaluateStatements(statements: AST, originalChangedFiles: Change
     }
   }
 
+
+  const changesKeyValue: Record<string, boolean> = {};
+  const netFilesKeyValue: Record<string, ChangedFile[]> = {};
   for (const statement of statements) {
     if (statement.type === 'STATEMENT') {
       const { matchedFiles, excludedFiles } = evaluateStatement(statement.key.name, originalChangedFiles);
@@ -148,9 +150,15 @@ export function evaluateStatements(statements: AST, originalChangedFiles: Change
       const excludedSet = new Set(excludedFiles.map((f) => f.file));
       const netFiles = matchedFiles.filter((f) => !excludedSet.has(f.file));
 
-      result[statement.key.name] = netFiles.length > 0;
+      changesKeyValue[statement.key.name] = netFiles.length > 0;
+      if (statement.key.path) {
+        netFilesKeyValue[statement.key.name] = [...netFiles];
+      }
     }
   }
 
-  return result;
+  return {
+    changes: changesKeyValue,
+    netFiles: netFilesKeyValue
+  };
 }

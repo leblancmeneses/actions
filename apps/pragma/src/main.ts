@@ -53,6 +53,7 @@ export async function run() {
     core.info(`pragma: ${JSON.stringify(variablesObject, undefined, 2)}`);
   } catch (error) {
     core.setFailed(error.message);
+    throw error;
   }
 }
 

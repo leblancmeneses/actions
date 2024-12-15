@@ -35,7 +35,7 @@ function ref(name: string): Expression {
   return { type: 'STATEMENT_REF', value: name };
 }
 
-describe('Parser AST tests', () => {
+describe('parser.spec', () => {
   describe('parenthesis handling', () => {
     const expression = or(
       quote('lib1/**', 'A'),

@@ -7,26 +7,53 @@ jest.mock('child_process', () => {
     execSync: jest.fn(),
   };
 });
+jest.mock('fs', () => {
+  const originalFs = jest.requireActual('fs'); // Preserve the original fs
+  return {
+    ...originalFs, // Spread original fs methods
+    existsSync: jest.fn(() => true), // Mock existsSync
+    lstatSync: jest.fn(() => ({
+      isDirectory: () => true, // Mock isDirectory to return true
+    })),
+    promises: {
+      access: jest.fn(), // Mock specific promises methods as needed
+      readFile: jest.fn(), // Example for readFile if used
+      writeFile: jest.fn(), // Example for writeFile if used
+    },
+  };
+});
 /* eslint-disable @nx/enforce-module-boundaries */
 import * as affectedMain from "@affected/main"; // Import everything
 import * as github from '@actions/github';
 import { run } from "@affected/main";
 import * as core from "@actions/core";
+import * as fs from 'fs';
 import * as cp from 'child_process';
 
 
 
-describe("affected action changes tests", () => {
+describe("changes.spec", () => {
   const gitMockResponses = {
-    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => 'base1',
-    'git log head1 --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => 'sha1',
-    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/version-autopilot"': () => 'sha2',
-    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/pragma"': () => 'sha2',
+    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./affected"': () => 'sha1',
+    'git log head1 --oneline --pretty=format:"%H" -n 1 -- "./affected"': () => 'sha2',
+    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => 'sha1',
+    'git log head1 --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => 'sha2',
+    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/version-autopilot"': () => 'sha3',
+    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/pragma"': () => 'sha4',
     'git diff --name-status base1 head1': () => `
 M       .github/workflows/ci.yml
 M       apps/affected/src/main.ts
 `.trim(),
   };
+
+  beforeAll(() => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -49,7 +76,7 @@ M       apps/affected/src/main.ts
     };
   });
 
-  test.only("should evaluate multiple expressions cumulatively", async () => {
+  test("should evaluate multiple expressions cumulatively", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
@@ -88,7 +115,7 @@ M\tapps/affected/src/main.ts
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
-          [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**' !'**/*.md';
+          <affected>: './apps/affected/**' './dist/apps/affected/**' !'**/*.md';
         `;
       return "";
     });
@@ -109,6 +136,11 @@ M\tapps/affected/src/main.ts
         throw new Error(`Unexpected input: ${inputName}`);
       });
 
+    jest.spyOn(fs, "existsSync").mockImplementation(() => true);
+    jest.spyOn(fs, "lstatSync").mockImplementation(() => ({
+      isDirectory: () => true,
+    }) as fs.Stats);
+
     // Act
     await run();
 
@@ -122,7 +154,7 @@ M\tapps/affected/src/main.ts
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
-          [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**' !'**/*.yml';
+          <affected>: './apps/affected/**' './dist/apps/affected/**' !'**/*.yml';
         `;
       return "";
     });
@@ -158,7 +190,7 @@ M\tapps/affected/src/main.ts
       if (inputName === "rules") return `
           typescript: '**/*.ts'; // match all typescript files
           ignoreYaml: !'**/*.yml'; ## match all non yaml files
-          [affected](./apps/affected): ignoreYaml './apps/affected/**' './dist/apps/affected/**' !typescript; /* the order of exclusion should not matter.*/
+          <affected>: ignoreYaml AND ('./apps/affected/**' OR './dist/apps/affected/**') AND !typescript; /* the order of exclusion should not matter.*/
         `;
       return "";
     });

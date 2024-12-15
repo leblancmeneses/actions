@@ -90,8 +90,8 @@ export async function run() {
       const changedFiles = await getChangedFiles();
       log(`Changed Files: ${changedFiles.join('\n')}`, verbose);
 
-      const affected = evaluateStatements(statements, changedFiles) as Record<string, boolean>;
-      for (const [key, value] of Object.entries(affected)) {
+      const {changes, netFiles} = evaluateStatements(statements, changedFiles);
+      for (const [key, value] of Object.entries(changes)) {
         affectedChanges[key] = value;
       }
 
@@ -126,6 +126,7 @@ export async function run() {
     core.info(`affected: ${JSON.stringify(affectedOutput, null, 2)}!`);
   } catch (error) {
     core.setFailed(error.message);
+    throw error;
   }
 }
 
