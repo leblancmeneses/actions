@@ -2,12 +2,12 @@ start
   = oneOrMoreStatement
 
 oneOrMoreStatement
-  = WS first:Statement WS rest:(WS Statement)* WS {
+  = _ first:Statement _ rest:(_ Statement)* _ {
       return [first, ...rest.map(([, stmt]) => stmt)];
     }
 
 Statement
-  = key:Key WS value:Expression WS ";" {
+  = key:Key _ value:Expression _ ";" {
       return { type: "STATEMENT", key, value };
     }
 
@@ -15,7 +15,7 @@ Expression
   = LogicalExpression
 
 LogicalExpression
-  = left:GroupingExpression tail:(WS op:Operator? WS right:GroupingExpression)* {
+  = left:GroupingExpression tail:(_ op:Operator? _ right:GroupingExpression)* {
       let expressions = [left];
       let ops = [];
 
@@ -45,7 +45,10 @@ LogicalExpression
     }
 
 GroupingExpression
-  = "(" WS e:LogicalExpression WS ")" { return e; }
+  = "!" _ "(" _ e:LogicalExpression _ ")" {
+      return { type: "EXCLUDE", exp: e };
+    }
+  / "(" _ e:LogicalExpression _ ")" { return e; }
   / primary
 
 Operator
@@ -55,7 +58,7 @@ Operator
 
 primary
   = val:ValueOfInterest { return val; }
-  / "!" WS exp:ValueOfInterest { return { type: "INVERSE", exp }; }
+  / "!" _ exp:ValueOfInterest { return { type: "EXCLUDE", exp }; }
 
 ValueOfInterest
   = SingleQuoteLiteral
@@ -105,7 +108,7 @@ validKeyName
       return first + rest.join('');
     }
 
-WS "whitespace or comments"
+_ "whitespace or comments"
   = (Whitespace / LineComment / LineCommentAlt / MultilineComment)*
 
 Whitespace

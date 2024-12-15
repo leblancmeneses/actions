@@ -18,10 +18,14 @@ import * as cp from 'child_process';
 
 describe("affected action changes tests", () => {
   const gitMockResponses = {
-    'git log 151e51530cd03e7cc60ca28582e990bca14cc90e --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => '151e51530cd03e7cc60ca28582e990bca14cc90e',
-    'git log 632865e4315146beae430ce80f8a52fc7f4355e6 --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => 'cde29f8c5001e95a5380a007954183eb7d07a7b3',
-    'git log 151e51530cd03e7cc60ca28582e990bca14cc90e --oneline --pretty=format:"%H" -n 1 -- "./apps/version-autopilot"': () => 'eb878e9d30254e35e6ff41b236116daf07fdfadd',
-    'git log 151e51530cd03e7cc60ca28582e990bca14cc90e --oneline --pretty=format:"%H" -n 1 -- "./apps/pragma"': () => 'eb878e9d30254e35e6ff41b236116daf07fdfadd',
+    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => 'base1',
+    'git log head1 --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => 'sha1',
+    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/version-autopilot"': () => 'sha2',
+    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/pragma"': () => 'sha2',
+    'git diff --name-status base1 head1': () => `
+M       .github/workflows/ci.yml
+M       apps/affected/src/main.ts
+`.trim(),
   };
 
   beforeEach(() => {
@@ -36,8 +40,8 @@ describe("affected action changes tests", () => {
 
     github.context.eventName = 'pull_request';
     process.env.BASE_REF='develop';
-    process.env.BASE_SHA='151e51530cd03e7cc60ca28582e990bca14cc90e';
-    process.env.HEAD_SHA='632865e4315146beae430ce80f8a52fc7f4355e6';
+    process.env.BASE_SHA='base1';
+    process.env.HEAD_SHA='head1';
     github.context.payload = {
       pull_request: {
         number: 100,
@@ -45,21 +49,21 @@ describe("affected action changes tests", () => {
     };
   });
 
-  test("should evaluate multiple expressions cumulatively", async () => {
+  test.only("should evaluate multiple expressions cumulatively", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
-          [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**';
+          <affected>: './apps/affected/**' './dist/apps/affected/**';
         `;
       return "";
     });
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT 151e51530cd03e7cc60ca28582e990bca14cc90e 632865e4315146beae430ce80f8a52fc7f4355e6': () => [
-          '.github/workflows/ci.yml',
-          'apps/affected/src/main.ts'
-      ].join('\n'),
+      'git diff --name-status base1 head1':  () => `
+M\t.github/workflows/ci.yml
+M\tapps/affected/src/main.ts
+`.trim(),
     };
 
     jest.spyOn(cp, 'execSync')
@@ -91,10 +95,10 @@ describe("affected action changes tests", () => {
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT 151e51530cd03e7cc60ca28582e990bca14cc90e 632865e4315146beae430ce80f8a52fc7f4355e6': () => [
-          '.github/workflows/ci.yml',
-          'apps/affected/src/main.ts'
-      ].join('\n'),
+      'git diff --name-only --diff-filter=ACMRT base1 head1': () => `
+M\t.github/workflows/ci.yml
+M\tapps/affected/src/main.ts
+`.trim(),
     };
 
     jest.spyOn(cp, 'execSync')
@@ -125,10 +129,10 @@ describe("affected action changes tests", () => {
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT 151e51530cd03e7cc60ca28582e990bca14cc90e 632865e4315146beae430ce80f8a52fc7f4355e6': () => [
-          '.github/workflows/ci.yml',
-          'apps/affected/src/main.ts'
-      ].join('\n'),
+      'git diff --name-only --diff-filter=ACMRT base1 head1': () => `
+M\t.github/workflows/ci.yml
+M\tapps/affected/src/main.ts
+`.trim(),
     };
 
     jest.spyOn(cp, 'execSync')
@@ -161,10 +165,10 @@ describe("affected action changes tests", () => {
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT 151e51530cd03e7cc60ca28582e990bca14cc90e 632865e4315146beae430ce80f8a52fc7f4355e6': () => [
-          '.github/workflows/ci.yml',
-          'apps/affected/src/main.ts'
-      ].join('\n'),
+      'git diff --name-only --diff-filter=ACMRT base1 head1': () => `
+M\t.github/workflows/ci.yml
+M\tapps/affected/src/main.ts
+`.trim(),
     };
 
     jest.spyOn(cp, 'execSync')

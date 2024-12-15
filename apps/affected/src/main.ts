@@ -3,118 +3,10 @@ import * as github from '@actions/github';
 import { parse } from './parser';
 import { execSync } from 'child_process';
 import fs from 'fs';
-import picomatch from 'picomatch';
+import {getChangedFiles} from './changedFiles';
+import {evaluateStatements} from './evaluateStatements';
+import { AST } from './parser.types';
 
-
-function evaluateStatements(statements, originalChangedFiles) {
-  const result = {};
-  const seen = new Map();
-
-  function evaluateStatement(statementKey, changedFiles) {
-    // Check if the statementKey has already been evaluated
-    if (seen.has(statementKey)) {
-      return seen.get(statementKey);
-    }
-
-    const statement = statements.find((s) => s.key.name === statementKey);
-    if (!statement) {
-      throw new Error(`Referenced statement key '${statementKey}' does not exist.`);
-    }
-
-    let cumulativeFiles = [];
-    let excludedFiles = [];
-
-    for (const value of statement.value) {
-      let currentFiles = [...changedFiles]; // Start with original files for each value
-
-      if (value.type === 'QUOTE_LITERAL') {
-        // Filter the files that match the QUOTE_LITERAL pattern
-        const isMatch = picomatch(value.value, { dot: true });
-        currentFiles = currentFiles.filter((file) => isMatch(file));
-      } else if (value.type === 'STATEMENT_REF') {
-        // Recursively evaluate the referenced statement and append new matches
-        const refMatches = evaluateStatement(value.value, originalChangedFiles);
-        currentFiles = [...new Set([...currentFiles, ...(refMatches.cumulativeFiles || [])])];
-        excludedFiles = [...new Set([...excludedFiles, ...(refMatches.excludedFiles || [])])];
-      } else if (value.type === 'INVERSE') {
-        if (value.exp.type === 'QUOTE_LITERAL') {
-          // Filter out files that match the INVERSE pattern
-          const isMatch = picomatch(value.exp.value, { dot: true });
-          const inverseMatches = currentFiles.filter((file) => isMatch(file));
-          excludedFiles = [...new Set([...excludedFiles, ...inverseMatches])];
-          currentFiles = currentFiles.filter((file) => !isMatch(file));
-        } else if (value.exp.type === 'STATEMENT_REF') {
-          // Evaluate the referenced statement in INVERSE
-          const refMatches = evaluateStatement(value.exp.value, originalChangedFiles);
-          const inverseMatches = currentFiles.filter((file) =>
-            refMatches.cumulativeFiles.includes(file)
-          );
-          excludedFiles = [...new Set([...excludedFiles, ...inverseMatches])];
-          currentFiles = currentFiles.filter((file) => !inverseMatches.includes(file));
-        }
-      } else {
-        throw new Error(`Unsupported value type: ${value.type}`);
-      }
-      cumulativeFiles = [...new Set([...cumulativeFiles, ...currentFiles])];
-    }
-
-    // Cache the result for the current statementKey
-    const evaluatedResult = { cumulativeFiles, excludedFiles };
-    seen.set(statementKey, evaluatedResult);
-
-    return evaluatedResult;
-  }
-
-  for (const statement of statements) {
-    if (statement.type === 'STATEMENT') {
-      const { cumulativeFiles, excludedFiles } = evaluateStatement(statement.key.name, originalChangedFiles);
-      const netFiles = cumulativeFiles.filter((file) => !excludedFiles.includes(file));
-      result[statement.key.name] = netFiles.length > 0;
-    }
-  }
-
-  return result;
-}
-
-
-
-
-export const getChangedFiles = async () => {
-  const eventName = github.context.eventName;
-  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
-  const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
-
-  let changedFiles = [];
-
-  try {
-    if (
-      eventName === 'pull_request' || eventName === 'workflow_dispatch'
-    ) {
-      // Pull request or workflow dispatch event
-      const baseDiffCommand = `git diff --name-only --diff-filter=ACMRT ${baseSha} ${headSha}`;
-      changedFiles = execSync(baseDiffCommand)
-        .toString()
-        .trim()
-        .split('\n')
-        .map((file) => file.trim())
-        .filter(Boolean);
-    } else if (eventName === 'push') {
-      // Push event
-      const baseDiffCommand = 'git diff --name-only HEAD~1';
-      changedFiles = execSync(baseDiffCommand)
-        .toString()
-        .trim()
-        .split('\n')
-        .map((file) => file.trim())
-        .filter(Boolean);
-    }
-
-    return changedFiles;
-  } catch (error) {
-    console.error('Error executing Git command:', error.message);
-    return [];
-  }
-}
 
 export const getCommitHash = (path: string, hasChanges: boolean) => {
   const folderOfInterest = path.startsWith("./") ? path : `./${path}`;
@@ -189,7 +81,7 @@ export async function run() {
     log(`github.context: ${JSON.stringify(github.context, undefined, 2)}`, verbose);
 
     if (rulesInput) {
-      const statements = parse(rulesInput, undefined);
+      const statements = parse(rulesInput, undefined) as AST;
 
       if (!Array.isArray(statements)) {
         throw new Error('Rules must be an array of statements');
