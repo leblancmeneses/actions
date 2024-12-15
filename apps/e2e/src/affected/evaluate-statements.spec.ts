@@ -235,6 +235,47 @@ describe('evaluate-statements.spec', () => {
       });
     });
 
+    it('should evaluate statementref exclude with OR', () => {
+      const statements = parse(`
+        markdown: '**/*.md'; # match all markdown files
+        <expression>: 'lib1/**' OR !markdown;
+      `, undefined) as AST;
+      const { changes, netFiles } = evaluateStatements(statements, [
+        { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
+      ]);
+      expect(changes.expression).toBe(true);
+      expect(netFiles).toEqual({
+        expression: [
+          { file: 'lib1/foo.js', status: ChangeStatus.Added }]
+      });
+    });
+    it('should evaluate statementref exclude with OR with md', () => {
+      const statements = parse(`
+        markdown: '**/*.md'; # match all markdown files
+        <expression>: 'lib1/**' OR !markdown;
+      `, undefined) as AST;
+      const { changes, netFiles } = evaluateStatements(statements, [
+        { file: 'lib1/foo.md', status: mapGitStatusCode('A') },
+      ]);
+      expect(changes.expression).toBe(true);
+      expect(netFiles).toEqual({
+        expression: [
+          { file: 'lib1/foo.md', status: ChangeStatus.Added }]
+      });
+    });
+    it('should evaluate statementref exclude with OR with md v2', () => {
+      const statements = parse(`
+        markdown: '**/*.md'; # match all markdown files
+        <expression>: 'lib1/**' OR !markdown;
+      `, undefined) as AST;
+      const { changes, netFiles } = evaluateStatements(statements, [
+        { file: 'lib2/foo.md', status: mapGitStatusCode('A') },
+      ]);
+      expect(changes.expression).toBe(false);
+      expect(netFiles).toEqual({
+        expression: []
+      });
+    });
   });
 
   it('should evaluate exclude with implicit OR correctly', () => {
