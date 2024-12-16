@@ -41,8 +41,8 @@ describe("changes.spec", () => {
     'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/version-autopilot"': () => 'sha3',
     'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/pragma"': () => 'sha4',
     'git diff --name-status base1 head1': () => `
-M       .github/workflows/ci.yml
-M       apps/affected/src/main.ts
+M\t.github/workflows/ci.yml
+M\tapps/affected/src/main.ts
 `.trim(),
   };
 
@@ -76,7 +76,7 @@ M       apps/affected/src/main.ts
     };
   });
 
-  test("should evaluate multiple expressions cumulatively", async () => {
+  test("should evaluate base expression", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
@@ -87,10 +87,6 @@ M       apps/affected/src/main.ts
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-status base1 head1':  () => `
-M\t.github/workflows/ci.yml
-M\tapps/affected/src/main.ts
-`.trim(),
     };
 
     jest.spyOn(cp, 'execSync')
@@ -111,21 +107,17 @@ M\tapps/affected/src/main.ts
   });
 
 
-  test("should evaluate multiple expressions cumulatively with exclusion not matching", async () => {
+  test("should evaluate base expression with except not matching", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
-          <affected>: './apps/affected/**' './dist/apps/affected/**' !'**/*.md';
+          <affected>: ('./apps/affected/**' OR './dist/apps/affected/**') EXCEPT('**/*.md');
         `;
       return "";
     });
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT base1 head1': () => `
-M\t.github/workflows/ci.yml
-M\tapps/affected/src/main.ts
-`.trim(),
     };
 
     jest.spyOn(cp, 'execSync')
@@ -150,7 +142,7 @@ M\tapps/affected/src/main.ts
     });
   });
 
-  test("should evaluate multiple expressions cumulatively with exclusion matching", async () => {
+  test("should evaluate base expression with except matching", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
@@ -161,10 +153,6 @@ M\tapps/affected/src/main.ts
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT base1 head1': () => `
-M\t.github/workflows/ci.yml
-M\tapps/affected/src/main.ts
-`.trim(),
     };
 
     jest.spyOn(cp, 'execSync')
@@ -184,23 +172,20 @@ M\tapps/affected/src/main.ts
     });
   });
 
-  test("should evaluate multiple expressions cumulatively with exclusion as composite and comments", async () => {
+  test("should evaluate base expression with except excluding all as composite and comments", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
           typescript: '**/*.ts'; // match all typescript files
-          ignoreYaml: !'**/*.yml'; ## match all non yaml files
-          <affected>: ignoreYaml AND ('./apps/affected/**' OR './dist/apps/affected/**') AND !typescript; /* the order of exclusion should not matter.*/
+          yaml: '**/*.yml'; ## match all non yaml files
+          notYaml: !'**/*.yml'; ## match all non yaml files
+          <affected>: ('./apps/affected/**' OR './dist/apps/affected/**') EXCEPT (yaml typescript);
         `;
       return "";
     });
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT base1 head1': () => `
-M\t.github/workflows/ci.yml
-M\tapps/affected/src/main.ts
-`.trim(),
     };
 
     jest.spyOn(cp, 'execSync')
@@ -217,7 +202,8 @@ M\tapps/affected/src/main.ts
     // Assert
     expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
       "typescript": true,
-      "ignoreYaml": true,
+      "yaml": true,
+      "notYaml": true,
       "affected": false
     });
   });

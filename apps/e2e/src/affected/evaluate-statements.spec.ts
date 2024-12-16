@@ -4,7 +4,7 @@ import { parse } from '../../../affected/src/parser';
 import { AST } from '../../../affected/src/parser.types';
 
 describe('evaluate-statements.spec', () => {
-  describe('exclusion expressions', () => {
+  describe('negate expressions', () => {
     describe('positive tests', () => {
       it('should evaluate exclusion', () => {
         const statements = parse(`
@@ -277,6 +277,53 @@ describe('evaluate-statements.spec', () => {
       });
     });
   });
+
+
+describe('exclude expressions', () => {
+  it('should exclude specified patterns', () => {
+    const statements = parse(`
+      markdown: '**/*.md';
+      yaml: '**/*.yaml' OR '**/*.yml';
+      <expression>: 'lib1/**' EXCEPT(markdown yaml '**/*.rs' "**/*.py");
+    `, undefined) as AST;
+
+    const { changes, netFiles } = evaluateStatements(statements, [
+      { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
+      { file: 'lib1/readme.md', status: mapGitStatusCode('A') },
+      { file: 'lib1/config.yaml', status: mapGitStatusCode('A') },
+      { file: 'lib1/script.py', status: mapGitStatusCode('A') },
+      { file: 'lib1/source.rs', status: mapGitStatusCode('A') },
+    ]);
+
+    // 'lib1/**' would normally match all above files
+    // But we exclude markdown (which matches readme.md),
+    // yaml (which matches config.yaml),
+    // '**/*.rs' (matches source.rs),
+    // and '**/*.py' (matches script.py),
+    // So only foo.js should remain.
+    expect(changes.expression).toBe(true);
+    expect(netFiles.expression).toEqual([
+      { file: 'lib1/foo.js', status: mapGitStatusCode('A') }
+    ]);
+  });
+
+  it('should return false if all matched files are excluded', () => {
+    const statements = parse(`
+      markdown: '**/*.md';
+      <expression>: 'lib1/**' EXCEPT(markdown);
+    `, undefined) as AST;
+
+    const { changes, netFiles } = evaluateStatements(statements, [
+      { file: 'lib1/readme.md', status: mapGitStatusCode('A') },
+    ]);
+
+    // 'lib1/**' matches 'readme.md'
+    // exclude 'markdown' also matches 'readme.md'
+    // so net matches is empty
+    expect(changes.expression).toBe(false);
+    expect(netFiles.expression).toEqual([]);
+  });
+});
 
   it('should evaluate exclude with implicit OR correctly', () => {
     const statements = parse(`

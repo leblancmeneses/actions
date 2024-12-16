@@ -12,7 +12,16 @@ Statement
     }
 
 Expression
-  = LogicalExpression
+  = base:LogicalExpression except:ExceptClause? {
+      if (except) {
+        return {
+          type: "EXPRESSION_WITH_EXCEPT",
+          base: base,
+          excludes: except
+        };
+      }
+      return base;
+    }
 
 LogicalExpression
   = left:GroupingExpression tail:(_ op:Operator? _ right:GroupingExpression)* {
@@ -55,7 +64,6 @@ Operator
   = "and"i { return "AND"; }
   / "or"i { return "OR"; }
 
-
 primary
   = val:ValueOfInterest { return val; }
   / "!" _ exp:ValueOfInterest { return { type: "EXCLUDE", exp }; }
@@ -65,12 +73,22 @@ ValueOfInterest
   / DoubleQuoteLiteral
   / Literal
 
+ExceptClause
+  = _ "EXCEPT"i _ "(" _ items:ExceptItems _ ")" {
+      return items;
+    }
+
+ExceptItems
+  = head:ValueOfInterest tail:(_ ValueOfInterest)* {
+      return [head, ...tail.map(([ , v]) => v)];
+    }
+
 SingleQuoteLiteral
   = "'" chars:[^']* "'" suffix:[aAcCdDmMrRuU]? {
       return {
         type: "QUOTE_LITERAL",
         value: chars.join(''),
-        ...(suffix ? {suffix: suffix.toUpperCase()}: {})
+        ...(suffix ? {suffix: suffix.toUpperCase()} : {})
       };
     }
 
@@ -79,12 +97,12 @@ DoubleQuoteLiteral
       return {
         type: "QUOTE_LITERAL",
         value: chars.join(''),
-        ...(suffix ? {suffix: suffix.toUpperCase()}: {})
+        ...(suffix ? {suffix: suffix.toUpperCase()} : {})
       };
     }
 
 Literal
-  = !("and"i / "or"i) chars:[a-zA-Z0-9_\-]+ {
+  = !("and"i / "or"i / "except"i) chars:[a-zA-Z0-9_\-]+ {
       return { type: "STATEMENT_REF", value: chars.join('') };
     }
 
@@ -92,7 +110,6 @@ Key
   = bracketedKey
   / nestedKey
   / simpleKey
-
 
 bracketedKey
   = "[" name:validKeyName "]" _ "(" path:[^)]* ")" _ ":" {

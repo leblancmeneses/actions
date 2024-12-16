@@ -143,7 +143,7 @@ M\tproject-api/readme.md
     const setFailedSpy = jest.spyOn(core, 'setFailed');
 
     // Run the function
-    await run();
+    await expect(run()).rejects.toThrow('Invalid directory: ./invalid/path');
 
     // Assertions
     expect(setFailedSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid directory: ./invalid/path'));

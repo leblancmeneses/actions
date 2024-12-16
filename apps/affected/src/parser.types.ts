@@ -14,11 +14,12 @@ export interface Key {
   path?: string; // optional if nested keys are used
 }
 
-// Expressions can be logical operators (AND, OR), inversions, or values
+// Extend Expression to include EXPRESSION_WITH_EXCEPT
 export type Expression = 
     OrExpression
   | AndExpression
   | ExcludeExpression
+  | ExpressionWithExcept
   | ValueOfInterest; 
 
 export interface OrExpression {
@@ -35,6 +36,14 @@ export interface AndExpression {
 export interface ExcludeExpression {
   type: 'EXCLUDE';
   exp: Expression;
+}
+
+// New ExpressionWithExcept interface
+// base is the main expression, excludes is an array of ValueOfInterest patterns to exclude
+export interface ExpressionWithExcept {
+  type: 'EXPRESSION_WITH_EXCEPT';
+  base: Expression;
+  excludes: ValueOfInterest[];
 }
 
 // A ValueOfInterest can be a quoted literal or a statement reference

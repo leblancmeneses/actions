@@ -2,9 +2,7 @@ import picomatch from 'picomatch';
 import { AST, Expression } from './parser.types';
 import { ChangedFile, mapGitStatusCode } from './changedFiles';
 
-
 interface EvaluationResult {
-  unMatchedFiles: ChangedFile[];
   matchedFiles: ChangedFile[];
   excludedFiles: ChangedFile[];
 }
@@ -14,6 +12,7 @@ export function evaluateStatements(statements: AST, originalChangedFiles: Change
   netFiles: Record<string, ChangedFile[]>;
 } {
   const seen = new Map<string, EvaluationResult>();
+
   function uniqueFiles(files: ChangedFile[]): ChangedFile[] {
     const seenSet = new Set<string>();
     const unique: ChangedFile[] = [];
@@ -28,16 +27,6 @@ export function evaluateStatements(statements: AST, originalChangedFiles: Change
 
   function unionFiles(a: ChangedFile[], b: ChangedFile[]): ChangedFile[] {
     return uniqueFiles([...a, ...b]);
-  }
-
-  function intersectionFiles(a: ChangedFile[], b: ChangedFile[]): ChangedFile[] {
-    const bSet = new Set(b.map((f) => f.file));
-    return a.filter((f) => bSet.has(f.file));
-  }
-
-  function differenceFiles(a: ChangedFile[], b: ChangedFile[]): ChangedFile[] {
-    const bSet = new Set(b.map((f) => f.file));
-    return a.filter((f) => !bSet.has(f.file));
   }
 
   function evaluateStatement(statementKey: string, changedFiles: ChangedFile[]): EvaluationResult {
@@ -57,53 +46,63 @@ export function evaluateStatements(statements: AST, originalChangedFiles: Change
 
   function evaluateNode(node: Expression, changedFiles: ChangedFile[]): EvaluationResult {
     switch (node.type) {
-      case 'OR': {
-        if (node.values.length === 0) {
-          return { unMatchedFiles: changedFiles, matchedFiles: [], excludedFiles: [] };
+      case 'EXPRESSION_WITH_EXCEPT': {
+        // Evaluate base
+        const baseResult = evaluateNode(node.base, changedFiles);
+
+        // Evaluate excludes
+        let excludeMatches: ChangedFile[] = [];
+        for (const excludeNode of node.excludes) {
+          const res = evaluateNode(excludeNode, changedFiles);
+          // Note: exclude nodes are ValueOfInterest, they shouldn't produce excluded files by themselves
+          // Just union their matchedFiles into excludeMatches
+          excludeMatches = unionFiles(excludeMatches, res.matchedFiles);
         }
 
-        let allNetMatches: ChangedFile[] = [];
+        // Remove excluded matches from base matchedFiles
+        const excludeSet = new Set(excludeMatches.map((f) => f.file));
+        const netFiles = baseResult.matchedFiles.filter((f) => !excludeSet.has(f.file));
+
+        return {
+          matchedFiles: netFiles,
+          excludedFiles: []
+        };
+      }
+
+      case 'OR': {
+        if (node.values.length === 0) {
+          return { matchedFiles: [], excludedFiles: [] };
+        }
+
+        let allMatches: ChangedFile[] = [];
         for (const child of node.values) {
           const res = evaluateNode(child, changedFiles);
-          // Compute net matches for the child
-          const excludedSet = new Set(res.excludedFiles.map((f) => f.file));
-          const childNetMatches = res.matchedFiles.filter((f) => !excludedSet.has(f.file));
-          // For OR, union these net matches with the accumulated matches
-          allNetMatches = unionFiles(allNetMatches, childNetMatches);
+          allMatches = unionFiles(allMatches, res.matchedFiles);
         }
-        // Return only net matches for OR
         return {
-          unMatchedFiles: [],
-          matchedFiles: allNetMatches,
+          matchedFiles: allMatches,
           excludedFiles: []
         };
       }
 
       case 'AND': {
         if (node.values.length === 0) {
-          return { unMatchedFiles: changedFiles, matchedFiles: [], excludedFiles: [] };
+          return { matchedFiles: [], excludedFiles: [] };
         }
 
-        let allNetMatches: ChangedFile[] | null = null;
+        let allMatches: ChangedFile[] = [];
         for (const child of node.values) {
           const res = evaluateNode(child, changedFiles);
-          const excludedSet = new Set(res.excludedFiles.map((f) => f.file));
-          const childNetMatches = res.matchedFiles.filter((f) => !excludedSet.has(f.file));
-
-          if (allNetMatches === null) {
-            allNetMatches = childNetMatches;
-          } else {
-            // For AND, intersect the net matches
-            allNetMatches = unionFiles(allNetMatches, childNetMatches).filter((f) => !excludedSet.has(f.file));
+          if (res.matchedFiles.length === 0) {
+            // If any child fails to match, the whole AND fails
+            return { matchedFiles: [], excludedFiles: [] };
           }
-
-          // If at any point intersection is empty, no need to continue
-          if (childNetMatches.length == 0) {
-            return { unMatchedFiles: [], matchedFiles: [], excludedFiles: [] };
-          }
+          // If this child passed, union its matches with what we have so far
+          allMatches = unionFiles(allMatches, res.matchedFiles);
         }
 
-        return { unMatchedFiles: [], matchedFiles: allNetMatches ?? [], excludedFiles: [] };
+        // If we reach here, all children matched. Return the union of their matches.
+        return { matchedFiles: allMatches, excludedFiles: [] };
       }
 
       case 'QUOTE_LITERAL': {
@@ -116,19 +115,24 @@ export function evaluateStatements(statements: AST, originalChangedFiles: Change
         }
 
         return {
-          unMatchedFiles: differenceFiles(changedFiles, matchingFiles),
           matchedFiles: matchingFiles,
           excludedFiles: []
         };
       }
 
       case 'EXCLUDE': {
+        // NOT operation: !exp
+        // If exp matched M and excluded E, then !exp should match all files not in M ∪ E.
         const res = evaluateNode(node.exp, changedFiles);
-        const excludedFiles = unionFiles(res.excludedFiles, res.matchedFiles);
+        const considered = unionFiles(res.matchedFiles, res.excludedFiles);
+        const consideredSet = new Set(considered.map((f) => f.file));
+        const complement = changedFiles.filter((cf) => !consideredSet.has(cf.file));
+
+        // excludedFiles for !exp is what exp considered: M ∪ E
         return {
-           unMatchedFiles: [],
-           matchedFiles: [...res.unMatchedFiles],
-           excludedFiles };
+          matchedFiles: complement,
+          excludedFiles: considered
+        };
       }
 
       case 'STATEMENT_REF': {
@@ -140,13 +144,12 @@ export function evaluateStatements(statements: AST, originalChangedFiles: Change
     }
   }
 
-
   const changesKeyValue: Record<string, boolean> = {};
   const netFilesKeyValue: Record<string, ChangedFile[]> = {};
   for (const statement of statements) {
     if (statement.type === 'STATEMENT') {
       const { matchedFiles, excludedFiles } = evaluateStatement(statement.key.name, originalChangedFiles);
-
+      // netFiles = matchedFiles - excludedFiles
       const excludedSet = new Set(excludedFiles.map((f) => f.file));
       const netFiles = matchedFiles.filter((f) => !excludedSet.has(f.file));
 
