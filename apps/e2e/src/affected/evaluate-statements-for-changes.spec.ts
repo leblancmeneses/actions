@@ -1,16 +1,16 @@
-import { evaluateStatements } from '../../../affected/src/evaluateStatements';
+import { evaluateStatementsForChanges } from '../../../affected/src/evaluateStatementsForChanges';
 import { ChangeStatus, mapGitStatusCode } from "../../../affected/src/changedFiles";
 import { parse } from '../../../affected/src/parser';
 import { AST } from '../../../affected/src/parser.types';
 
-describe('evaluate-statements.spec', () => {
+describe('evaluate-statements-for-changes.spec', () => {
   describe('negate expressions', () => {
     describe('positive tests', () => {
       it('should evaluate exclusion', () => {
         const statements = parse(`
           <expression>: !'**/*.md';
         `, undefined) as AST;
-        const { changes, netFiles } = evaluateStatements(statements, [
+        const { changes, netFiles } = evaluateStatementsForChanges(statements, [
           { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
         ]);
         expect(changes.expression).toBe(true);
@@ -24,7 +24,7 @@ describe('evaluate-statements.spec', () => {
           <markdown>: !'**/*.md';
           <expression>: markdown;
         `, undefined) as AST;
-        const { changes, netFiles } = evaluateStatements(statements, [
+        const { changes, netFiles } = evaluateStatementsForChanges(statements, [
           { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
         ]);
         expect(changes.markdown).toBe(true);
@@ -40,7 +40,7 @@ describe('evaluate-statements.spec', () => {
           markdown: '**/*.md';
           <expression>: !markdown;
         `, undefined) as AST;
-        const { changes, netFiles } = evaluateStatements(statements, [
+        const { changes, netFiles } = evaluateStatementsForChanges(statements, [
           { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
         ]);
         expect(changes.expression).toBe(true);
@@ -55,7 +55,7 @@ describe('evaluate-statements.spec', () => {
           level1: level2;
           <expression>: level1;
         `, undefined) as AST;
-        const { changes, netFiles } = evaluateStatements(statements, [
+        const { changes, netFiles } = evaluateStatementsForChanges(statements, [
           { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
         ]);
         expect(changes.expression).toBe(true);
@@ -70,7 +70,7 @@ describe('evaluate-statements.spec', () => {
         const statements = parse(`
           <expression>: !'**/*.md';
         `, undefined) as AST;
-        const { changes, netFiles } = evaluateStatements(statements, [
+        const { changes, netFiles } = evaluateStatementsForChanges(statements, [
           { file: 'lib1/foo.md', status: mapGitStatusCode('A') },
         ]);
         expect(changes.expression).toBe(false);
@@ -84,7 +84,7 @@ describe('evaluate-statements.spec', () => {
           markdown: !'**/*.md';
           <expression>: markdown;
         `, undefined) as AST;
-        const { changes, netFiles } = evaluateStatements(statements, [
+        const { changes, netFiles } = evaluateStatementsForChanges(statements, [
           { file: 'lib1/foo.md', status: mapGitStatusCode('A') },
         ]);
         expect(changes.expression).toBe(false);
@@ -98,7 +98,7 @@ describe('evaluate-statements.spec', () => {
           markdown: '**/*.md';
           <expression>: !markdown;
         `, undefined) as AST;
-        const { changes, netFiles } = evaluateStatements(statements, [
+        const { changes, netFiles } = evaluateStatementsForChanges(statements, [
           { file: 'lib1/foo.md', status: mapGitStatusCode('A') },
         ]);
         expect(changes.expression).toBe(false);
@@ -113,7 +113,7 @@ describe('evaluate-statements.spec', () => {
           level1: level2;
           <expression>: level1;
         `, undefined) as AST;
-        const { changes, netFiles } = evaluateStatements(statements, [
+        const { changes, netFiles } = evaluateStatementsForChanges(statements, [
           { file: 'lib1/foo.md', status: mapGitStatusCode('A') },
         ]);
         expect(changes.expression).toBe(false);
@@ -130,7 +130,7 @@ describe('evaluate-statements.spec', () => {
       const statements = parse(`
         <expression>: '**/*.md';
       `, undefined) as AST;
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
       ]);
       expect(changes.expression).toBe(false);
@@ -143,7 +143,7 @@ describe('evaluate-statements.spec', () => {
       const statements = parse(`
         <expression>: '**/*.md';
       `, undefined) as AST;
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/foo.md', status: mapGitStatusCode('A') },
       ]);
       expect(changes.expression).toBe(true);
@@ -157,7 +157,7 @@ describe('evaluate-statements.spec', () => {
   describe('boolean expressions', () => {
     const statements = parse(`<expression>: 'lib1/**'a  ('lib2/**' AND 'lib3/**');`, undefined) as AST;
     it('should evaluate OR correctly when lib1 is a match', () => {
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
         { file: 'lib4/foo.js', status: mapGitStatusCode('D') },
       ]);
@@ -168,7 +168,7 @@ describe('evaluate-statements.spec', () => {
     });
 
     it('should evaluate OR correctly when lib1 is a match but file status is a miss', () => {
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/foo.js', status: mapGitStatusCode('D') },
         { file: 'lib4/foo.js', status: mapGitStatusCode('D') },
       ]);
@@ -179,7 +179,7 @@ describe('evaluate-statements.spec', () => {
     });
 
     it('should evaluate OR correctly when lib2 is a match but missing lib3', () => {
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib2/foo.js', status: mapGitStatusCode('A') },
         { file: 'lib4/foo.js', status: mapGitStatusCode('D') },
       ]);
@@ -190,7 +190,7 @@ describe('evaluate-statements.spec', () => {
     });
 
     it('should evaluate OR correctly when lib2 AND lib3 is a match', () => {
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib2/foo.js', status: mapGitStatusCode('D') },
         { file: 'lib3/foo.js', status: mapGitStatusCode('A') },
         { file: 'lib4/foo.js', status: mapGitStatusCode('D') },
@@ -210,7 +210,7 @@ describe('evaluate-statements.spec', () => {
         markdown: '**/*.md'; # match all markdown files
         <expression>: 'lib1/**' AND !markdown;
       `, undefined) as AST;
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
       ]);
       expect(changes.expression).toBe(true);
@@ -225,7 +225,7 @@ describe('evaluate-statements.spec', () => {
         markdown: !'**/*.md'; # match all markdown files
         <expression>: 'lib1/**' AND markdown;
       `, undefined) as AST;
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
       ]);
       expect(changes.expression).toBe(true);
@@ -240,7 +240,7 @@ describe('evaluate-statements.spec', () => {
         markdown: '**/*.md'; # match all markdown files
         <expression>: 'lib1/**' OR !markdown;
       `, undefined) as AST;
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
       ]);
       expect(changes.expression).toBe(true);
@@ -254,7 +254,7 @@ describe('evaluate-statements.spec', () => {
         markdown: '**/*.md'; # match all markdown files
         <expression>: 'lib1/**' OR !markdown;
       `, undefined) as AST;
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/foo.md', status: mapGitStatusCode('A') },
       ]);
       expect(changes.expression).toBe(true);
@@ -268,7 +268,7 @@ describe('evaluate-statements.spec', () => {
         markdown: '**/*.md'; # match all markdown files
         <expression>: 'lib1/**' OR !markdown;
       `, undefined) as AST;
-      const { changes, netFiles } = evaluateStatements(statements, [
+      const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib2/foo.md', status: mapGitStatusCode('A') },
       ]);
       expect(changes.expression).toBe(false);
@@ -287,7 +287,7 @@ describe('exclude expressions', () => {
       <expression>: 'lib1/**' EXCEPT(markdown yaml '**/*.rs' "**/*.py");
     `, undefined) as AST;
 
-    const { changes, netFiles } = evaluateStatements(statements, [
+    const { changes, netFiles } = evaluateStatementsForChanges(statements, [
       { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
       { file: 'lib1/readme.md', status: mapGitStatusCode('A') },
       { file: 'lib1/config.yaml', status: mapGitStatusCode('A') },
@@ -313,7 +313,7 @@ describe('exclude expressions', () => {
       <expression>: 'lib1/**' EXCEPT(markdown);
     `, undefined) as AST;
 
-    const { changes, netFiles } = evaluateStatements(statements, [
+    const { changes, netFiles } = evaluateStatementsForChanges(statements, [
       { file: 'lib1/readme.md', status: mapGitStatusCode('A') },
     ]);
 
@@ -329,7 +329,7 @@ describe('exclude expressions', () => {
     const statements = parse(`
       <expression>: 'lib1/**' !'lib1/foo.js'; # left side won.
     `, undefined) as AST;
-    const { changes, netFiles } = evaluateStatements(statements, [
+    const { changes, netFiles } = evaluateStatementsForChanges(statements, [
       { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
     ]);
     expect(changes.expression).toBe(true);
@@ -343,7 +343,7 @@ describe('exclude expressions', () => {
     const statements = parse(`
       <expression>: 'lib1/**' OR !'lib1/foo.js'; # left side won.
     `, undefined) as AST;
-    const { changes, netFiles } = evaluateStatements(statements, [
+    const { changes, netFiles } = evaluateStatementsForChanges(statements, [
       { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
     ]);
     expect(changes.expression).toBe(true);
@@ -357,7 +357,7 @@ describe('exclude expressions', () => {
     const statements = parse(`
       <expression>: 'lib1/**' AND !'lib1/foo.js'; # right side fails expression.
     `, undefined) as AST;
-    const { changes, netFiles } = evaluateStatements(statements, [
+    const { changes, netFiles } = evaluateStatementsForChanges(statements, [
       { file: 'lib1/foo.js', status: mapGitStatusCode('A') },
     ]);
     expect(changes.expression).toBe(false);

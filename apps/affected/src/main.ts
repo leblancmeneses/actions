@@ -4,7 +4,7 @@ import { parse } from './parser';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import {getChangedFiles} from './changedFiles';
-import {evaluateStatements} from './evaluateStatements';
+import {evaluateStatementsForChanges} from './evaluateStatementsForChanges';
 import { AST } from './parser.types';
 
 
@@ -90,7 +90,7 @@ export async function run() {
       const changedFiles = await getChangedFiles();
       log(`Changed Files: ${changedFiles.join('\n')}`, verbose);
 
-      const {changes, netFiles} = evaluateStatements(statements, changedFiles);
+      const {changes} = evaluateStatementsForChanges(statements, changedFiles);
       for (const [key, value] of Object.entries(changes)) {
         affectedChanges[key] = value;
       }

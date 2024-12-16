@@ -7,7 +7,11 @@ interface EvaluationResult {
   excludedFiles: ChangedFile[];
 }
 
-export function evaluateStatements(statements: AST, originalChangedFiles: ChangedFile[]): {
+export interface Options {
+  enableSuffix: boolean;
+}
+
+export function evaluateStatementsForChanges(statements: AST, originalChangedFiles: ChangedFile[], options: Options = {enableSuffix:true}): {
   changes: Record<string, boolean>;
   netFiles: Record<string, ChangedFile[]>;
 } {
@@ -109,7 +113,7 @@ export function evaluateStatements(statements: AST, originalChangedFiles: Change
         const isMatch = picomatch(node.value, { dot: true });
         let matchingFiles = changedFiles.filter((cf) => isMatch(cf.file));
 
-        if (node.suffix) {
+        if (node.suffix && options.enableSuffix) {
           const requiredStatus = mapGitStatusCode(node.suffix);
           matchingFiles = matchingFiles.filter((cf) => cf.status === requiredStatus);
         }
@@ -155,7 +159,7 @@ export function evaluateStatements(statements: AST, originalChangedFiles: Change
 
       changesKeyValue[statement.key.name] = netFiles.length > 0;
       if (statement.key.path) {
-        netFilesKeyValue[statement.key.name] = [...netFiles];
+        netFilesKeyValue[statement.key.name] = [...netFiles].sort();
       }
     }
   }

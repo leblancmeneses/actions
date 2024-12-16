@@ -111,10 +111,6 @@ Key
   / nestedKey
   / simpleKey
 
-bracketedKey
-  = "[" name:validKeyName "]" _ "(" path:[^)]* ")" _ ":" {
-      return { name: name, path: path.join('') };
-    }
 
 nestedKey
   = "<" name:validKeyName ">" _ ":" {
