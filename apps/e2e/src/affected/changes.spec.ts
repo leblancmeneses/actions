@@ -33,17 +33,82 @@ import * as cp from 'child_process';
 
 
 describe("changes.spec", () => {
+    const files = `.editorconfig
+    .eslintignore
+    .eslintrc.json
+    .github/example-output.png
+    .github/workflows/ci.yml
+    .gitignore
+    .husky/pre-commit
+    .nvmrc
+    .prettierignore
+    .prettierrc
+    .vscode/extensions.json
+    LICENSE
+    README.md
+    apps/affected/.eslintrc.json
+    apps/affected/action.yml
+    apps/affected/jest.config.ts
+    apps/affected/project.json
+    apps/affected/src/changedFiles.ts
+    apps/affected/src/evaluateStatementsForChanges.ts
+    apps/affected/src/main.ts
+    apps/affected/src/parser.peggy
+    apps/affected/src/parser.ts
+    apps/affected/src/parser.types.ts
+    apps/affected/tsconfig.app.json
+    apps/affected/tsconfig.json
+    apps/affected/tsconfig.spec.json
+    apps/e2e/.eslintrc.json
+    apps/e2e/jest.config.ts
+    apps/e2e/project.json
+    apps/e2e/src/affected/TODO.md
+    apps/e2e/src/affected/affected.spec.ts
+    apps/e2e/src/affected/changed-files.spec.ts
+    apps/e2e/src/affected/changes.spec.ts
+    apps/e2e/src/affected/evaluate-statements-for-changes.spec.ts
+    apps/e2e/src/affected/parser.spec.ts
+    apps/e2e/src/pragma/pragma.spec.ts
+    apps/e2e/src/test-setup.ts
+    apps/e2e/src/version-autopilot/version-autopilot.spec.ts
+    apps/e2e/tsconfig.json
+    apps/e2e/tsconfig.spec.json
+    apps/pragma/.eslintrc.json
+    apps/pragma/action.yml
+    apps/pragma/jest.config.ts
+    apps/pragma/project.json
+    apps/pragma/src/main.ts
+    apps/pragma/tsconfig.app.json
+    apps/pragma/tsconfig.json
+    apps/pragma/tsconfig.spec.json
+    apps/version-autopilot/.eslintrc.json
+    apps/version-autopilot/action.yml
+    apps/version-autopilot/jest.config.ts
+    apps/version-autopilot/project.json
+    apps/version-autopilot/src/main.ts
+    apps/version-autopilot/tsconfig.app.json
+    apps/version-autopilot/tsconfig.json
+    apps/version-autopilot/tsconfig.spec.json
+    dist/apps/affected/action.yml
+    dist/apps/affected/main.js
+    dist/apps/pragma/action.yml
+    dist/apps/pragma/main.js
+    dist/apps/version-autopilot/action.yml
+    dist/apps/version-autopilot/main.js
+    docs/graphics/repository-open-graph-template.png
+    jest.config.ts
+    jest.preset.js
+    nx.json
+    package.json
+    pnpm-lock.yaml
+    tsconfig.base.json`.split('\n').map(f => f.trim()).filter(Boolean);
+
   const gitMockResponses = {
-    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./affected"': () => 'sha1',
-    'git log head1 --oneline --pretty=format:"%H" -n 1 -- "./affected"': () => 'sha2',
-    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => 'sha1',
-    'git log head1 --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => 'sha2',
-    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/version-autopilot"': () => 'sha3',
-    'git log base1 --oneline --pretty=format:"%H" -n 1 -- "./apps/pragma"': () => 'sha4',
     'git diff --name-status base1 head1': () => `
 M\t.github/workflows/ci.yml
 M\tapps/affected/src/main.ts
 `.trim(),
+    'git ls-files': () => files.join('\n'),
   };
 
   beforeAll(() => {
@@ -86,15 +151,23 @@ M\tapps/affected/src/main.ts
     });
 
     const execSyncResponses = {
-      ...gitMockResponses,
+      ...gitMockResponses
     };
 
     jest.spyOn(cp, 'execSync')
-      .mockImplementation((inputName) => {
-        if (execSyncResponses[inputName]) {
-          return execSyncResponses[inputName]();
+      .mockImplementation((command) => {
+        if (command.startsWith('git hash-object')) {
+          const match = command.match(/git hash-object\s+"([^"]+)"/);
+          if(!match) {
+            throw new Error(`Unexpected command: ${command}`);
+          }
+
+          return match[1];
         }
-        throw new Error(`Unexpected input: ${inputName}`);
+        if (execSyncResponses[command]) {
+          return execSyncResponses[command]();
+        }
+        throw new Error(`Unexpected input: ${command}`);
       });
 
     // Act
@@ -121,11 +194,19 @@ M\tapps/affected/src/main.ts
     };
 
     jest.spyOn(cp, 'execSync')
-      .mockImplementation((inputName) => {
-        if (execSyncResponses[inputName]) {
-          return execSyncResponses[inputName]();
+      .mockImplementation((command) => {
+        if (command.startsWith('git hash-object')) {
+          const match = command.match(/git hash-object\s+"([^"]+)"/);
+          if(!match) {
+            throw new Error(`Unexpected command: ${command}`);
+          }
+
+          return match[1];
         }
-        throw new Error(`Unexpected input: ${inputName}`);
+        if (execSyncResponses[command]) {
+          return execSyncResponses[command]();
+        }
+        throw new Error(`Unexpected input: ${command}`);
       });
 
     jest.spyOn(fs, "existsSync").mockImplementation(() => true);
@@ -156,11 +237,19 @@ M\tapps/affected/src/main.ts
     };
 
     jest.spyOn(cp, 'execSync')
-      .mockImplementation((inputName) => {
-        if (execSyncResponses[inputName]) {
-          return execSyncResponses[inputName]();
+      .mockImplementation((command) => {
+        if (command.startsWith('git hash-object')) {
+          const match = command.match(/git hash-object\s+"([^"]+)"/);
+          if(!match) {
+            throw new Error(`Unexpected command: ${command}`);
+          }
+
+          return match[1];
         }
-        throw new Error(`Unexpected input: ${inputName}`);
+        if (execSyncResponses[command]) {
+          return execSyncResponses[command]();
+        }
+        throw new Error(`Unexpected input: ${command}`);
       });
 
     // Act
@@ -189,11 +278,19 @@ M\tapps/affected/src/main.ts
     };
 
     jest.spyOn(cp, 'execSync')
-      .mockImplementation((inputName) => {
-        if (execSyncResponses[inputName]) {
-          return execSyncResponses[inputName]();
+      .mockImplementation((command) => {
+        if (command.startsWith('git hash-object')) {
+          const match = command.match(/git hash-object\s+"([^"]+)"/);
+          if(!match) {
+            throw new Error(`Unexpected command: ${command}`);
+          }
+
+          return match[1];
         }
-        throw new Error(`Unexpected input: ${inputName}`);
+        if (execSyncResponses[command]) {
+          return execSyncResponses[command]();
+        }
+        throw new Error(`Unexpected input: ${command}`);
       });
 
     // Act

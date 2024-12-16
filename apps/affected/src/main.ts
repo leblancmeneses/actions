@@ -1,53 +1,17 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { parse } from './parser';
-import { execSync } from 'child_process';
-import fs from 'fs';
 import {getChangedFiles} from './changedFiles';
 import {evaluateStatementsForChanges} from './evaluateStatementsForChanges';
+import {evaluateStatementsForHashes} from './evaluateStatementsForHashes';
 import { AST } from './parser.types';
 
 
-export const getCommitHash = (path: string, hasChanges: boolean) => {
-  const folderOfInterest = path.startsWith("./") ? path : `./${path}`;
-  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
-  const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
-
-  let commitSha = execSync(
-    `git log ${baseSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`
-  ).toString().trim();
-
-  if (hasChanges) {
-    commitSha = execSync(`git log ${headSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`)
-      .toString()
-      .trim();
-  }
-
-  return commitSha;
-}
-
-export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, appTarget: string, path?: string, productionBranch?: string, imageTagPrefix?: string) => {
-  const folderOfInterest = path ? path.startsWith("./") ? path : `./${path}` : `./${appTarget}`;
-
+export const getImageName = (appTarget: string, hasChanges: boolean, sha: string, productionBranch?: string, imageTagPrefix?: string) => {
   const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || process.env.GITHUB_REF_NAME;
-  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
-  const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
-
-  const commitShaBefore = execSync(
-    `git log ${baseSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`
-  ).toString().trim();
-
-  let commitShaAfter = commitShaBefore;
-
-  if (hasChanges) {
-    commitShaAfter = execSync(`git log ${headSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`)
-      .toString()
-      .trim();
-  }
-
 
   let imageName1 = `${appTarget}:${baseRef}-${sha}`;
-  if (commitShaBefore === commitShaAfter) {
+  if (!hasChanges) {
     if (productionBranch) {
       imageName1 = `${appTarget}:${productionBranch}-${sha}`;
     }
@@ -95,18 +59,16 @@ export async function run() {
         affectedChanges[key] = value;
       }
 
+      const commitSha = await evaluateStatementsForHashes(statements);
+
       for (const statement of statements) {
         if (statement.type !== 'STATEMENT') continue;
 
         const { key } = statement;
         if (key.path) {
-          if (!fs.existsSync(key.path) || !fs.lstatSync(key.path).isDirectory()) {
-            throw new Error(`Invalid directory: ${key.path}`);
-          }
-          const commitSha = getCommitHash(key.path, affectedChanges[key.name]);
-          affectedShas[key.name] = commitSha;
+          affectedShas[key.name] = commitSha[key.name];
 
-          const imageName = getDevOrProdPrefixImageName(affectedChanges[key.name], commitSha, key.name, key.path, productionBranch, imageTagPrefix);
+          const imageName = getImageName(key.name, affectedChanges[key.name], commitSha[key.name], productionBranch, imageTagPrefix);
           affectedImageTags[key.name] = imageName;
 
           log(`Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`, verbose);

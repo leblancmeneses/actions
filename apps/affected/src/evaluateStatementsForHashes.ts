@@ -8,7 +8,7 @@ interface EvaluationResult {
   excludedFiles: string[];
 }
 
-export async function evaluateStatementForHashes(statements: AST): Promise<Record<string, string>> {
+export async function evaluateStatementsForHashes(statements: AST): Promise<Record<string, string>> {
   const allFilesOutput = execSync('git ls-files', { encoding: 'utf-8' });
   const allFiles = allFilesOutput.split('\n').filter(Boolean);
 
@@ -143,20 +143,22 @@ export async function evaluateStatementForHashes(statements: AST): Promise<Recor
 
   const resultHashes: Record<string, string> = {};
   for (const statement of statements) {
-    if (statement.type === 'STATEMENT' && statement.key.path) {
+    if (statement.type === 'STATEMENT') {
       const { matchedFiles, excludedFiles } = evaluateStatement(statement.key.name, allFiles);
-      // netFiles = matchedFiles - excludedFiles
-      const excludedSet = new Set(excludedFiles);
-      const netFiles = matchedFiles.filter((f) => !excludedSet.has(f));
+      if (statement.key.path) {
+        // netFiles = matchedFiles - excludedFiles
+        const excludedSet = new Set(excludedFiles);
+        const netFiles = matchedFiles.filter((f) => !excludedSet.has(f));
 
-      const sortedFiles = netFiles.slice().sort();
-      const hash = crypto.createHash('sha1');
-      for (const f of sortedFiles) {
-        const fileHash = execSync(`git hash-object "${f}"`, { encoding: 'utf-8' }).trim();
-        hash.update(fileHash + '\n');
+        const sortedFiles = netFiles.slice().sort();
+        const hash = crypto.createHash('sha1');
+        for (const f of sortedFiles) {
+          const fileHash = execSync(`git hash-object "${f}"`, { encoding: 'utf-8' }).trim();
+          hash.update(fileHash + '\n');
+        }
+
+        resultHashes[statement.key.path] = hash.digest('hex');
       }
-
-      resultHashes[statement.key.path] = hash.digest('hex');
     }
   }
 
