@@ -53,7 +53,8 @@ jobs:
           gitflow-production-branch: '' # optional; used in recommended_imagetags.
           recommended-imagetags-prefix: '' # optional; used in recommended_imagetags.
           rules: |
-            peggy-updates-incomplete: 'apps/affected/src/parser.peggy' AND !('apps/affected/src/parser.ts' OR 'e2e/src/affected/parser.spec.ts');
+            peggy-parser-updated: 'apps/affected/src/parser.peggy';
+            peggy-parser-updates-incomplete: peggy-parser-updated AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
               # peggy was updated but not the generated parser file or its tests.
             markdown: '**/*.md';
             <project-ui>: 'project-ui/**' EXCEPT (markdown '**/*.spec.ts');
@@ -459,6 +460,12 @@ jobs:
           echo '${{ needs.vars.outputs.version-autopilot }}' | jq .
 ```
 
+The `uses:` clause we recommend locking to a specific version.
+
+```yaml
+uses: leblancmeneses/actions/dist/apps/<taskname>@main # latest
+uses: leblancmeneses/actions/dist/apps/<taskname>@v1.1.1 # specific tag
+```
 
 # Run locally
 

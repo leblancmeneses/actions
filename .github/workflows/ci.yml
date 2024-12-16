@@ -74,7 +74,7 @@ jobs:
         with:
           rules: |
             peggy-parser-updated: 'apps/affected/src/parser.peggy';
-            peggy-parser-updates-incomplete: peggy-parser-updated AND !('apps/affected/src/parser.ts' OR 'e2e/src/affected/parser.spec.ts');
+            peggy-parser-updates-incomplete: peggy-parser-updated AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
             ci: '.github/workflows/ci.yml';
             <affected>: './apps/affected/**' './dist/apps/affected/**';
             <version-autopilot>: './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
