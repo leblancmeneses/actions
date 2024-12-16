@@ -118,7 +118,7 @@ export async function evaluateStatementForHashes(statements: AST): Promise<Recor
         };
       }
 
-      case 'EXCLUDE': {
+      case 'NEGATE': {
         // NOT operation: !exp
         // If exp matched M and excluded E, then !exp = all_files - (M ∪ E).
         const res = evaluateNode(node.exp, files);

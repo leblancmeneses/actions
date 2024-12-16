@@ -55,7 +55,7 @@ LogicalExpression
 
 GroupingExpression
   = "!" _ "(" _ e:LogicalExpression _ ")" {
-      return { type: "EXCLUDE", exp: e };
+      return { type: "NEGATE", exp: e };
     }
   / "(" _ e:LogicalExpression _ ")" { return e; }
   / primary
@@ -66,7 +66,7 @@ Operator
 
 primary
   = val:ValueOfInterest { return val; }
-  / "!" _ exp:ValueOfInterest { return { type: "EXCLUDE", exp }; }
+  / "!" _ exp:ValueOfInterest { return { type: "NEGATE", exp }; }
 
 ValueOfInterest
   = SingleQuoteLiteral
@@ -107,8 +107,7 @@ Literal
     }
 
 Key
-  = bracketedKey
-  / nestedKey
+  = nestedKey
   / simpleKey
 
 

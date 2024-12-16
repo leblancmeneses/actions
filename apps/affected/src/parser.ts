@@ -288,13 +288,13 @@ function peg$parse(input, options) {
       return buildExpressionChain(expressions, ops);
     };
   var peg$f4 = function(e) {
-      return { type: "EXCLUDE", exp: e };
+      return { type: "NEGATE", exp: e };
     };
   var peg$f5 = function(e) { return e; };
   var peg$f6 = function() { return "AND"; };
   var peg$f7 = function() { return "OR"; };
   var peg$f8 = function(val) { return val; };
-  var peg$f9 = function(exp) { return { type: "EXCLUDE", exp }; };
+  var peg$f9 = function(exp) { return { type: "NEGATE", exp }; };
   var peg$f10 = function(items) {
       return items;
     };

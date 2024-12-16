@@ -18,7 +18,7 @@ function quote(value: string, suffix?: string): Expression {
   };
 }
 
-// Helper for AND, OR, EXCLUDE, and STATEMENT_REF
+// Helper for AND, OR, NEGATE, and STATEMENT_REF
 function and(...values: Expression[]): Expression {
   return { type: 'AND', values };
 }
@@ -28,7 +28,7 @@ function or(...values: Expression[]): Expression {
 }
 
 function not(exp: Expression): Expression {
-  return { type: 'EXCLUDE', exp };
+  return { type: 'NEGATE', exp };
 }
 
 function ref(name: string): Expression {

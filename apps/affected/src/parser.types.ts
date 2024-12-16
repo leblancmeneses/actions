@@ -34,7 +34,7 @@ export interface AndExpression {
 
 // Exclude applies logical negation to any Expression
 export interface ExcludeExpression {
-  type: 'EXCLUDE';
+  type: 'NEGATE';
   exp: Expression;
 }
 

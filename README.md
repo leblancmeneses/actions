@@ -4,7 +4,8 @@
   - [Affected Action](#affected-action)
     - [Rule DSL](#rule-dsl)
       - [Composing Rules](#composing-rules)
-      - [Exclusion Expression](#exclusion-expression)
+      - [Negate Expression](#negate-expression)
+      - [Except Expression](#except-expression)
       - [Wrapping up example](#wrapping-up-example)
     - [Consuming the JSON object](#consuming-the-json-object)
     - [Real world usage](#real-world-usage)
@@ -52,39 +53,47 @@ jobs:
           gitflow-production-branch: '' # optional; used in recommended_imagetags.
           recommended-imagetags-prefix: '' # optional; used in recommended_imagetags.
           rules: |
-            <project-ui>: 'project-ui/**';
-              # project-ui is the image name, directory to calculate the sha, and changes key.
-            <project-api>: 'project-api/**';
-              # project-api is the image name, directory to calculate the sha, and changes key.
-            [project-dbmigrations](./databases/project): './databases/project/**';
-              # project-dbmigrations is the image name.
-              # './databases/project' is the directory to calculate the sha.
-              # changes.project-dbmigrations is boolean of the evaluated expression.
-            project-e2e: project-ui project-api project-dbmigrations !'**/*.md';
-              # changes.project-e2e is boolean of the evaluated expression.
+            peggy-updates-incomplete: 'apps/affected/src/parser.peggy' AND !('apps/affected/src/parser.ts' OR 'e2e/src/affected/parser.spec.ts');
+              # peggy was updated but not the generated parser file or its tests.
+            markdown: '**/*.md';
+            <project-ui>: 'project-ui/**' EXCEPT (markdown '**/*.spec.ts');
+            <project-api>: 'project-api/**' EXCEPT ('**/README.md');
+            <project-dbmigrations>: './databases/project/**';
+            project-e2e: (project-ui project-api project-dbmigrations) EXCEPT (markdown);
 
 ```
 ### Rule DSL
 
-These rules map a *project name*, its *directory*, and the *expression* to check for changes.
+These rules map a *project name* and the *expression* to check for changes and to generate an sha1 hash of the dependency graph.
 
-* The left side of the colon `:` is the **rule key**, while the right side specifies the expression to match files.
-* **Rule keys with brackets** `[]` or `<>` will appear in the JSON object under `recommended_imagetags` or `shas`, and `changes`.
+* The left side of the colon `:` is the **rule key**, while the right side specifies the **expression** to match files.
+* **Rule keys with brackets** `<>` will appear in the JSON object under `recommended_imagetags` or `shas`, and `changes`.
 * **Rule keys without brackets** will only appear in `changes` but **not** in `recommended_imagetags` or `shas`.
+* Glob expressions use [picomatch](https://github.com/micromatch/picomatch) for matching.
+
 
 #### Composing Rules
 
 The `project-e2e` rule includes `project-ui`, `project-api`, and `project-dbmigrations`. This allows referencing prior expressions and combining them.
 For example, **e2e** runs if files change in any of these projects but not for markdown-only changes.
+An expression can combine multiple expressions using `AND` or `OR` operators.  Implicitly `OR` is used if no operator is specified.
 
-#### Exclusion Expression
 
-The `!` operator excludes files or directories.
+#### Negate Expression
 
-* For example, `!'**/*.md'` excludes all markdown files.
-* Glob expressions use [picomatch](https://github.com/micromatch/picomatch) for matching.
+The `!` operator negates files or directories.
 
-This structure provides flexibility and reusability for defining change-based rules across projects.
+* For example, `!'dir/file.js'` ensures changes are not made to the file in a pull request.
+
+#### Except Expression
+
+The `EXCEPT` operator removes files or directories from the expression.
+
+```yaml
+  markdown: '**/*.md';
+  <project-ui>: 'project-ui/**' EXCEPT (markdown '**/*.spec.ts');
+```
+
 
 #### Wrapping up example
 
@@ -93,7 +102,7 @@ Assuming a change list containing:
 ```json
 [
   "project-ui/file1.js",
-  "project-api/readme.md",
+  "project-api/README.md",
 ]
 ```
 
@@ -102,7 +111,9 @@ The `affected` action will generate the following JSON objects:
 ```json
 {
   "changes": {
-    "project-api": true,
+    "peggy-updates-incomplete": false,
+    "markdown": true,
+    "project-api": false,
     "project-ui": true,
     "project-dbmigrations": false,
     "project-e2e": true
@@ -138,11 +149,8 @@ The `affected` action will generate the following JSON objects:
           echo '${{ steps.affected.outputs.affected }}' | jq .
 
           # You can use env values for naming complex expressions.
-          AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r .changes.affected)
-          VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["version-autopilot"]')
-
-          echo "AFFECTED_AFFECTED=$AFFECTED_AFFECTED" >> $GITHUB_ENV
-          echo "VERSION_AUTOPILOT_AFFECTED=$VERSION_AUTOPILOT_AFFECTED" >> $GITHUB_ENV
+          HAS_CHANGED_PROJECT_E2E=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["project-e2e"]')
+          echo "HAS_CHANGED_PROJECT_E2E=$HAS_CHANGED_PROJECT_E2E" >> $GITHUB_ENV
 
       - name: e2e tests
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.project-e2e }}
@@ -158,9 +166,6 @@ jobs:
     uses: ./.github/workflows/template.job.init.yml
     secrets:
       GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
-
-  # ... uses pragma and affected tasks
-
 
   build-ui:
     needs: [vars, lint-ui, lint-api]
