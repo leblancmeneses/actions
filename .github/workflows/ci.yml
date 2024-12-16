@@ -76,9 +76,9 @@ jobs:
             peggy-parser-updated: 'apps/affected/src/parser.peggy';
             peggy-parser-updates-incomplete: peggy-parser-updated AND !('apps/affected/src/parser.ts' OR 'e2e/src/affected/parser.spec.ts');
             ci: '.github/workflows/ci.yml';
-            [affected]: './apps/affected/**' './dist/apps/affected/**';
-            [version-autopilot]: './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
-            [pragma]: './apps/pragma/**' './dist/apps/pragma/**';
+            <affected>: './apps/affected/**' './dist/apps/affected/**';
+            <version-autopilot>: './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
+            <pragma>: './apps/pragma/**' './dist/apps/pragma/**';
             e2e: ('./e2e/**' ci pragma affected version-autopilot) EXCEPT ('**/*.md');
 
       - name: incomplete parser changes
