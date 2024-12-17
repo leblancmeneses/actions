@@ -60,7 +60,7 @@ jobs:
           recommended-imagetags-prefix: '' # optional; used in recommended_imagetags.
           rules: |
             peggy-parser-updated: 'apps/affected/src/parser.peggy';
-            peggy-parser-updates-incomplete: peggy-parser-updated AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
+            peggy-parser-updates-incomplete: peggy-parser-updated AND (!'apps/affected/src/parser.ts' AND !'apps/e2e/src/affected/parser.spec.ts');
               # peggy was updated but not the generated parser file or its tests.
             markdown: '**/*.md';
             <project-ui>: 'project-ui/**' EXCEPT (markdown '**/*.spec.ts');
