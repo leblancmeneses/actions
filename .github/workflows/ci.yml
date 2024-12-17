@@ -44,7 +44,7 @@ jobs:
       # - run: npx nx-cloud record -- echo Hello World
       # - run: npx nx affected -t lint test build
 
-      - name: example version-autopilot
+      - name: calculate version-autopilot
         id: version-autopilot
         uses: ./dist/apps/version-autopilot
         with:
@@ -52,14 +52,14 @@ jobs:
           minor: 0
           shift: 50 # remove if this is a brand new application. Otherwise, use this to match your current version.
 
-      - name: example version-autopilot output
+      - name: version-autopilot output
         run: |
           echo "github.run_number: ${{ github.run_number }}"
           echo "version_autopilot_string_recommended: ${{ steps.version-autopilot.outputs.version_autopilot_string_recommended }}"
           echo "version_autopilot_string: ${{ steps.version-autopilot.outputs.version_autopilot_string }}"
           echo "version_autopilot_code: ${{ steps.version-autopilot.outputs.version_autopilot_code }}"
 
-      - name: example pragma
+      - name: calculate pragma
         id: pragma
         uses: ./dist/apps/pragma
         with:
@@ -68,16 +68,31 @@ jobs:
             force = false
             deploy = "${{ github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/prod' }}"
 
-      - name: example affected
+      - name: calculate affected
         id: affected
         uses: ./dist/apps/affected
         with:
           rules: |
+            peggy-parser: 'apps/affected/src/parser.peggy';
+            peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
             ci: '.github/workflows/ci.yml';
-            [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**';
-            [version-autopilot](./apps/version-autopilot): './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
-            [pragma](./apps/pragma): './apps/pragma/**' './dist/apps/pragma/**';
-            e2e: './e2e/**' ci pragma affected version-autopilot !'**/*.md';
+            <affected>: './apps/affected/**' './dist/apps/affected/**';
+            <version-autopilot>: './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
+            <pragma>: './apps/pragma/**' './dist/apps/pragma/**';
+            e2e: ('./e2e/**' ci pragma affected version-autopilot) EXCEPT ('**/*.md');
+
+      - name: incomplete parser changes
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.peggy-parser-checkIf-incomplete }}
+        run: |
+          echo "Missing parser.ts or parser.spec.ts in changeset."
+          exit 1
+
+      - name: check if parser changes are incomplete
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.peggy-parser }}
+        run: |
+          pnpm apps:affected:generate-parser
+          sed -i '1i /* eslint-disable @typescript-eslint/ban-ts-comment */\n// @ts-nocheck' apps/affected/src/parser.ts
+          git diff --exit-code -- ./
 
       - name: e2e tests
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.e2e }}

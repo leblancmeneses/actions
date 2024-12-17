@@ -7,22 +7,100 @@ jest.mock('child_process', () => {
     execSync: jest.fn(),
   };
 });
-/* eslint-disable @nx/enforce-module-boundaries */
-import * as affectedMain from "@affected/main"; // Import everything
 import * as github from '@actions/github';
-import { run } from "@affected/main";
+import { run } from "../../../affected/src/main";
 import * as core from "@actions/core";
 import * as cp from 'child_process';
 
 
 
-describe("affected action changes tests", () => {
+describe("changes.spec", () => {
+    const files = `.editorconfig
+    .eslintignore
+    .eslintrc.json
+    .github/example-output.png
+    .github/workflows/ci.yml
+    .gitignore
+    .husky/pre-commit
+    .nvmrc
+    .prettierignore
+    .prettierrc
+    .vscode/extensions.json
+    LICENSE
+    README.md
+    apps/affected/.eslintrc.json
+    apps/affected/action.yml
+    apps/affected/jest.config.ts
+    apps/affected/project.json
+    apps/affected/src/changedFiles.ts
+    apps/affected/src/evaluateStatementsForChanges.ts
+    apps/affected/src/main.ts
+    apps/affected/src/parser.peggy
+    apps/affected/src/parser.ts
+    apps/affected/src/parser.types.ts
+    apps/affected/tsconfig.app.json
+    apps/affected/tsconfig.json
+    apps/affected/tsconfig.spec.json
+    apps/e2e/.eslintrc.json
+    apps/e2e/jest.config.ts
+    apps/e2e/project.json
+    apps/e2e/src/affected/TODO.md
+    apps/e2e/src/affected/affected.spec.ts
+    apps/e2e/src/affected/changed-files.spec.ts
+    apps/e2e/src/affected/changes.spec.ts
+    apps/e2e/src/affected/evaluate-statements-for-changes.spec.ts
+    apps/e2e/src/affected/parser.spec.ts
+    apps/e2e/src/pragma/pragma.spec.ts
+    apps/e2e/src/test-setup.ts
+    apps/e2e/src/version-autopilot/version-autopilot.spec.ts
+    apps/e2e/tsconfig.json
+    apps/e2e/tsconfig.spec.json
+    apps/pragma/.eslintrc.json
+    apps/pragma/action.yml
+    apps/pragma/jest.config.ts
+    apps/pragma/project.json
+    apps/pragma/src/main.ts
+    apps/pragma/tsconfig.app.json
+    apps/pragma/tsconfig.json
+    apps/pragma/tsconfig.spec.json
+    apps/version-autopilot/.eslintrc.json
+    apps/version-autopilot/action.yml
+    apps/version-autopilot/jest.config.ts
+    apps/version-autopilot/project.json
+    apps/version-autopilot/src/main.ts
+    apps/version-autopilot/tsconfig.app.json
+    apps/version-autopilot/tsconfig.json
+    apps/version-autopilot/tsconfig.spec.json
+    dist/apps/affected/action.yml
+    dist/apps/affected/main.js
+    dist/apps/pragma/action.yml
+    dist/apps/pragma/main.js
+    dist/apps/version-autopilot/action.yml
+    dist/apps/version-autopilot/main.js
+    docs/graphics/repository-open-graph-template.png
+    jest.config.ts
+    jest.preset.js
+    nx.json
+    package.json
+    pnpm-lock.yaml
+    tsconfig.base.json`.split('\n').map(f => f.trim()).filter(Boolean);
+
   const gitMockResponses = {
-    'git log 151e51530cd03e7cc60ca28582e990bca14cc90e --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => '151e51530cd03e7cc60ca28582e990bca14cc90e',
-    'git log 632865e4315146beae430ce80f8a52fc7f4355e6 --oneline --pretty=format:"%H" -n 1 -- "./apps/affected"': () => 'cde29f8c5001e95a5380a007954183eb7d07a7b3',
-    'git log 151e51530cd03e7cc60ca28582e990bca14cc90e --oneline --pretty=format:"%H" -n 1 -- "./apps/version-autopilot"': () => 'eb878e9d30254e35e6ff41b236116daf07fdfadd',
-    'git log 151e51530cd03e7cc60ca28582e990bca14cc90e --oneline --pretty=format:"%H" -n 1 -- "./apps/pragma"': () => 'eb878e9d30254e35e6ff41b236116daf07fdfadd',
+    'git diff --name-status base1 head1': () => `
+M\t.github/workflows/ci.yml
+M\tapps/affected/src/main.ts
+`.trim(),
+    'git ls-files': () => files.join('\n'),
   };
+
+  beforeAll(() => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -36,8 +114,8 @@ describe("affected action changes tests", () => {
 
     github.context.eventName = 'pull_request';
     process.env.BASE_REF='develop';
-    process.env.BASE_SHA='151e51530cd03e7cc60ca28582e990bca14cc90e';
-    process.env.HEAD_SHA='632865e4315146beae430ce80f8a52fc7f4355e6';
+    process.env.BASE_SHA='base1';
+    process.env.HEAD_SHA='head1';
     github.context.payload = {
       pull_request: {
         number: 100,
@@ -45,29 +123,33 @@ describe("affected action changes tests", () => {
     };
   });
 
-  test("should evaluate multiple expressions cumulatively", async () => {
+  test("should evaluate base expression", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
-          [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**';
+          <affected>: './apps/affected/**' './dist/apps/affected/**';
         `;
       return "";
     });
 
     const execSyncResponses = {
-      ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT 151e51530cd03e7cc60ca28582e990bca14cc90e 632865e4315146beae430ce80f8a52fc7f4355e6': () => [
-          '.github/workflows/ci.yml',
-          'apps/affected/src/main.ts'
-      ].join('\n'),
+      ...gitMockResponses
     };
 
     jest.spyOn(cp, 'execSync')
-      .mockImplementation((inputName) => {
-        if (execSyncResponses[inputName]) {
-          return execSyncResponses[inputName]();
+      .mockImplementation((command) => {
+        if (command.startsWith('git hash-object')) {
+          const match = command.match(/git hash-object\s+"([^"]+)"/);
+          if(!match) {
+            throw new Error(`Unexpected command: ${command}`);
+          }
+
+          return match[1];
         }
-        throw new Error(`Unexpected input: ${inputName}`);
+        if (execSyncResponses[command]) {
+          return execSyncResponses[command]();
+        }
+        throw new Error(`Unexpected input: ${command}`);
       });
 
     // Act
@@ -80,29 +162,33 @@ describe("affected action changes tests", () => {
   });
 
 
-  test("should evaluate multiple expressions cumulatively with exclusion not matching", async () => {
+  test("should evaluate base expression with except not matching", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
-          [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**' !'**/*.md';
+          <affected>: ('./apps/affected/**' OR './dist/apps/affected/**') EXCEPT('**/*.md');
         `;
       return "";
     });
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT 151e51530cd03e7cc60ca28582e990bca14cc90e 632865e4315146beae430ce80f8a52fc7f4355e6': () => [
-          '.github/workflows/ci.yml',
-          'apps/affected/src/main.ts'
-      ].join('\n'),
     };
 
     jest.spyOn(cp, 'execSync')
-      .mockImplementation((inputName) => {
-        if (execSyncResponses[inputName]) {
-          return execSyncResponses[inputName]();
+      .mockImplementation((command) => {
+        if (command.startsWith('git hash-object')) {
+          const match = command.match(/git hash-object\s+"([^"]+)"/);
+          if(!match) {
+            throw new Error(`Unexpected command: ${command}`);
+          }
+
+          return match[1];
         }
-        throw new Error(`Unexpected input: ${inputName}`);
+        if (execSyncResponses[command]) {
+          return execSyncResponses[command]();
+        }
+        throw new Error(`Unexpected input: ${command}`);
       });
 
     // Act
@@ -114,29 +200,33 @@ describe("affected action changes tests", () => {
     });
   });
 
-  test("should evaluate multiple expressions cumulatively with exclusion matching", async () => {
+  test("should evaluate base expression with except matching", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
-          [affected](./apps/affected): './apps/affected/**' './dist/apps/affected/**' !'**/*.yml';
+          <affected>: './apps/affected/**' './dist/apps/affected/**' !'**/*.yml';
         `;
       return "";
     });
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT 151e51530cd03e7cc60ca28582e990bca14cc90e 632865e4315146beae430ce80f8a52fc7f4355e6': () => [
-          '.github/workflows/ci.yml',
-          'apps/affected/src/main.ts'
-      ].join('\n'),
     };
 
     jest.spyOn(cp, 'execSync')
-      .mockImplementation((inputName) => {
-        if (execSyncResponses[inputName]) {
-          return execSyncResponses[inputName]();
+      .mockImplementation((command) => {
+        if (command.startsWith('git hash-object')) {
+          const match = command.match(/git hash-object\s+"([^"]+)"/);
+          if(!match) {
+            throw new Error(`Unexpected command: ${command}`);
+          }
+
+          return match[1];
         }
-        throw new Error(`Unexpected input: ${inputName}`);
+        if (execSyncResponses[command]) {
+          return execSyncResponses[command]();
+        }
+        throw new Error(`Unexpected input: ${command}`);
       });
 
     // Act
@@ -148,31 +238,36 @@ describe("affected action changes tests", () => {
     });
   });
 
-  test("should evaluate multiple expressions cumulatively with exclusion as composite and comments", async () => {
+  test("should evaluate base expression with except excluding all as composite and comments", async () => {
     // Arrange
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
           typescript: '**/*.ts'; // match all typescript files
-          ignoreYaml: !'**/*.yml'; ## match all non yaml files
-          [affected](./apps/affected): ignoreYaml './apps/affected/**' './dist/apps/affected/**' !typescript; /* the order of exclusion should not matter.*/
+          yaml: '**/*.yml'; ## match all non yaml files
+          notYaml: !'**/*.yml'; ## match all non yaml files
+          <affected>: ('./apps/affected/**' OR './dist/apps/affected/**') EXCEPT (yaml typescript);
         `;
       return "";
     });
 
     const execSyncResponses = {
       ...gitMockResponses,
-      'git diff --name-only --diff-filter=ACMRT 151e51530cd03e7cc60ca28582e990bca14cc90e 632865e4315146beae430ce80f8a52fc7f4355e6': () => [
-          '.github/workflows/ci.yml',
-          'apps/affected/src/main.ts'
-      ].join('\n'),
     };
 
     jest.spyOn(cp, 'execSync')
-      .mockImplementation((inputName) => {
-        if (execSyncResponses[inputName]) {
-          return execSyncResponses[inputName]();
+      .mockImplementation((command) => {
+        if (command.startsWith('git hash-object')) {
+          const match = command.match(/git hash-object\s+"([^"]+)"/);
+          if(!match) {
+            throw new Error(`Unexpected command: ${command}`);
+          }
+
+          return match[1];
         }
-        throw new Error(`Unexpected input: ${inputName}`);
+        if (execSyncResponses[command]) {
+          return execSyncResponses[command]();
+        }
+        throw new Error(`Unexpected input: ${command}`);
       });
 
     // Act
@@ -181,7 +276,8 @@ describe("affected action changes tests", () => {
     // Assert
     expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
       "typescript": true,
-      "ignoreYaml": true,
+      "yaml": true,
+      "notYaml": false,
       "affected": false
     });
   });

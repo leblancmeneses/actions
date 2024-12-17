@@ -1,161 +1,17 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { parse } from './parser';
-import { execSync } from 'child_process';
-import fs from 'fs';
-import picomatch from 'picomatch';
+import {getChangedFiles} from './changedFiles';
+import {evaluateStatementsForChanges} from './evaluateStatementsForChanges';
+import {allGitFiles, evaluateStatementsForHashes} from './evaluateStatementsForHashes';
+import { AST } from './parser.types';
 
 
-function evaluateStatements(statements, originalChangedFiles) {
-  const result = {};
-  const seen = new Map();
-
-  function evaluateStatement(statementKey, changedFiles) {
-    // Check if the statementKey has already been evaluated
-    if (seen.has(statementKey)) {
-      return seen.get(statementKey);
-    }
-
-    const statement = statements.find((s) => s.key.name === statementKey);
-    if (!statement) {
-      throw new Error(`Referenced statement key '${statementKey}' does not exist.`);
-    }
-
-    let cumulativeFiles = [];
-    let excludedFiles = [];
-
-    for (const value of statement.value) {
-      let currentFiles = [...changedFiles]; // Start with original files for each value
-
-      if (value.type === 'QUOTE_LITERAL') {
-        // Filter the files that match the QUOTE_LITERAL pattern
-        const isMatch = picomatch(value.value, { dot: true });
-        currentFiles = currentFiles.filter((file) => isMatch(file));
-      } else if (value.type === 'STATEMENT_REF') {
-        // Recursively evaluate the referenced statement and append new matches
-        const refMatches = evaluateStatement(value.value, originalChangedFiles);
-        currentFiles = [...new Set([...currentFiles, ...(refMatches.cumulativeFiles || [])])];
-        excludedFiles = [...new Set([...excludedFiles, ...(refMatches.excludedFiles || [])])];
-      } else if (value.type === 'INVERSE') {
-        if (value.exp.type === 'QUOTE_LITERAL') {
-          // Filter out files that match the INVERSE pattern
-          const isMatch = picomatch(value.exp.value, { dot: true });
-          const inverseMatches = currentFiles.filter((file) => isMatch(file));
-          excludedFiles = [...new Set([...excludedFiles, ...inverseMatches])];
-          currentFiles = currentFiles.filter((file) => !isMatch(file));
-        } else if (value.exp.type === 'STATEMENT_REF') {
-          // Evaluate the referenced statement in INVERSE
-          const refMatches = evaluateStatement(value.exp.value, originalChangedFiles);
-          const inverseMatches = currentFiles.filter((file) =>
-            refMatches.cumulativeFiles.includes(file)
-          );
-          excludedFiles = [...new Set([...excludedFiles, ...inverseMatches])];
-          currentFiles = currentFiles.filter((file) => !inverseMatches.includes(file));
-        }
-      } else {
-        throw new Error(`Unsupported value type: ${value.type}`);
-      }
-      cumulativeFiles = [...new Set([...cumulativeFiles, ...currentFiles])];
-    }
-
-    // Cache the result for the current statementKey
-    const evaluatedResult = { cumulativeFiles, excludedFiles };
-    seen.set(statementKey, evaluatedResult);
-
-    return evaluatedResult;
-  }
-
-  for (const statement of statements) {
-    if (statement.type === 'STATEMENT') {
-      const { cumulativeFiles, excludedFiles } = evaluateStatement(statement.key.name, originalChangedFiles);
-      const netFiles = cumulativeFiles.filter((file) => !excludedFiles.includes(file));
-      result[statement.key.name] = netFiles.length > 0;
-    }
-  }
-
-  return result;
-}
-
-
-
-
-export const getChangedFiles = async () => {
-  const eventName = github.context.eventName;
-  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
-  const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
-
-  let changedFiles = [];
-
-  try {
-    if (
-      eventName === 'pull_request' || eventName === 'workflow_dispatch'
-    ) {
-      // Pull request or workflow dispatch event
-      const baseDiffCommand = `git diff --name-only --diff-filter=ACMRT ${baseSha} ${headSha}`;
-      changedFiles = execSync(baseDiffCommand)
-        .toString()
-        .trim()
-        .split('\n')
-        .map((file) => file.trim())
-        .filter(Boolean);
-    } else if (eventName === 'push') {
-      // Push event
-      const baseDiffCommand = 'git diff --name-only HEAD~1';
-      changedFiles = execSync(baseDiffCommand)
-        .toString()
-        .trim()
-        .split('\n')
-        .map((file) => file.trim())
-        .filter(Boolean);
-    }
-
-    return changedFiles;
-  } catch (error) {
-    console.error('Error executing Git command:', error.message);
-    return [];
-  }
-}
-
-export const getCommitHash = (path: string, hasChanges: boolean) => {
-  const folderOfInterest = path.startsWith("./") ? path : `./${path}`;
-  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
-  const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
-
-  let commitSha = execSync(
-    `git log ${baseSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`
-  ).toString().trim();
-
-  if (hasChanges) {
-    commitSha = execSync(`git log ${headSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`)
-      .toString()
-      .trim();
-  }
-
-  return commitSha;
-}
-
-export const getDevOrProdPrefixImageName = (hasChanges: boolean, sha: string, appTarget: string, path?: string, productionBranch?: string, imageTagPrefix?: string) => {
-  const folderOfInterest = path ? path.startsWith("./") ? path : `./${path}` : `./${appTarget}`;
-
+export const getImageName = (appTarget: string, hasChanges: boolean, sha: string, productionBranch?: string, imageTagPrefix?: string) => {
   const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || process.env.GITHUB_REF_NAME;
-  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
-  const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
-
-  const commitShaBefore = execSync(
-    `git log ${baseSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`
-  ).toString().trim();
-
-  let commitShaAfter = commitShaBefore;
-
-  if (hasChanges) {
-    commitShaAfter = execSync(`git log ${headSha} --oneline --pretty=format:"%H" -n 1 -- "${folderOfInterest}"`)
-      .toString()
-      .trim();
-  }
-
 
   let imageName1 = `${appTarget}:${baseRef}-${sha}`;
-  if (commitShaBefore === commitShaAfter) {
+  if (!hasChanges) {
     if (productionBranch) {
       imageName1 = `${appTarget}:${productionBranch}-${sha}`;
     }
@@ -189,7 +45,7 @@ export async function run() {
     log(`github.context: ${JSON.stringify(github.context, undefined, 2)}`, verbose);
 
     if (rulesInput) {
-      const statements = parse(rulesInput, undefined);
+      const statements = parse(rulesInput, undefined) as AST;
 
       if (!Array.isArray(statements)) {
         throw new Error('Rules must be an array of statements');
@@ -198,23 +54,23 @@ export async function run() {
       const changedFiles = await getChangedFiles();
       log(`Changed Files: ${changedFiles.join('\n')}`, verbose);
 
-      const affected = evaluateStatements(statements, changedFiles) as Record<string, boolean>;
-      for (const [key, value] of Object.entries(affected)) {
+      const {changes} = evaluateStatementsForChanges(statements, changedFiles);
+      for (const [key, value] of Object.entries(changes)) {
         affectedChanges[key] = value;
       }
+
+      const allFiles = await allGitFiles();
+      log(`All Git Files: ${allFiles.join('\n')}`, verbose);
+      const commitSha = await evaluateStatementsForHashes(statements, allFiles);
 
       for (const statement of statements) {
         if (statement.type !== 'STATEMENT') continue;
 
         const { key } = statement;
         if (key.path) {
-          if (!fs.existsSync(key.path) || !fs.lstatSync(key.path).isDirectory()) {
-            throw new Error(`Invalid directory: ${key.path}`);
-          }
-          const commitSha = getCommitHash(key.path, affectedChanges[key.name]);
-          affectedShas[key.name] = commitSha;
+          affectedShas[key.name] = commitSha[key.name];
 
-          const imageName = getDevOrProdPrefixImageName(affectedChanges[key.name], commitSha, key.name, key.path, productionBranch, imageTagPrefix);
+          const imageName = getImageName(key.name, affectedChanges[key.name], commitSha[key.name], productionBranch, imageTagPrefix);
           affectedImageTags[key.name] = imageName;
 
           log(`Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`, verbose);
@@ -234,6 +90,7 @@ export async function run() {
     core.info(`affected: ${JSON.stringify(affectedOutput, null, 2)}!`);
   } catch (error) {
     core.setFailed(error.message);
+    throw error;
   }
 }
 

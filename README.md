@@ -4,7 +4,14 @@
   - [Affected Action](#affected-action)
     - [Rule DSL](#rule-dsl)
       - [Composing Rules](#composing-rules)
-      - [Exclusion Expression](#exclusion-expression)
+      - [Literal Expression](#literal-expression)
+      - [Regex Expression](#regex-expression)
+      - [Suffix for Literal and Regex Expressions](#suffix-for-literal-and-regex-expressions)
+        - [Usage with Literal Expressions:](#usage-with-literal-expressions)
+        - [Usage with Regular Expressions:](#usage-with-regular-expressions)
+        - [Key Notes:](#key-notes)
+      - [Negate Expression](#negate-expression)
+      - [Except Expression](#except-expression)
       - [Wrapping up example](#wrapping-up-example)
     - [Consuming the JSON object](#consuming-the-json-object)
     - [Real world usage](#real-world-usage)
@@ -52,48 +59,96 @@ jobs:
           gitflow-production-branch: '' # optional; used in recommended_imagetags.
           recommended-imagetags-prefix: '' # optional; used in recommended_imagetags.
           rules: |
-            <project-ui>: 'project-ui/**';
-              # project-ui is the image name, directory to calculate the sha, and changes key.
-            <project-api>: 'project-api/**';
-              # project-api is the image name, directory to calculate the sha, and changes key.
-            [project-dbmigrations](./databases/project): './databases/project/**';
-              # project-dbmigrations is the image name.
-              # './databases/project' is the directory to calculate the sha.
-              # changes.project-dbmigrations is boolean of the evaluated expression.
-            project-e2e: project-ui project-api project-dbmigrations !'**/*.md';
-              # changes.project-e2e is boolean of the evaluated expression.
+            peggy-parser: 'apps/affected/src/parser.peggy';
+            peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
+              # peggy was updated but not the generated parser file or its tests.
+            markdown: '**/*.md';
+            <project-ui>: 'project-ui/**' EXCEPT (markdown '**/*.spec.ts');
+            <project-api>: 'project-api/**' EXCEPT ('**/README.md');
+            <project-dbmigrations>: './databases/project/**';
+            project-e2e: (project-ui project-api project-dbmigrations) EXCEPT (markdown);
 
 ```
 ### Rule DSL
 
-These rules map a *project name*, its *directory*, and the *expression* to check for changes.
+These rules map a *project name* and the *expression* to check for changes and to generate an sha1 hash of the dependency graph.
 
-* The left side of the colon `:` is the **rule key**, while the right side specifies the expression to match files.
-* **Rule keys with brackets** `[]` or `<>` will appear in the JSON object under `recommended_imagetags` or `shas`, and `changes`.
+* The left side of the colon `:` is the **rule key**, while the right side specifies the **expression** to match files.
+* **Rule keys with brackets** `<>` will appear in the JSON object under `recommended_imagetags` or `shas`, and `changes`.
 * **Rule keys without brackets** will only appear in `changes` but **not** in `recommended_imagetags` or `shas`.
+* Glob expressions use [picomatch](https://github.com/micromatch/picomatch) for matching.
+
 
 #### Composing Rules
 
-The `project-e2e` rule includes `project-ui`, `project-api`, and `project-dbmigrations`. This allows referencing prior expressions and combining them.
-For example, **e2e** runs if files change in any of these projects but not for markdown-only changes.
+The `project-e2e` rule is composed of `project-ui`, `project-api`, and `project-dbmigrations`, enabling you to reference and combine multiple expressions. For example, `e2e` runs when files change in any of these projects but excludes runs triggered by markdown-only changes.
 
-#### Exclusion Expression
+Expressions can combine multiple conditions using `AND` or `OR` operators. If no operator is specified, `OR` is used by default.
 
-The `!` operator excludes files or directories.
+#### Literal Expression
 
-* For example, `!'**/*.md'` excludes all markdown files.
-* Glob expressions use [picomatch](https://github.com/micromatch/picomatch) for matching.
+Literal expressions are string-based and can be enclosed in single or double quotes. For example:
 
-This structure provides flexibility and reusability for defining change-based rules across projects.
+* `'file.ts'` OR `"file.ts"`
+
+By default, literal expressions are case-sensitive. To make them case-insensitive, append the `i` flag:
+
+* Example: `"readme.md"i` will match `README.md`, `readme.md`, or `rEaDme.mD`.
+
+#### Regex Expression
+
+Regex expressions allow for more flexible matching and are defined using the standard JavaScript regex syntax. For example:
+
+* `/readme\.md/i`
+
+This regex will match `README.md`, `readme.md`, or `rEaDme.mD`. Internally, the expression is converted to a JavaScript RegExp object, ensuring full compatibility with JavaScript’s native regex functionality.
+
+
+#### Suffix for Literal and Regex Expressions
+
+By default, all expressions match files regardless of their Git status code. However, you can add a suffix to the expression to filter matches based on specific Git status codes.
+The suffixes are `A` for added, `M` for modified, `D` for deleted, `R` for renamed, `C` for copied, `U` for unmerged, `T` for typechange, `X` for unknown, `B` for broken.
+
+##### Usage with Literal Expressions:
+* **Default behavior:** `'file.ts'` matches files with any Git status code.
+* **With status suffix:** `'file.ts':M` matches only files with the "modified" status.
+* **Case-insensitive matching:** `'file.ts'i:A` matches "added" files, ignoring case.
+
+##### Usage with Regular Expressions:
+* **Default behavior:** `/readme\.md/` matches files with any Git status code.
+* **With status suffix:** `/readme\.md/:M` matches only "modified" files.
+* **Case-insensitive matching:** `/readme\.md/i:A` matches "added" files, ignoring case.
+
+##### Key Notes:
+1. **Suffix Syntax:** Add a colon : followed by the desired status code to filter matches.
+2. **Case Insensitivity:** Use the i flag before the colon to make the match case-insensitive.
+
+
+#### Negate Expression
+
+The `!` operator is used to exclude specific files or directories from matching criteria. This ensures that certain files or directories are not modified in a pull request.
+
+* **Example:** `!'dir/file.js'` ensures that changes to `dir/file.js` are not allowed in a pull request.
+
+
+#### Except Expression
+
+The `EXCEPT` operator removes files or directories from the expression.
+
+```yaml
+  markdown: '**/*.md';
+  <project-ui>: 'project-ui/**' EXCEPT (markdown '**/*.spec.ts');
+```
+
 
 #### Wrapping up example
 
-Assuming a change list containing:
+Assuming a changelist contains the following files:
 
 ```json
 [
   "project-ui/file1.js",
-  "project-api/readme.md",
+  "project-api/README.md",
 ]
 ```
 
@@ -102,7 +157,10 @@ The `affected` action will generate the following JSON objects:
 ```json
 {
   "changes": {
-    "project-api": true,
+    "peggy-parser": false,
+    "peggy-parser-checkIf-incomplete": false,
+    "markdown": true,
+    "project-api": false,
     "project-ui": true,
     "project-dbmigrations": false,
     "project-e2e": true
@@ -138,11 +196,8 @@ The `affected` action will generate the following JSON objects:
           echo '${{ steps.affected.outputs.affected }}' | jq .
 
           # You can use env values for naming complex expressions.
-          AFFECTED_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r .changes.affected)
-          VERSION_AUTOPILOT_AFFECTED=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["version-autopilot"]')
-
-          echo "AFFECTED_AFFECTED=$AFFECTED_AFFECTED" >> $GITHUB_ENV
-          echo "VERSION_AUTOPILOT_AFFECTED=$VERSION_AUTOPILOT_AFFECTED" >> $GITHUB_ENV
+          HAS_CHANGED_PROJECT_E2E=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["project-e2e"]')
+          echo "HAS_CHANGED_PROJECT_E2E=$HAS_CHANGED_PROJECT_E2E" >> $GITHUB_ENV
 
       - name: e2e tests
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.project-e2e }}
@@ -158,9 +213,6 @@ jobs:
     uses: ./.github/workflows/template.job.init.yml
     secrets:
       GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
-
-  # ... uses pragma and affected tasks
-
 
   build-ui:
     needs: [vars, lint-ui, lint-api]
@@ -454,6 +506,14 @@ jobs:
           echo '${{ needs.vars.outputs.version-autopilot }}' | jq .
 ```
 
+We recommend locking the `uses:` clause to a specific tag or sha to avoid pipeline
+breakage due to future changes in the action.
+
+```yaml
+uses: leblancmeneses/actions/dist/apps/<taskname>@main # latest
+uses: leblancmeneses/actions/dist/apps/<taskname>@v1.1.1 # specific tag
+uses: leblancmeneses/actions/dist/apps/<taskname>@commit-sha # specific sha
+```
 
 # Run locally
 

@@ -41,6 +41,7 @@ export async function run() {
     core.info(`version_autopilot: ${JSON.stringify(versionAutopilot, null, 2)}!`);
   } catch (error) {
     core.setFailed(error.message);
+    throw error;
   }
 }
 
