@@ -67,6 +67,13 @@ describe("affected.spec", () => {
           return match[1];
         }
 
+        if (command.startsWith('git diff --name-status')) {
+          return [
+            "project-ui/file1.ts",
+            "project-api/README.md",
+          ].map(f => `M\t${f}`).join('\n');
+        }
+
         if (execSyncResponses[command]) {
           return execSyncResponses[command]();
         }
