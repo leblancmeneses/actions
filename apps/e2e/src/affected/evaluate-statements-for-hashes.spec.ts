@@ -40,7 +40,7 @@ describe('evaluate-statements-for-hashes.spec', () => {
       <markdown>: '**/*.md';
     `, undefined) as AST;
 
-    const result = await evaluateStatementsForHashes(statements);
+    const result = await evaluateStatementsForHashes(statements, files);
     const hash = crypto.createHash('sha1')
                        .update(files.filter(f => f.endsWith('.md')).sort().join('\n') + '\n')
                        .digest('hex');
@@ -146,7 +146,7 @@ describe('evaluate-statements-for-hashes.spec', () => {
     `, undefined) as AST;
 
 
-    const result = await evaluateStatementsForHashes(statements);
+    const result = await evaluateStatementsForHashes(statements, files);
     const matchedFiles = files.filter(f => (f.startsWith('apps/affected/') || f.startsWith('dist/apps/affected/')) && !f.endsWith('.md')).sort();
     const hash = crypto.createHash('sha1')
                        .update(matchedFiles.join('\n') + '\n')

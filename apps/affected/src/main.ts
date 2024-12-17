@@ -3,7 +3,7 @@ import * as github from '@actions/github';
 import { parse } from './parser';
 import {getChangedFiles} from './changedFiles';
 import {evaluateStatementsForChanges} from './evaluateStatementsForChanges';
-import {evaluateStatementsForHashes} from './evaluateStatementsForHashes';
+import {allGitFiles, evaluateStatementsForHashes} from './evaluateStatementsForHashes';
 import { AST } from './parser.types';
 
 
@@ -59,7 +59,9 @@ export async function run() {
         affectedChanges[key] = value;
       }
 
-      const commitSha = await evaluateStatementsForHashes(statements);
+      const allFiles = await allGitFiles();
+      log(`All Git Files: ${allFiles.join('\n')}`, verbose);
+      const commitSha = await evaluateStatementsForHashes(statements, allFiles);
 
       for (const statement of statements) {
         if (statement.type !== 'STATEMENT') continue;

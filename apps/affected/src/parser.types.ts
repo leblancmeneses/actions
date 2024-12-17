@@ -18,7 +18,7 @@ export interface Key {
 export type Expression = 
     OrExpression
   | AndExpression
-  | ExcludeExpression
+  | NegateExpression
   | ExpressionWithExcept
   | ValueOfInterest; 
 
@@ -33,7 +33,7 @@ export interface AndExpression {
 }
 
 // Exclude applies logical negation to any Expression
-export interface ExcludeExpression {
+export interface NegateExpression {
   type: 'NEGATE';
   exp: Expression;
 }
@@ -47,11 +47,20 @@ export interface ExpressionWithExcept {
 }
 
 // A ValueOfInterest can be a quoted literal or a statement reference
-export type ValueOfInterest = QuoteLiteral | StatementRef;
+export type ValueOfInterest = QuoteLiteral | RegexLiteral | StatementRef;
 
 export interface QuoteLiteral {
   type: 'QUOTE_LITERAL';
   value: string;
+  suffix?: string; // optional suffix
+  ignoreCase?: boolean; // optional flag
+}
+
+
+export interface RegexLiteral {
+  type: 'REGEX_LITERAL';
+  pattern: string;
+  flags?: string; // optional flags
   suffix?: string; // optional suffix
 }
 

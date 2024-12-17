@@ -1,5 +1,5 @@
 import { parse } from '../../../affected/src/parser';
-import { AST, Expression, Statement } from '../../../affected/src/parser.types';
+import { AST, Expression, Statement, ValueOfInterest } from '../../../affected/src/parser.types';
 
 function stmt(name: string, value: Expression, path?: string): Statement {
   const key = path ? { name, path } : { name };
@@ -10,13 +10,32 @@ function stmt(name: string, value: Expression, path?: string): Statement {
   };
 }
 
-function quote(value: string, suffix?: string): Expression {
+function exprWithExcept(base: Expression, excludes: ValueOfInterest[]): Expression {
+  return {
+    type: 'EXPRESSION_WITH_EXCEPT',
+    base,
+    excludes
+  };
+}
+
+function quote(value: string, ignoreCase?: boolean, suffix?: string): ValueOfInterest {
   return {
     type: 'QUOTE_LITERAL',
     value,
+    ...(suffix ? { suffix } : {}),
+    ...(ignoreCase ? { ignoreCase: true } : {})
+  };
+}
+
+function regexLiteral(pattern: string, flags?: string, suffix?: string): ValueOfInterest {
+  return {
+    type: 'REGEX_LITERAL',
+    pattern,
+    ...(flags ? { flags } : {}),
     ...(suffix ? { suffix } : {})
   };
 }
+
 
 // Helper for AND, OR, NEGATE, and STATEMENT_REF
 function and(...values: Expression[]): Expression {
@@ -36,16 +55,63 @@ function ref(name: string): Expression {
 }
 
 describe('parser.spec', () => {
-  describe('parenthesis handling', () => {
+
+  describe('literal', () => {
+    it('should parse single quote literal', () => {
+      const rulesInput = `literal: 'readme.md';`;
+      const ast = parse(rulesInput, undefined) as AST;
+
+      expect(ast).toEqual([
+        stmt('literal', quote('readme.md'))
+      ]);
+    });
+    it('should parse double quote literal', () => {
+      const rulesInput = `literal: "readme.md";`;
+      const ast = parse(rulesInput, undefined) as AST;
+
+      expect(ast).toEqual([
+        stmt('literal', quote('readme.md'))
+      ]);
+    });
+
+    it('should parse quote literal with ignore casing', () => {
+      const rulesInput = `literal: "readme.md"i 'readme.md'i;`;
+      const ast = parse(rulesInput, undefined) as AST;
+
+      expect(ast).toEqual([
+        stmt('literal', or(quote('readme.md', true), quote('readme.md', true)))
+      ]);
+    });
+
+    it('should parse quote literal with ignore casing and file status suffix', () => {
+      const rulesInput = `literal: "readme.md"i:a 'readme.md'i:d;`;
+      const ast = parse(rulesInput, undefined) as AST;
+
+      expect(ast).toEqual([
+        stmt('literal', or(quote('readme.md', true, 'A'), quote('readme.md', true, 'D')))
+      ]);
+    });
+
+    it('should parse quote literal with file status suffix only', () => {
+      const rulesInput = `literal: "readme.md":a 'readme.md':d;`;
+      const ast = parse(rulesInput, undefined) as AST;
+
+      expect(ast).toEqual([
+        stmt('literal', or(quote('readme.md', undefined, 'A'), quote('readme.md', undefined, 'D')))
+      ]);
+    });
+  });
+
+  describe('parenthesis', () => {
     const expression = or(
-      quote('lib1/**', 'A'),
+      quote('lib1/**', undefined, 'A'),
       and(
         quote('lib2/**'),
         quote('lib3/**')
       )
     );
     it('should parse mixed1_0 correctly', () => {
-      const rulesInput = `mixed1_0: 'lib1/**'a  ('lib2/**'  AND 'lib3/**');`;
+      const rulesInput = `mixed1_0: 'lib1/**':a  ('lib2/**'  AND 'lib3/**');`;
       const ast = parse(rulesInput, undefined) as AST;
 
       expect(ast).toEqual([
@@ -54,24 +120,66 @@ describe('parser.spec', () => {
     });
 
     it('should parse mixed1_1 correctly', () => {
-      const rulesInput = `mixed1_1: ('lib1/**'a)  ('lib2/**'  AND 'lib3/**');`;
+      const rulesInput = `mixed1_1: ('lib1/**':a)  ('lib2/**'  AND 'lib3/**');`;
       const ast = parse(rulesInput, undefined) as AST;
 
       expect(ast).toEqual([
         stmt('mixed1_1', expression)
       ]);
     });
+
+    it('should parse nested literal with except clause correctly', () => {
+      const rulesInput = `expression: ('**/*.*' EXCEPT('file.ts' 'file.spec.ts'));`;
+      const ast = parse(rulesInput, undefined) as AST;
+
+      expect(ast).toEqual([
+        stmt('expression', exprWithExcept(
+          quote('**/*.*'),
+          [
+            quote('file.ts'),
+            quote('file.spec.ts')
+          ]
+        ))
+      ]);
+    });
   });
 
+  describe('regex', () => {
+    it('should parse basic regex expression', () => {
+      const rulesInput = `regex: /readme.md/;`;
+      const ast = parse(rulesInput, undefined) as AST;
+
+      expect(ast).toEqual([
+        stmt('regex', regexLiteral('readme.md'))
+      ]);
+    });
+
+    it('should parse regex expression without suffix', () => {
+      const rulesInput = `regex: /readme.md/i;`;
+      const ast = parse(rulesInput, undefined) as AST;
+
+      expect(ast).toEqual([
+        stmt('regex', regexLiteral('readme.md', 'i'))
+      ]);
+    });
+    it('should parse regex expression with suffix', () => {
+      const rulesInput = `regex: /readme.md/i:a;`;
+      const ast = parse(rulesInput, undefined) as AST;
+
+      expect(ast).toEqual([
+        stmt('regex', regexLiteral('readme.md', 'i', 'A'))
+      ]);
+    });
+  });
 
   describe('statementref and expression negation', () => {
     it('should parse expression1 correctly', () => {
-      const rulesInput = `expression1: ('lib1/**'a)  ('lib2/**'  AND !'lib3/**') !mixed1_0;`;
+      const rulesInput = `expression1: ('lib1/**':a)  ('lib2/**'  AND !'lib3/**') !mixed1_0;`;
       const ast = parse(rulesInput, undefined) as AST;
 
       expect(ast).toEqual([
         stmt('expression1', or(
-          quote('lib1/**', 'A'),
+          quote('lib1/**', undefined, 'A'),
           and(
             quote('lib2/**'),
             not(quote('lib3/**'))
@@ -82,12 +190,12 @@ describe('parser.spec', () => {
     });
 
     it('should parse expression2 correctly', () => {
-      const rulesInput = `expression2: ('lib1/**'a)  !('lib2/**'  AND !'lib3/**') !mixed1_1;`;
+      const rulesInput = `expression2: ('lib1/**':a)  !('lib2/**'  AND !'lib3/**') !mixed1_1;`;
       const ast = parse(rulesInput, undefined) as AST;
 
       expect(ast).toEqual([
         stmt('expression2', or(
-          quote('lib1/**', 'A'),
+          quote('lib1/**', undefined, 'A'),
           not(
             and(
               quote('lib2/**'),
@@ -100,8 +208,28 @@ describe('parser.spec', () => {
     });
   });
 
+  describe('expression with except', () => {
+    it('should combine EXCEPT with other logical expressions inside parentheses', () => {
+      const rulesInput = `
+        test_complex_except: (!('**/*.*' EXCEPT('ignored/path.js')) 'another/**');
+      `;
+      const ast = parse(rulesInput, undefined) as AST;
+      expect(ast).toEqual([
+        stmt('test_complex_except', or(
+          not({
+            type: 'EXPRESSION_WITH_EXCEPT',
+            base: quote('**/*.*'),
+            excludes: [
+              { type: 'QUOTE_LITERAL', value: 'ignored/path.js' }
+            ]
+          }),
+          quote('another/**')
+        ))
+      ]);
+    });
+  });
 
-  describe('equivalency', () => {
+  describe('boolean equivalency', () => {
     const equivalency1 = or(quote('lib1/**'), quote('lib2/**'), quote('lib3/**'));
     const equivalency2 = or(and(quote('lib1/**'), quote('lib2/**')), quote('lib3/**'));
 

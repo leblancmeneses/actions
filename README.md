@@ -4,6 +4,12 @@
   - [Affected Action](#affected-action)
     - [Rule DSL](#rule-dsl)
       - [Composing Rules](#composing-rules)
+      - [Literal Expression](#literal-expression)
+      - [Regex Expression](#regex-expression)
+      - [Suffix for Literal and Regex Expressions](#suffix-for-literal-and-regex-expressions)
+        - [Usage with Literal Expressions:](#usage-with-literal-expressions)
+        - [Usage with Regular Expressions:](#usage-with-regular-expressions)
+        - [Key Notes:](#key-notes)
       - [Negate Expression](#negate-expression)
       - [Except Expression](#except-expression)
       - [Wrapping up example](#wrapping-up-example)
@@ -75,16 +81,55 @@ These rules map a *project name* and the *expression* to check for changes and t
 
 #### Composing Rules
 
-The `project-e2e` rule includes `project-ui`, `project-api`, and `project-dbmigrations`. This allows referencing prior expressions and combining them.
-For example, **e2e** runs if files change in any of these projects but not for markdown-only changes.
-An expression can combine multiple expressions using `AND` or `OR` operators.  Implicitly `OR` is used if no operator is specified.
+The `project-e2e` rule is composed of `project-ui`, `project-api`, and `project-dbmigrations`, enabling you to reference and combine multiple expressions. For example, `e2e` runs when files change in any of these projects but excludes runs triggered by markdown-only changes.
+
+Expressions can combine multiple conditions using `AND` or `OR` operators. If no operator is specified, `OR` is used by default.
+
+#### Literal Expression
+
+Literal expressions are string-based and can be enclosed in single or double quotes. For example:
+
+* `'file.ts'` OR `"file.ts"`
+
+By default, literal expressions are case-sensitive. To make them case-insensitive, append the `i` flag:
+
+* Example: `"readme.md"i` will match `README.md`, `readme.md`, or `rEaDme.mD`.
+
+#### Regex Expression
+
+Regex expressions allow for more flexible matching and are defined using the standard JavaScript regex syntax. For example:
+
+* `/readme\.md/i`
+
+This regex will match `README.md`, `readme.md`, or `rEaDme.mD`. Internally, the expression is converted to a JavaScript RegExp object, ensuring full compatibility with JavaScript’s native regex functionality.
+
+
+#### Suffix for Literal and Regex Expressions
+
+By default, all expressions match files regardless of their Git status code. However, you can add a suffix to the expression to filter matches based on specific Git status codes.
+The suffixes are `A` for added, `M` for modified, `D` for deleted, `R` for renamed, `C` for copied, `U` for unmerged, `T` for typechange, `X` for unknown, `B` for broken.
+
+##### Usage with Literal Expressions:
+* **Default behavior:** `'file.ts'` matches files with any Git status code.
+* **With status suffix:** `'file.ts':M` matches only files with the "modified" status.
+* **Case-insensitive matching:** `'file.ts'i:A` matches "added" files, ignoring case.
+
+##### Usage with Regular Expressions:
+* **Default behavior:** `/readme\.md/` matches files with any Git status code.
+* **With status suffix:** `/readme\.md/:M` matches only "modified" files.
+* **Case-insensitive matching:** `/readme\.md/i:A` matches "added" files, ignoring case.
+
+##### Key Notes:
+1. **Suffix Syntax:** Add a colon : followed by the desired status code to filter matches.
+2. **Case Insensitivity:** Use the i flag before the colon to make the match case-insensitive.
 
 
 #### Negate Expression
 
-The `!` operator negates files or directories.
+The `!` operator is used to exclude specific files or directories from matching criteria. This ensures that certain files or directories are not modified in a pull request.
 
-* For example, `!'dir/file.js'` ensures changes are not made to the file in a pull request.
+* **Example:** `!'dir/file.js'` ensures that changes to `dir/file.js` are not allowed in a pull request.
+
 
 #### Except Expression
 
@@ -460,11 +505,13 @@ jobs:
           echo '${{ needs.vars.outputs.version-autopilot }}' | jq .
 ```
 
-The `uses:` clause we recommend locking to a specific version.
+We recommend locking the `uses:` clause to a specific tag or sha to avoid pipeline
+breakage due to future changes in the action.
 
 ```yaml
 uses: leblancmeneses/actions/dist/apps/<taskname>@main # latest
 uses: leblancmeneses/actions/dist/apps/<taskname>@v1.1.1 # specific tag
+uses: leblancmeneses/actions/dist/apps/<taskname>@commit-sha # specific sha
 ```
 
 # Run locally

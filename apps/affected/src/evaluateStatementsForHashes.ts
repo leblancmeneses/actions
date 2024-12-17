@@ -8,10 +8,11 @@ interface EvaluationResult {
   excludedFiles: string[];
 }
 
-export async function evaluateStatementsForHashes(statements: AST): Promise<Record<string, string>> {
-  const allFilesOutput = execSync('git ls-files', { encoding: 'utf-8' });
-  const allFiles = allFilesOutput.split('\n').filter(Boolean);
+export function allGitFiles() {
+  return execSync('git ls-files', { encoding: 'utf-8' }).split('\n').filter(Boolean);
+};
 
+export async function evaluateStatementsForHashes(statements: AST, allFiles: string[]): Promise<Record<string, string>> {
   // A cache to avoid re-evaluating the same statement multiple times
   const seen = new Map<string, EvaluationResult>();
 

@@ -30,7 +30,7 @@ LogicalExpression
 
       for (let i = 0; i < tail.length; i++) {
         const [ , opMaybe, , expr] = tail[i];
-        const opStr = opMaybe ? opMaybe : "OR"; // Default operator if none
+        const opStr = opMaybe ? opMaybe : "OR"; // Default operator if none is present
         ops.push(opStr);
         expressions.push(expr);
       }
@@ -54,15 +54,17 @@ LogicalExpression
     }
 
 GroupingExpression
-  = "!" _ "(" _ e:LogicalExpression _ ")" {
+  = "!" _ "(" _ e:Expression _ ")" {
       return { type: "NEGATE", exp: e };
     }
-  / "(" _ e:LogicalExpression _ ")" { return e; }
+  / "(" _ e:Expression _ ")" {
+      return e;
+    }
   / primary
 
 Operator
   = "and"i { return "AND"; }
-  / "or"i { return "OR"; }
+  / "or"i  { return "OR"; }
 
 primary
   = val:ValueOfInterest { return val; }
@@ -71,6 +73,7 @@ primary
 ValueOfInterest
   = SingleQuoteLiteral
   / DoubleQuoteLiteral
+  / RegexLiteral
   / Literal
 
 ExceptClause
@@ -84,20 +87,32 @@ ExceptItems
     }
 
 SingleQuoteLiteral
-  = "'" chars:[^']* "'" suffix:[aAcCdDmMrRuU]? {
+  = "'" chars:[^']* "'" ic:OptionalIgnoreCase? s:OptionalLiteralSuffix? {
       return {
         type: "QUOTE_LITERAL",
         value: chars.join(''),
-        ...(suffix ? {suffix: suffix.toUpperCase()} : {})
+        ...(ic ? { ignoreCase: true } : {}),
+        ...(s ? { suffix: s } : {})
       };
     }
 
 DoubleQuoteLiteral
-  = '"' chars:[^"]* '"' suffix:[aAcCdDmMrRuU]? {
+  = '"' chars:[^"]* '"' ic:OptionalIgnoreCase? s:OptionalLiteralSuffix? {
       return {
         type: "QUOTE_LITERAL",
         value: chars.join(''),
-        ...(suffix ? {suffix: suffix.toUpperCase()} : {})
+        ...(ic ? { ignoreCase: true } : {}),
+        ...(s ? { suffix: s } : {})
+      };
+    }
+
+RegexLiteral
+  = "/" pattern:RegexPattern "/" flags:RegexFlags? s:OptionalLiteralSuffix? {
+      return {
+        type: "REGEX_LITERAL",
+        pattern: pattern.join(''),
+        ...(flags && flags.length > 0 ? { flags: flags.join('') } : {}),
+        ...(s ? { suffix: s } : {})
       };
     }
 
@@ -109,7 +124,6 @@ Literal
 Key
   = nestedKey
   / simpleKey
-
 
 nestedKey
   = "<" name:validKeyName ">" _ ":" {
@@ -125,6 +139,20 @@ validKeyName
   = ![0-9\-] first:[a-zA-Z_] rest:[a-zA-Z0-9_\-]* {
       return first + rest.join('');
     }
+
+OptionalIgnoreCase
+  = [i] { return true; }
+
+OptionalLiteralSuffix
+  = ":" s:[aAcCdDmMrRuU] {
+      return s.toUpperCase();
+    }
+
+RegexPattern
+  = chars:[^/]+ { return chars; }
+
+RegexFlags
+  = flags:[a-zA-Z]+ { return flags; }
 
 _ "whitespace or comments"
   = (Whitespace / LineComment / LineCommentAlt / MultilineComment)*

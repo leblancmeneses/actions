@@ -7,27 +7,11 @@ jest.mock('child_process', () => {
     execSync: jest.fn(),
   };
 });
-jest.mock('fs', () => {
-  const originalFs = jest.requireActual('fs'); // Preserve the original fs
-  return {
-    ...originalFs, // Spread original fs methods
-    existsSync: jest.fn(() => true), // Mock existsSync
-    lstatSync: jest.fn(() => ({
-      isDirectory: () => true, // Mock isDirectory to return true
-    })),
-    promises: {
-      access: jest.fn(), // Mock specific promises methods as needed
-      readFile: jest.fn(), // Example for readFile if used
-      writeFile: jest.fn(), // Example for writeFile if used
-    },
-  };
-});
 /* eslint-disable @nx/enforce-module-boundaries */
 import * as affectedMain from "@affected/main"; // Import everything
 import * as github from '@actions/github';
 import { run } from "@affected/main";
 import * as core from "@actions/core";
-import * as fs from 'fs';
 import * as cp from 'child_process';
 
 
@@ -209,11 +193,6 @@ M\tapps/affected/src/main.ts
         throw new Error(`Unexpected input: ${command}`);
       });
 
-    jest.spyOn(fs, "existsSync").mockImplementation(() => true);
-    jest.spyOn(fs, "lstatSync").mockImplementation(() => ({
-      isDirectory: () => true,
-    }) as fs.Stats);
-
     // Act
     await run();
 
@@ -300,7 +279,7 @@ M\tapps/affected/src/main.ts
     expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
       "typescript": true,
       "yaml": true,
-      "notYaml": true,
+      "notYaml": false,
       "affected": false
     });
   });
