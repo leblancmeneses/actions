@@ -7,12 +7,11 @@ jest.mock('child_process', () => {
     execSync: jest.fn(),
   };
 });
-/* eslint-disable @nx/enforce-module-boundaries */
-import * as affectedMain from "@affected/main"; // Import everything
-import { run } from "@affected/main";
+import { run } from "../../../affected/src/main";
 import * as core from "@actions/core";
 import * as cp from 'child_process';
 import crypto from 'crypto';
+import * as github from '@actions/github';
 
 
 
@@ -20,6 +19,7 @@ describe("affected.spec", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
+    github.context.eventName = 'push';
     delete process.env.BASE_REF;
     process.env.BASE_REF = 'dev';
   });
