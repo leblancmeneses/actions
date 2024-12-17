@@ -8,7 +8,11 @@ import { AST } from './parser.types';
 
 
 export const getImageName = (appTarget: string, hasChanges: boolean, sha: string, productionBranch?: string, imageTagPrefix?: string) => {
-  const baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || process.env.GITHUB_REF_NAME;
+  let baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || process.env.GITHUB_REF_NAME;
+
+  if (baseRef && baseRef.includes('/')) {
+    baseRef = baseRef.split('/').pop();
+  }
 
   let imageName1 = `${appTarget}:${baseRef}-${sha}`;
   if (!hasChanges) {
