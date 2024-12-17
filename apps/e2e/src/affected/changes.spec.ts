@@ -7,10 +7,8 @@ jest.mock('child_process', () => {
     execSync: jest.fn(),
   };
 });
-/* eslint-disable @nx/enforce-module-boundaries */
-import * as affectedMain from "@affected/main"; // Import everything
 import * as github from '@actions/github';
-import { run } from "@affected/main";
+import { run } from "../../../affected/src/main";
 import * as core from "@actions/core";
 import * as cp from 'child_process';
 
