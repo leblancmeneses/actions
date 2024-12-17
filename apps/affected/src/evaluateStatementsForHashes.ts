@@ -2,6 +2,7 @@ import { execSync } from 'child_process';
 import picomatch from 'picomatch';
 import crypto from 'crypto';
 import { AST, Expression } from './parser.types';
+import { EXEC_SYNC_MAX_BUFFER } from './constants';
 
 interface EvaluationResult {
   matchedFiles: string[];
@@ -9,7 +10,7 @@ interface EvaluationResult {
 }
 
 export function allGitFiles() {
-  return execSync('git ls-files', { encoding: 'utf-8' }).split('\n').filter(Boolean);
+  return execSync('git ls-files', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER }).split('\n').filter(Boolean);
 };
 
 export async function evaluateStatementsForHashes(statements: AST, allFiles: string[]): Promise<Record<string, string>> {

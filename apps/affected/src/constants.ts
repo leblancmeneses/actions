@@ -1,0 +1,1 @@
+export const EXEC_SYNC_MAX_BUFFER = 50 * 1024 * 1024; // 50 MB buffer

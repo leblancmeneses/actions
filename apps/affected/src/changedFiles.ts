@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import * as github from '@actions/github';
+import { EXEC_SYNC_MAX_BUFFER } from './constants';
 
 export enum ChangeStatus {
   Added = 'added',
@@ -57,7 +58,7 @@ export const getChangedFiles = async (): Promise<ChangedFile[]> => {
     baseDiffCommand = 'git diff --name-status HEAD~1 HEAD';
   }
 
-  const output = execSync(baseDiffCommand, { encoding: 'utf-8' }).trim();
+  const output = execSync(baseDiffCommand, { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER }).trim();
   if (output) {
     // Each line of output is formatted like: "<STATUS>\t<FILE_PATH>"
     changedFiles = output

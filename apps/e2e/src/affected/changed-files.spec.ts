@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import * as github from '@actions/github';
 import { ChangeStatus, mapGitStatusCode, getChangedFiles } from  "../../../affected/src/changedFiles";
+import { EXEC_SYNC_MAX_BUFFER } from '../../../affected/src/constants';
 
 jest.mock('child_process');
 jest.mock('@actions/github', () => {
@@ -69,7 +70,7 @@ describe('changed-files.spec', () => {
       mockExecSync.mockReturnValueOnce('');
       const files = await getChangedFiles();
       expect(files).toEqual([]);
-      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status base-sha head-sha', { encoding: 'utf-8' });
+      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status base-sha head-sha', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER });
     });
 
     it('parses changed files for a pull_request event', async () => {
@@ -99,7 +100,7 @@ describe('changed-files.spec', () => {
       mockExecSync.mockReturnValueOnce('');
 
       await getChangedFiles();
-      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status env-base-sha env-head-sha', { encoding: 'utf-8' });
+      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status env-base-sha env-head-sha', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER  });
     });
 
     it('handles push event by comparing HEAD~1 and HEAD', async () => {
@@ -107,7 +108,7 @@ describe('changed-files.spec', () => {
       mockExecSync.mockReturnValueOnce('');
       
       await getChangedFiles();
-      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status HEAD~1 HEAD', { encoding: 'utf-8' });
+      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status HEAD~1 HEAD', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER  });
     });
 
     it('handles unknown events by falling back to HEAD~1 and HEAD', async () => {
@@ -115,7 +116,7 @@ describe('changed-files.spec', () => {
       mockExecSync.mockReturnValueOnce('');
 
       await getChangedFiles();
-      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status HEAD~1 HEAD', { encoding: 'utf-8' });
+      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status HEAD~1 HEAD', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER  });
     });
 
     it('handles filenames with tabs (unlikely, but safe)', async () => {
