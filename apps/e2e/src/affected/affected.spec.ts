@@ -30,10 +30,23 @@ describe("affected.spec", () => {
 
     jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
       if (inputName === "rules") return `
-          <project-ui>: 'project-ui/**' EXCEPT('**/*.md');
-          <project-api>: 'project-api/**' EXCEPT('**/*.md');
-          <project-dbmigrations>: 'databases/project/**' EXCEPT('**/*.md');
-          project-e2e: ('e2e/**' project-ui project-api project-dbmigrations) EXCEPT('**/*.md');
+            peggy-parser: 'apps/affected/src/parser.peggy';
+            peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
+              # peggy was updated but not the generated parser file or its tests.
+
+            markdown: '**/*.md';
+
+            ui-core: 'libs/ui-core/**';
+            third-party-deprecated: 'libs/third-party-deprecated/**';
+            ui-libs: ui-core third-party-deprecated;
+
+            <project-ui>: ui-libs 'project-ui/**' EXCEPT (markdown '**/*.spec.ts');
+            <project-api>: 'project-api/**' EXCEPT ('**/README.md');
+            <project-dbmigrations>: './databases/project/**';
+
+            project-e2e: ('e2e/**' project-ui project-api project-dbmigrations) EXCEPT (markdown);
+
+            project-ui-run-lint: 'milagro-api/**/*.ts';
         `;
       return "";
     });
@@ -50,9 +63,9 @@ describe("affected.spec", () => {
 
     const execSyncResponses = {
       'git diff --name-status HEAD~1 HEAD': () => [
-      "project-ui/file1.ts",
-      "project-api/README.md",
-    ].map(f => `M\t${f}`).join('\n'),
+        "project-ui/file1.ts",
+        "project-api/README.md",
+      ].map(f => `M\t${f}`).join('\n'),
       'git ls-files': () => files.join('\n'),
     };
 
@@ -97,7 +110,19 @@ describe("affected.spec", () => {
         .digest('hex');
     }
 
-    expect(core.setOutput).toHaveBeenCalledWith("affected_changes", { "project-api": false, "project-dbmigrations": false, "project-e2e": true, "project-ui": true });
+    expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
+      "markdown": true,
+      "peggy-parser": false,
+      "peggy-parser-checkIf-incomplete": false,
+      "project-api": false,
+      "project-dbmigrations": false,
+      "project-e2e": true,
+      "project-ui": true,
+      "project-ui-run-lint": false,
+      "third-party-deprecated": false,
+      "ui-core": false,
+      "ui-libs": false
+    });
     expect(core.setOutput).toHaveBeenCalledWith("affected_shas", {
       'project-api': getHash('project-api/'),
       'project-dbmigrations': getHash('databases/project/'),

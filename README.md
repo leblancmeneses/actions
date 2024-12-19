@@ -34,7 +34,9 @@
 
 ## Affected Action
 
-This task generates a JSON object to streamline your pipeline by skipping unnecessary steps and running only those affected by `changes`. It also aligns git commits with images via `recommended_imagetags` and `shas`, simplifying GitOps strategies.
+This task generates a JSON object to optimize your pipeline by skipping unnecessary steps and executing only those impacted by `changes`. It also aligns Git commits with images using `recommended_imagetags` and `shas`, which represent hashes of the dependency graph defined by specified rules.
+
+We recommend using `changes` for pull requests and `shas` for core branches like `main`, `develop`, and `prod`, serving as a dependency graph key for caching purposes.
 
 
 ```yaml
@@ -62,11 +64,18 @@ jobs:
             peggy-parser: 'apps/affected/src/parser.peggy';
             peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
               # peggy was updated but not the generated parser file or its tests.
+
             markdown: '**/*.md';
-            <project-ui>: 'project-ui/**' EXCEPT (markdown '**/*.spec.ts');
+
+            ui-core: 'libs/ui-core/**';
+            third-party-deprecated: 'libs/third-party-deprecated/**';
+            ui-libs: ui-core third-party-deprecated;
+
+            <project-ui>: ui-libs 'project-ui/**' EXCEPT (markdown '**/*.spec.ts');
             <project-api>: 'project-api/**' EXCEPT ('**/README.md');
             <project-dbmigrations>: './databases/project/**';
-            project-e2e: (project-ui project-api project-dbmigrations) EXCEPT (markdown);
+
+            project-e2e: ('e2e/**' project-ui project-api project-dbmigrations) EXCEPT (markdown);
 
 ```
 ### Rule DSL
@@ -163,7 +172,10 @@ The `affected` action will generate the following JSON objects:
     "project-api": false,
     "project-ui": true,
     "project-dbmigrations": false,
-    "project-e2e": true
+    "project-e2e": true,
+    "third-party-deprecated": false,
+    "ui-core": false,
+    "ui-libs": false
   },
   "shas": {
     "project-ui": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
