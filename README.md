@@ -234,8 +234,7 @@ jobs:
     with:
       ENABLED: ${{fromJson(needs.vars.outputs.affected).changes.app-ui}}
       FORCE_BUILD: ${{ github.event.inputs.MANUAL_FORCE_BUILD == 'true' ||
-        fromJson(needs.vars.outputs.pragma).FORCE-BUILD == true ||
-        fromJson(needs.vars.outputs.pragma).APP-UI-FORCE-BUILD == true }}
+        fromJson(needs.vars.outputs.pragma).FORCE-BUILD == true }}
       PRE_BUILD_HOOK: .github/_prebuild.app-ui.sh
       DOCKER_FILE: "./app-ui/Dockerfile"
       DOCKER_CONTEXT: "./app-api"
