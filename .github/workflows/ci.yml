@@ -119,9 +119,13 @@ jobs:
         run: |
           echo ''
           echo 'inputs:'
-          echo '${{ toJson(inputs) }}' | jq .
+          jq -r . <<EOF
+          ${{ toJson(inputs) }}
+          EOF
           echo '============================'
           echo 'github:'
-          echo '${{ toJson(github) }}' | jq .
+          jq -r . <<EOF
+          ${{ toJson(github) }}
+          EOF
           echo '============================'
           printenv
