@@ -36,7 +36,7 @@
 
 ## Affected Action
 
-This task is designed for projects in mono repos that are not *fully* covered by build tools like Make, Bazel, or Nx. It helps track the dependency graph and streamline your pipeline by identifying and executing only the steps impacted by recent changes.
+This task is designed for projects in mono repos that are not *fully* covered by build tools similar to Make, Bazel, or Nx. It helps track the dependency graph and streamline your pipeline by identifying and executing only the steps impacted by recent changes.
 
 ### Key Features
 
