@@ -64,12 +64,20 @@ export const getChangedFiles = async (): Promise<ChangedFile[]> => {
     changedFiles = output
       .split('\n')
       .filter(Boolean)
-      .map(line => {
+      .reduce((accumulator, line) => {
         const [statusCode, ...fileParts] = line.split('\t');
         const filePath = fileParts.join('\t'); // In case filename contains tabs (unlikely, but safe)
-        const status = mapGitStatusCode(statusCode);
-        return { file: filePath, status };
-      });
+        const status = mapGitStatusCode(statusCode[0]);
+        if(status === ChangeStatus.Renamed) {
+          // Renamed files have two paths
+          const [oldPath, newPath] = filePath.split(/\s+/);
+          accumulator.push({ file: oldPath, status: ChangeStatus.Renamed });
+          accumulator.push({ file: newPath, status: ChangeStatus.Renamed });
+        } else {
+          accumulator.push({ file: filePath, status });
+        }
+        return accumulator;
+      }, [] as ChangedFile[]);
   }
 
   return changedFiles;

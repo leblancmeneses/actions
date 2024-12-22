@@ -2,6 +2,8 @@
 
 - [Actions](#actions)
   - [Affected Action](#affected-action)
+    - [Key Features](#key-features)
+    - [Recommendations:](#recommendations)
     - [Rule DSL](#rule-dsl)
       - [Composing Rules](#composing-rules)
       - [Literal Expression](#literal-expression)
@@ -34,10 +36,19 @@
 
 ## Affected Action
 
-This task generates a JSON object to optimize your pipeline by skipping unnecessary steps and executing only those impacted by `changes`. It also aligns Git commits with images using `recommended_imagetags` and `shas`, which represent hashes of the dependency graph defined by specified rules.
+This task is designed for projects in mono repos that are not *fully* covered by build tools similar to Make, Bazel, or Nx. It helps track the dependency graph and streamline your pipeline by identifying and executing only the steps impacted by recent changes.
 
-We recommend using `changes` for pull requests and `shas` for core branches like `main`, `develop`, and `prod`, serving as a dependency graph key for caching purposes.
+### Key Features
 
+* **Dependency Graph Optimization:** Generates a JSON object to identify dependencies impacted by `changes`, allowing you to skip unnecessary steps and focus only on what needs to be executed.
+* **Commit Alignment:** Aligns Git commits with images using `recommended_imagetags` and `shas`. These hashes represent the state of the dependency graph, based on defined rules, ensuring consistency across your workflow.
+
+### Recommendations:
+
+* Use `changes` for pull requests to detect and act upon specific updates.
+* Use `shas` for core branches like `main`, `develop`, and `prod` as a key for caching purposes, improving build efficiency.
+
+This approach helps optimize pipelines, reduce execution time, and maintain reliable caching across your development workflow.
 
 ```yaml
 jobs:
