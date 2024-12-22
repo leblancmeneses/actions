@@ -73,6 +73,18 @@ describe('changed-files.spec', () => {
       expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status base-sha head-sha', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER });
     });
 
+    it('parses rename status ignoring score', async () => {
+      const gitOutput = `R100\tinfrascripts/errorsink/001-init-service.sh\tinfrascripts/projectX/001-init-errorsink-service.sh\nD\tdeleted-file.md`;
+      mockExecSync.mockReturnValueOnce(gitOutput);
+
+      const files = await getChangedFiles();
+      expect(files).toEqual([
+        { file: 'infrascripts/errorsink/001-init-service.sh', status: ChangeStatus.Renamed },
+        { file: 'infrascripts/projectX/001-init-errorsink-service.sh', status: ChangeStatus.Renamed },
+        { file: 'deleted-file.md', status: ChangeStatus.Deleted },
+      ]);
+    });
+
     it('parses changed files for a pull_request event', async () => {
       const gitOutput = `A\tadded-file.txt\nM\tmodified-file.js\nD\tdeleted-file.md`;
       mockExecSync.mockReturnValueOnce(gitOutput);
