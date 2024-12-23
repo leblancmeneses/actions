@@ -69,8 +69,10 @@ jobs:
         uses: leblancmeneses/actions/dist/apps/affected@main
         with:
           verbose: false # optional
-          gitflow-production-branch: '' # optional; used in recommended_imagetags.
-          recommended-imagetags-prefix: '' # optional; used in recommended_imagetags.
+          recommended-imagetags-tag-prefix: '' # optional; The prefix to add to the image tag. target:<prefix>sha1
+          recommended-imagetags-tag-suffix: '' # optional; The suffix to add to the image tag. target:sha1<suffix>'
+          recommended-imagetags-registry: '' # optional; used in recommended_imagetags.
+          recommended-imagetags-tag-truncate-size: 0 # optional; The number of characters to keep from the sha1 value.
           rules: |
             peggy-parser: 'apps/affected/src/parser.peggy';
             peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
@@ -195,15 +197,15 @@ The `affected` action will generate the following JSON objects:
   },
   "recommended_imagetags": {
     "project-ui": [
-      "project-ui:dev-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+      "project-ui:38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
       "project-ui:pr-6"
     ],
     "project-api": [
-      "project-api:dev-dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
+      "project-api:dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
       "project-api:pr-6"
     ],
     "project-dbmigrations": [
-      "project-dbmigrations:dev-7b367954a3ca29a02e2b570112d85718e56429c9",
+      "project-dbmigrations:7b367954a3ca29a02e2b570112d85718e56429c9",
       "project-dbmigrations:pr-6"
     ],
   }

@@ -108,12 +108,10 @@ M\tapps/affected/src/main.ts
 
     delete github.context.eventName;
     delete github.context.payload;
-    delete process.env.BASE_REF;
     delete process.env.BASE_SHA;
     delete process.env.HEAD_SHA;
 
     github.context.eventName = 'pull_request';
-    process.env.BASE_REF='develop';
     process.env.BASE_SHA='base1';
     process.env.HEAD_SHA='head1';
     github.context.payload = {
