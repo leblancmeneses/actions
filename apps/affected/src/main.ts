@@ -6,27 +6,15 @@ import {evaluateStatementsForChanges} from './evaluateStatementsForChanges';
 import {allGitFiles, evaluateStatementsForHashes} from './evaluateStatementsForHashes';
 import { AST } from './parser.types';
 
-
-export const getImageName = (appTarget: string, hasChanges: boolean, sha: string, productionBranch?: string, imageTagPrefix?: string) => {
-  let baseRef = process.env.BASE_REF || github.context.payload?.pull_request?.base?.ref || process.env.GITHUB_REF_NAME;
-
-  if (baseRef && baseRef.includes('/')) {
-    baseRef = baseRef.split('/').pop();
-  }
-
-  let imageName1 = `${appTarget}:${baseRef}-${sha}`;
-  if (!hasChanges) {
-    if (productionBranch) {
-      imageName1 = `${appTarget}:${productionBranch}-${sha}`;
-    }
-  }
+export const getImageName = (appTarget: string, sha: string, imageTagRegistry = '', imageTagPrefix = '', imageTagSuffix = '') => {
+  const imageName1 = `${appTarget}:${imageTagPrefix}${sha}${imageTagSuffix}`;
 
   let imageName2 = `${appTarget}:latest`;
   if (github.context.eventName === 'pull_request') {
     imageName2 = `${appTarget}:pr-${github.context.payload.pull_request.number}`;
   }
 
-  return [imageName1, imageName2].map((imageName) => `${imageTagPrefix || ''}${imageName}`);
+  return [imageName1, imageName2].map((imageName) => `${imageTagRegistry || ''}${imageName}`);
 }
 
 export const log = (message: string, verbose: boolean) => {
@@ -43,8 +31,9 @@ export async function run() {
 
     const rulesInput = core.getInput('rules', { required: true });
     const verbose = core.getInput('verbose', { required: false }) === 'true';
-    const productionBranch = core.getInput('gitflow-production-branch', { required: false }) || '';
-    const imageTagPrefix = core.getInput('recommended-imagetags-prefix', { required: false }) || '';
+    const imageTagPrefix = core.getInput('recommended-imagetags-tag-prefix', { required: false }) || '';
+    const imageTagSuffix = core.getInput('recommended-imagetags-tag-suffix', { required: false }) || '';
+    const imageTagRegistry = core.getInput('recommended-imagetags-registry', { required: false }) || '';
 
     log(`github.context: ${JSON.stringify(github.context, undefined, 2)}`, verbose);
 
@@ -74,7 +63,7 @@ export async function run() {
         if (key.path) {
           affectedShas[key.name] = commitSha[key.name];
 
-          const imageName = getImageName(key.name, affectedChanges[key.name], commitSha[key.name], productionBranch, imageTagPrefix);
+          const imageName = getImageName(key.name, commitSha[key.name], imageTagRegistry, imageTagPrefix, imageTagSuffix);
           affectedImageTags[key.name] = imageName;
 
           log(`Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`, verbose);

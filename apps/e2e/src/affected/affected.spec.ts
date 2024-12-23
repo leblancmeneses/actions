@@ -130,15 +130,15 @@ describe("affected.spec", () => {
     });
     expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
       "project-ui": [
-        "project-ui:dev-" + getHash('project-ui/'),
+        "project-ui:" + getHash('project-ui/'),
         "project-ui:latest",
       ],
       "project-api": [
-        "project-api:dev-" + getHash('project-api/'),
+        "project-api:" + getHash('project-api/'),
         "project-api:latest",
       ],
       "project-dbmigrations": [
-        "project-dbmigrations:dev-" + getHash('databases/project/'),
+        "project-dbmigrations:" + getHash('databases/project/'),
         "project-dbmigrations:latest",
       ],
     });
