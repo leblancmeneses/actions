@@ -69,9 +69,10 @@ jobs:
         uses: leblancmeneses/actions/dist/apps/affected@main
         with:
           verbose: false # optional
-          recommended-imagetags-tag-prefix: '' # optional; The prefix to add to the image tag. target:<prefix>sha
-          recommended-imagetags-tag-suffix: '' # optional; The suffix to add to the image tag. target:sha<suffix>'
+          recommended-imagetags-tag-prefix: '' # optional; The prefix to add to the image tag. target:<prefix>sha1
+          recommended-imagetags-tag-suffix: '' # optional; The suffix to add to the image tag. target:sha1<suffix>'
           recommended-imagetags-registry: '' # optional; used in recommended_imagetags.
+          recommended-imagetags-tag-truncate-size: 0 # optional; The number of characters to keep from the sha1 value.
           rules: |
             peggy-parser: 'apps/affected/src/parser.peggy';
             peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
