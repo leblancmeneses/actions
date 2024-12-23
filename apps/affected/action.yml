@@ -12,6 +12,10 @@ inputs:
     description: 'The suffix to add to the image tag. target:sha<suffix>'
     required: false
     default: ''
+  recommended-imagetags-tag-truncate-size:
+    description: 'The number of characters to keep from the sha1 value. Positive values retain characters from the start (left), negative values retain characters from the end (right), and 0 keeps the entire value.'
+    required: false
+    default: 0
   recommended-imagetags-registry:
     description: 'The prefix to add to all image tags.'
     required: false

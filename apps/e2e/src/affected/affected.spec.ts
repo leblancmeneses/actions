@@ -20,8 +20,6 @@ describe("affected.spec", () => {
     jest.clearAllMocks();
     jest.resetModules();
     github.context.eventName = 'push';
-    delete process.env.BASE_REF;
-    process.env.BASE_REF = 'dev';
   });
 
   test("should parse valid YAML and set outputs", async () => {
@@ -143,5 +141,164 @@ describe("affected.spec", () => {
       ],
     });
     expect(core.info).toHaveBeenCalled();
+  });
+
+
+  describe('recommended_imagetags', () => {
+    const files = [
+      "project-api/file1.ts",
+      "project-ui/file1.ts",
+    ];
+
+    function getHash(folder: string) {
+      const matchedFiles = [...files.filter(f => f.startsWith(folder))].sort();
+      return crypto.createHash('sha1')
+        .update(matchedFiles.join('\n') + '\n')
+        .digest('hex');
+    }
+
+    beforeEach(() => {
+      jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
+
+      const execSyncResponses = {
+        'git diff --name-status HEAD~1 HEAD': () => files.map(f => `M\t${f}`).join('\n'),
+        'git ls-files': () => files.join('\n'),
+      };
+
+      jest.spyOn(cp, 'execSync')
+        .mockImplementation((command: string) => {
+          if (command.startsWith('git hash-object')) {
+            const match = command.match(/git hash-object\s+"([^"]+)"/);
+            if (!match) {
+              throw new Error(`Unexpected command: ${command}`);
+            }
+
+            return match[1];
+          }
+
+          if (command.startsWith('git diff --name-status')) {
+            return files.map(f => `M\t${f}`).join('\n');
+          }
+
+          if (execSyncResponses[command]) {
+            return execSyncResponses[command]();
+          }
+          throw new Error(`Unexpected input: ${command}`);
+        });
+    });
+
+    test("should generate tags with prefix", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+        if (inputName === "rules") return `
+            <project-api>: 'project-api/**/*.ts';
+          `;
+        if (inputName === "recommended-imagetags-tag-prefix") return `prefix-`;
+        return "";
+      });
+
+      // Act
+      await run();
+
+      // Assert
+      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
+        "project-api": [
+          "project-api:prefix-" + getHash('project-api/'),
+          "project-api:latest",
+        ],
+      });
+    });
+
+    test("should generate tags with suffix", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+        if (inputName === "rules") return `
+            <project-api>: 'project-api/**/*.ts';
+          `;
+        if (inputName === "recommended-imagetags-tag-suffix") return `-suffix`;
+        return "";
+      });
+
+      // Act
+      await run();
+
+      // Assert
+      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
+        "project-api": [
+          "project-api:" + getHash('project-api/') + '-suffix',
+          "project-api:latest",
+        ],
+      });
+    });
+
+    test("should generate tags with keep first seven chars of sha1", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+        if (inputName === "rules") return `
+            <project-api>: 'project-api/**/*.ts';
+          `;
+        if (inputName === "recommended-imagetags-tag-truncate-size") return `7`;
+        if (inputName === "recommended-imagetags-registry") return `registry.cool/`;
+        return "";
+      });
+
+      // Act
+      await run();
+
+      // Assert
+      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
+        "project-api": [
+          "registry.cool/project-api:" + getHash('project-api/').slice(0, 7),
+          "registry.cool/project-api:latest",
+        ],
+      });
+    });
+
+    test("should generate tags with keep last seven chars of sha1", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+        if (inputName === "rules") return `
+            <project-api>: 'project-api/**/*.ts';
+          `;
+        if (inputName === "recommended-imagetags-tag-truncate-size") return `-7`;
+        return "";
+      });
+
+      // Act
+      await run();
+
+      // Assert
+      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
+        "project-api": [
+          "project-api:" + getHash('project-api/').slice(-7),
+          "project-api:latest",
+        ],
+      });
+    });
+
+    test("should generate tags with keep first seven chars of sha1", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+        if (inputName === "rules") return `
+            <project-api>: 'project-api/**/*.ts';
+          `;
+        if (inputName === "recommended-imagetags-tag-prefix") return `prefix-`;
+        if (inputName === "recommended-imagetags-tag-suffix") return `-suffix`;
+        if (inputName === "recommended-imagetags-tag-truncate-size") return `7`;
+        if (inputName === "recommended-imagetags-registry") return `registry.cool/`;
+        return "";
+      });
+
+      // Act
+      await run();
+
+      // Assert
+      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
+        "project-api": [
+          "registry.cool/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
+          "registry.cool/project-api:latest",
+        ],
+      });
+    });
   });
 });

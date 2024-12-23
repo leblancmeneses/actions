@@ -6,8 +6,17 @@ import {evaluateStatementsForChanges} from './evaluateStatementsForChanges';
 import {allGitFiles, evaluateStatementsForHashes} from './evaluateStatementsForHashes';
 import { AST } from './parser.types';
 
-export const getImageName = (appTarget: string, sha: string, imageTagRegistry = '', imageTagPrefix = '', imageTagSuffix = '') => {
-  const imageName1 = `${appTarget}:${imageTagPrefix}${sha}${imageTagSuffix}`;
+export const getImageName = (appTarget: string, sha: string, truncateSha1Size = 0, imageTagRegistry = '', imageTagPrefix = '', imageTagSuffix = '') => {
+  let sha1 = sha;
+  if (isNaN(truncateSha1Size) || truncateSha1Size === 0) {
+    sha1=sha;
+  } else if (truncateSha1Size > 0) {
+    sha1=sha.slice(0, truncateSha1Size);
+  } else {
+    sha1=sha.slice(truncateSha1Size);
+  }
+
+  const imageName1 = `${appTarget}:${imageTagPrefix}${sha1}${imageTagSuffix}`;
 
   let imageName2 = `${appTarget}:latest`;
   if (github.context.eventName === 'pull_request') {
@@ -31,6 +40,7 @@ export async function run() {
 
     const rulesInput = core.getInput('rules', { required: true });
     const verbose = core.getInput('verbose', { required: false }) === 'true';
+    const truncateSha1Size = parseInt(core.getInput('recommended-imagetags-tag-truncate-size', { required: false }) || '0');
     const imageTagPrefix = core.getInput('recommended-imagetags-tag-prefix', { required: false }) || '';
     const imageTagSuffix = core.getInput('recommended-imagetags-tag-suffix', { required: false }) || '';
     const imageTagRegistry = core.getInput('recommended-imagetags-registry', { required: false }) || '';
@@ -63,7 +73,7 @@ export async function run() {
         if (key.path) {
           affectedShas[key.name] = commitSha[key.name];
 
-          const imageName = getImageName(key.name, commitSha[key.name], imageTagRegistry, imageTagPrefix, imageTagSuffix);
+          const imageName = getImageName(key.name, commitSha[key.name], truncateSha1Size, imageTagRegistry, imageTagPrefix, imageTagSuffix);
           affectedImageTags[key.name] = imageName;
 
           log(`Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`, verbose);
