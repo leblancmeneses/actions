@@ -73,6 +73,7 @@ jobs:
           recommended-imagetags-tag-suffix: '' # optional; The suffix to add to the image tag. target:sha1<suffix>'
           recommended-imagetags-registry: '' # optional; used in recommended_imagetags.
           recommended-imagetags-tag-truncate-size: 0 # optional; The number of characters to keep from the sha1 value.
+          changed-files-output-path: '' # optional; The path to write the file containing the list of changed files.
           rules: |
             peggy-parser: 'apps/affected/src/parser.peggy';
             peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
@@ -443,6 +444,8 @@ If you are looking for semantic versioning research `git tags` and [release pipe
 ```
 
 # Recommendations for multi-job pipeline
+
+A [single job pipeline](https://github.com/leblancmeneses/actions/blob/main/.github/workflows/ci.yml) is a great starting point for CI/CD workflows. However, as your project evolves, you may need to divide your pipeline into multiple jobs to enhance performance, maintainability, and accommodate different operating systems for various tools.
 
 Create an init job to calculate variables needed across multiple jobs. This will avoid redundant checkouts and calculations across each job.
 

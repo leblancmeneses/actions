@@ -46,7 +46,7 @@ export async function run() {
     const imageTagPrefix = core.getInput('recommended-imagetags-tag-prefix', { required: false }) || '';
     const imageTagSuffix = core.getInput('recommended-imagetags-tag-suffix', { required: false }) || '';
     const imageTagRegistry = core.getInput('recommended-imagetags-registry', { required: false }) || '';
-    const changed_files_output_path = core.getInput('changed_files_output_path', { required: false }) || '';
+    const changedFilesOutputPath = core.getInput('changed-files-output-path', { required: false }) || '';
 
     log(`github.context: ${JSON.stringify(github.context, undefined, 2)}`, verbose);
 
@@ -59,8 +59,8 @@ export async function run() {
 
       const changedFiles = await getChangedFiles();
       log(`Changed Files: ${changedFiles.join('\n')}`, verbose);
-      if (changed_files_output_path) {
-        await writeChangedFiles(changed_files_output_path, changedFiles);
+      if (changedFilesOutputPath) {
+        await writeChangedFiles(changedFilesOutputPath, changedFiles);
       }
 
       const { changes } = evaluateStatementsForChanges(statements, changedFiles);

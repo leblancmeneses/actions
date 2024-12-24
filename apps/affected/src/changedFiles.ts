@@ -86,7 +86,7 @@ export const getChangedFiles = async (): Promise<ChangedFile[]> => {
 };
 
 
-export async function writeChangedFiles(changed_files_output_path: string, changedFiles: ChangedFile[]) {
+export const writeChangedFiles = async (changed_files_output_path: string, changedFiles: ChangedFile[]): Promise<void> => {
   const directory = path.dirname(changed_files_output_path);
   try {
     await fs.mkdir(directory, { recursive: true });

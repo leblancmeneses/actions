@@ -24,7 +24,7 @@ inputs:
     description: 'The registry to add to all image tags.'
     required: false
     default: ''
-  changed_files_output_path:
+  changed-files-output-path:
     description: 'Writes a JSON array of ChangedFile objects, where each object has a file name and its change status.'
     required: false
     default: ''

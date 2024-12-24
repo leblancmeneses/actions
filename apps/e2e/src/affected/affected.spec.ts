@@ -8,18 +8,22 @@ jest.mock('child_process', () => {
   };
 });
 import { run } from "../../../affected/src/main";
+import * as changedFilesModule from '../../../affected/src/changedFiles';
 import * as core from "@actions/core";
 import * as cp from 'child_process';
 import crypto from 'crypto';
 import * as github from '@actions/github';
 
 
-
 describe("affected.spec", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
+    jest.restoreAllMocks();
     github.context.eventName = 'push';
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   test("should parse valid YAML and set outputs", async () => {
@@ -299,6 +303,83 @@ describe("affected.spec", () => {
           "registry.cool/project-api:latest",
         ],
       });
+    });
+  });
+
+
+  describe('changed-files-output-path', () => {
+    const files = [
+      "project-api/file1.ts",
+      "project-ui/file1.ts",
+    ];
+
+    beforeEach(() => {
+      jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
+
+      const execSyncResponses = {
+        'git diff --name-status HEAD~1 HEAD': () => files.map(f => `M\t${f}`).join('\n'),
+        'git ls-files': () => files.join('\n'),
+      };
+
+      jest.spyOn(cp, 'execSync')
+        .mockImplementation((command: string) => {
+          if (command.startsWith('git hash-object')) {
+            const match = command.match(/git hash-object\s+"([^"]+)"/);
+            if (!match) {
+              throw new Error(`Unexpected command: ${command}`);
+            }
+
+            return match[1];
+          }
+
+          if (command.startsWith('git diff --name-status')) {
+            return files.map(f => `M\t${f}`).join('\n');
+          }
+
+          if (execSyncResponses[command]) {
+            return execSyncResponses[command]();
+          }
+          throw new Error(`Unexpected input: ${command}`);
+        });
+    });
+
+    test("should not generate an output file", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+        if (inputName === "rules") return `
+            <project-api>: 'project-api/**/*.ts';
+          `;
+        return "";
+      });
+      jest.spyOn(changedFilesModule, 'writeChangedFiles').mockImplementation(async (changedFiles) => {
+        console.log(`Writing files: ${changedFiles}`);
+      });
+
+      // Act
+      await run();
+
+      // Assert
+      expect(changedFilesModule.writeChangedFiles).not.toHaveBeenCalled();
+    });
+
+    test("should generate an output file", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+        if (inputName === "rules") return `
+            <project-api>: 'project-api/**/*.ts';
+          `;
+        if (inputName === "changed-files-output-path") return 'abc.txt';
+        return "";
+      });
+      jest.spyOn(changedFilesModule, 'writeChangedFiles').mockImplementation(async (changedFiles) => {
+        console.log(`Writing files: ${changedFiles}`);
+      });
+
+      // Act
+      await run();
+
+      // Assert
+      expect(changedFilesModule.writeChangedFiles).toHaveBeenCalledWith('abc.txt', files.map(f => ({ file: f, status: changedFilesModule.ChangeStatus.Modified })));
     });
   });
 });
