@@ -351,14 +351,16 @@ describe("affected.spec", () => {
           `;
         return "";
       });
+      let fileWritten = false;
       jest.spyOn(changedFilesModule, 'writeChangedFiles').mockImplementation(async (changedFiles) => {
-        console.log(`Writing files: ${changedFiles}`);
+        fileWritten = true;
       });
 
       // Act
       await run();
 
       // Assert
+      expect(fileWritten).toBe(false);
       expect(changedFilesModule.writeChangedFiles).not.toHaveBeenCalled();
     });
 
@@ -371,14 +373,16 @@ describe("affected.spec", () => {
         if (inputName === "changed-files-output-path") return 'abc.txt';
         return "";
       });
+      let fileWritten = false;
       jest.spyOn(changedFilesModule, 'writeChangedFiles').mockImplementation(async (changedFiles) => {
-        console.log(`Writing files: ${changedFiles}`);
+        fileWritten = true;
       });
 
       // Act
       await run();
 
       // Assert
+      expect(fileWritten).toBe(true);
       expect(changedFilesModule.writeChangedFiles).toHaveBeenCalledWith('abc.txt', files.map(f => ({ file: f, status: changedFilesModule.ChangeStatus.Modified })));
     });
   });
