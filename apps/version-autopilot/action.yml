@@ -1,5 +1,9 @@
 name: 'Version Autopilot'
 description: 'Auto version incremental on build'
+author: Leblanc Meneses
+branding:
+  icon: 'hash'
+  color: 'blue'
 inputs:
   major:
     description: 'The initial "major" part of the version number'

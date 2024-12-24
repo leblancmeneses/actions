@@ -1,5 +1,9 @@
-name: 'Affected Processor'
+name: 'Affected Targets'
 description: 'Determines affected components and generates corresponding SHA, recommended image tags, and change status based on the provided rules.'
+author: Leblanc Meneses
+branding:
+  icon: 'target'
+  color: 'red'
 inputs:
   rules:
     description: 'Defines rules in DSL format specified in README.md.'
@@ -18,6 +22,10 @@ inputs:
     default: 0
   recommended-imagetags-registry:
     description: 'The registry to add to all image tags.'
+    required: false
+    default: ''
+  changed_files_output_path:
+    description: 'Writes a JSON array of ChangedFile objects, where each object has a file name and its change status.'
     required: false
     default: ''
   verbose:

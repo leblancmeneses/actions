@@ -1,5 +1,9 @@
 name: 'Pragma Action'
-description: 'Used to change the behavior of the build run using dynamic variables controlled by pull request description.'
+description: 'Used to change the behavior of the build run using dynamic variables controlled by the pull request description.'
+author: Leblanc Meneses
+branding:
+  icon: 'settings'
+  color: 'blue'
 inputs:
   variables:
     description: 'INI-formatted list of key-value pairs (e.g., var1=value1\nvar2=value2)'

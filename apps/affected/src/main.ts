@@ -1,19 +1,21 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { parse } from './parser';
-import {getChangedFiles} from './changedFiles';
-import {evaluateStatementsForChanges} from './evaluateStatementsForChanges';
-import {allGitFiles, evaluateStatementsForHashes} from './evaluateStatementsForHashes';
+import { getChangedFiles, writeChangedFiles } from './changedFiles';
+import { evaluateStatementsForChanges } from './evaluateStatementsForChanges';
+import { allGitFiles, evaluateStatementsForHashes } from './evaluateStatementsForHashes';
 import { AST } from './parser.types';
+
+
 
 export const getImageName = (appTarget: string, sha: string, truncateSha1Size = 0, imageTagRegistry = '', imageTagPrefix = '', imageTagSuffix = '') => {
   let sha1 = sha;
   if (isNaN(truncateSha1Size) || truncateSha1Size === 0) {
-    sha1=sha;
+    sha1 = sha;
   } else if (truncateSha1Size > 0) {
-    sha1=sha.slice(0, truncateSha1Size);
+    sha1 = sha.slice(0, truncateSha1Size);
   } else {
-    sha1=sha.slice(truncateSha1Size);
+    sha1 = sha.slice(truncateSha1Size);
   }
 
   const imageName1 = `${appTarget}:${imageTagPrefix}${sha1}${imageTagSuffix}`;
@@ -44,6 +46,7 @@ export async function run() {
     const imageTagPrefix = core.getInput('recommended-imagetags-tag-prefix', { required: false }) || '';
     const imageTagSuffix = core.getInput('recommended-imagetags-tag-suffix', { required: false }) || '';
     const imageTagRegistry = core.getInput('recommended-imagetags-registry', { required: false }) || '';
+    const changed_files_output_path = core.getInput('changed_files_output_path', { required: false }) || '';
 
     log(`github.context: ${JSON.stringify(github.context, undefined, 2)}`, verbose);
 
@@ -56,8 +59,11 @@ export async function run() {
 
       const changedFiles = await getChangedFiles();
       log(`Changed Files: ${changedFiles.join('\n')}`, verbose);
+      if (changed_files_output_path) {
+        await writeChangedFiles(changed_files_output_path, changedFiles);
+      }
 
-      const {changes} = evaluateStatementsForChanges(statements, changedFiles);
+      const { changes } = evaluateStatementsForChanges(statements, changedFiles);
       for (const [key, value] of Object.entries(changes)) {
         affectedChanges[key] = value;
       }

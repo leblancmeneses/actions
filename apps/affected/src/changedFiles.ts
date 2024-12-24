@@ -1,6 +1,8 @@
 import { execSync } from 'child_process';
 import * as github from '@actions/github';
 import { EXEC_SYNC_MAX_BUFFER } from './constants';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 export enum ChangeStatus {
   Added = 'added',
@@ -82,3 +84,19 @@ export const getChangedFiles = async (): Promise<ChangedFile[]> => {
 
   return changedFiles;
 };
+
+
+export async function writeChangedFiles(changed_files_output_path: string, changedFiles: ChangedFile[]) {
+  const directory = path.dirname(changed_files_output_path);
+  try {
+    await fs.mkdir(directory, { recursive: true });
+  } catch (err) {
+    throw new Error(`Failed to create directory at ${directory}: ${err.message}`, { cause: err });
+  }
+
+  try {
+    await fs.writeFile(changed_files_output_path, JSON.stringify(changedFiles, null, 2), 'utf8');
+  } catch (err) {
+    throw new Error(`Failed to write changed files to ${changed_files_output_path}: ${err.message}`, { cause: err });
+  }
+}
