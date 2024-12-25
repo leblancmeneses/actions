@@ -488,8 +488,18 @@ jobs:
         id: affected
         uses: leblancmeneses/actions/dist/apps/affected@main
         with:
+          changed-files-output-path: .artifacts/affected.json
           rules: |
             ...
+
+      - name: upload affected output
+        uses: actions/upload-artifact@v4
+        with:
+          name: affected
+          if-no-files-found: ignore
+          retention-days: 1
+          path: .artifacts/**
+          include-hidden-files: true
 
       - name: calculate version-autopilot outputs
         id: version-autopilot
@@ -523,6 +533,17 @@ jobs:
     needs: [vars]
     runs-on: ubuntu-latest
     steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: download affected
+        uses: actions/download-artifact@v4
+        with:
+          name: affected
+          path: .artifacts/
+
       - name: example output
         run: |
           echo "affected: "
@@ -531,6 +552,11 @@ jobs:
           echo '${{ needs.vars.outputs.pragma }}' | jq .
           echo "version-autopilot: "
           echo '${{ needs.vars.outputs.version-autopilot }}' | jq .
+
+          cat ./.artifacts/affected.json
+          for file in $(jq -r '.[] | .file' ./.artifacts/affected.json); do
+            echo "processing: $file"
+          done
 ```
 
 We recommend locking the `uses:` clause to a specific tag or sha to avoid pipeline
