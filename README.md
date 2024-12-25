@@ -73,7 +73,8 @@ jobs:
           recommended-imagetags-tag-suffix: '' # optional; The suffix to add to the image tag. target:sha1<suffix>'
           recommended-imagetags-registry: '' # optional; used in recommended_imagetags.
           recommended-imagetags-tag-truncate-size: 0 # optional; The number of characters to keep from the sha1 value.
-          changed-files-output-path: '' # optional; The path to write the file containing the list of changed files.
+          changed-files-output-file: '' # optional; The path to write the file containing the list of changed files.
+          rules-file: '' # optional; The path to the file containing the rules if you perfer externalizing the rules.
           rules: |
             peggy-parser: 'apps/affected/src/parser.peggy';
             peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
@@ -488,7 +489,7 @@ jobs:
         id: affected
         uses: leblancmeneses/actions/apps/affected@main
         with:
-          changed-files-output-path: .artifacts/affected.json
+          changed-files-output-file: .artifacts/affected.json
           rules: |
             ...
 

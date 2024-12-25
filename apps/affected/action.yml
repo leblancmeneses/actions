@@ -6,8 +6,13 @@ branding:
   color: 'red'
 inputs:
   rules:
-    description: 'Defines rules in DSL format specified in README.md.'
-    required: true
+    description: 'Defines rules in a DSL format specified in README.md.'
+    required: false
+    default: ''
+  rules-file:
+    description: 'Reference to file containing rules in a DSL format specified in README.md.'
+    required: false
+    default: ''
   recommended-imagetags-tag-prefix:
     description: 'The prefix to add to the image tag. target:<prefix>sha'
     required: false
@@ -24,8 +29,8 @@ inputs:
     description: 'The registry to add to all image tags.'
     required: false
     default: ''
-  changed-files-output-path:
-    description: 'Writes a JSON array of ChangedFile objects, where each object has a file name and its change status.'
+  changed-files-output-file:
+    description: 'Writes a file containing a JSON array of ChangedFile objects, where each object has a file name and its change status.'
     required: false
     default: ''
   verbose:

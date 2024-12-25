@@ -72,14 +72,14 @@ jobs:
         id: affected
         uses: ./apps/affected
         with:
-          rules: |
-            peggy-parser: 'apps/affected/src/parser.peggy';
-            peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
-            ci: '.github/workflows/ci.yml';
-            <affected>: './apps/affected/**' './dist/apps/affected/**';
-            <version-autopilot>: './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
-            <pragma>: './apps/pragma/**' './dist/apps/pragma/**';
-            e2e: ('./e2e/**' ci pragma affected version-autopilot) EXCEPT ('**/*.md');
+          changed-files-output-file: ./.artifacts/changed.json
+          rules-file: .github/affected.rules
+
+      - name: affected output
+        run: |
+          echo "affected: "
+          echo '${{ steps.affected.outputs.affected }}' | jq .
+          cat ./.artifacts/changed.json
 
       - name: incomplete parser changes
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.peggy-parser-checkIf-incomplete }}

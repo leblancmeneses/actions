@@ -101,7 +101,7 @@ describe("affected.spec", () => {
     // Assert
     expect(mockSetFailed).not.toHaveBeenCalled();
     expect(core.getInput).toHaveBeenCalledWith("rules", {
-      required: true,
+      required: false,
     });
 
 
@@ -307,7 +307,7 @@ describe("affected.spec", () => {
   });
 
 
-  describe('changed-files-output-path', () => {
+  describe('changed-files-output-file', () => {
     const files = [
       "project-api/file1.ts",
       "project-ui/file1.ts",
@@ -370,7 +370,7 @@ describe("affected.spec", () => {
         if (inputName === "rules") return `
             <project-api>: 'project-api/**/*.ts';
           `;
-        if (inputName === "changed-files-output-path") return 'abc.txt';
+        if (inputName === "changed-files-output-file") return 'abc.txt';
         return "";
       });
       let fileWritten = false;
@@ -384,6 +384,75 @@ describe("affected.spec", () => {
       // Assert
       expect(fileWritten).toBe(true);
       expect(changedFilesModule.writeChangedFiles).toHaveBeenCalledWith('abc.txt', files.map(f => ({ file: f, status: changedFilesModule.ChangeStatus.Modified })));
+    });
+  });
+
+
+  describe('rules', () => {
+    const files = [
+      "project-api/file1.ts",
+      "project-ui/file1.ts",
+    ];
+
+    beforeEach(() => {
+      jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
+
+      const execSyncResponses = {
+        'git diff --name-status HEAD~1 HEAD': () => files.map(f => `M\t${f}`).join('\n'),
+        'git ls-files': () => files.join('\n'),
+      };
+
+      jest.spyOn(cp, 'execSync')
+        .mockImplementation((command: string) => {
+          if (command.startsWith('git hash-object')) {
+            const match = command.match(/git hash-object\s+"([^"]+)"/);
+            if (!match) {
+              throw new Error(`Unexpected command: ${command}`);
+            }
+
+            return match[1];
+          }
+
+          if (command.startsWith('git diff --name-status')) {
+            return files.map(f => `M\t${f}`).join('\n');
+          }
+
+          if (execSyncResponses[command]) {
+            return execSyncResponses[command]();
+          }
+          throw new Error(`Unexpected input: ${command}`);
+        });
+    });
+
+    test("should require either rules or rules-file", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((_inputName: string) => {
+        return "";
+      });
+      const mockSetFailed = jest.spyOn(core, 'setFailed').mockImplementation(jest.fn());
+      const errorMessage = "You must specify either 'rules' or 'rules-file'.";
+      // Act
+      await expect(run()).rejects.toThrow(errorMessage);
+
+      // Assert
+      expect(mockSetFailed).toHaveBeenCalledWith(errorMessage);
+    });
+
+    test("should enforce exclusivity between rules and rules-file", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((inputName) => {
+        if (inputName === "rules") return "some rules";
+        if (inputName === "rules-file") return "path/to/rules-file";
+        return "";
+      });
+      const mockSetFailed = jest.spyOn(core, "setFailed").mockImplementation(jest.fn());
+      const errorMessage = "Only one of 'rules' or 'rules-file' can be specified. Please use either one.";
+
+      // Act
+      await expect(run()).rejects.toThrow(errorMessage);
+
+      // Assert
+      expect(mockSetFailed).toHaveBeenCalledWith(errorMessage);
     });
   });
 });

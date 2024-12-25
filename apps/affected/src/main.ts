@@ -5,8 +5,34 @@ import { getChangedFiles, writeChangedFiles } from './changedFiles';
 import { evaluateStatementsForChanges } from './evaluateStatementsForChanges';
 import { allGitFiles, evaluateStatementsForHashes } from './evaluateStatementsForHashes';
 import { AST } from './parser.types';
+import fs from 'fs';
+import path from 'path';
 
+export const getRules = () => {
+  const rulesInput = core.getInput('rules', { required: false }) || '';
+  const rulesFile = core.getInput('rules-file', { required: false }) || '';
 
+  if (rulesInput && rulesFile) {
+      throw new Error("Only one of 'rules' or 'rules-file' can be specified. Please use either one.");
+  }
+
+  if (!rulesInput && !rulesFile) {
+      throw new Error("You must specify either 'rules' or 'rules-file'.");
+  }
+
+  let rules = '';
+  if (rulesInput) {
+    rules = rulesInput;
+  } else {
+    const rulesFilePath = path.resolve(rulesFile);
+    if (!fs.existsSync(rulesFilePath)) {
+        throw new Error(`The specified rules-file does not exist: ${rulesFilePath}`);
+    }
+
+    rules = fs.readFileSync(rulesFilePath, 'utf8');
+  }
+  return rules;
+};
 
 export const getImageName = (appTarget: string, sha: string, truncateSha1Size = 0, imageTagRegistry = '', imageTagPrefix = '', imageTagSuffix = '') => {
   let sha1 = sha;
@@ -40,13 +66,13 @@ export async function run() {
     const affectedShas: Record<string, string> = {};
     const affectedChanges: Record<string, boolean> = {};
 
-    const rulesInput = core.getInput('rules', { required: true });
+    const rulesInput = getRules();
     const verbose = core.getInput('verbose', { required: false }) === 'true';
     const truncateSha1Size = parseInt(core.getInput('recommended-imagetags-tag-truncate-size', { required: false }) || '0');
     const imageTagPrefix = core.getInput('recommended-imagetags-tag-prefix', { required: false }) || '';
     const imageTagSuffix = core.getInput('recommended-imagetags-tag-suffix', { required: false }) || '';
     const imageTagRegistry = core.getInput('recommended-imagetags-registry', { required: false }) || '';
-    const changedFilesOutputPath = core.getInput('changed-files-output-path', { required: false }) || '';
+    const changedFilesOutputFile = core.getInput('changed-files-output-file', { required: false }) || '';
 
     log(`github.context: ${JSON.stringify(github.context, undefined, 2)}`, verbose);
 
@@ -59,8 +85,8 @@ export async function run() {
 
       const changedFiles = await getChangedFiles();
       log(`Changed Files: ${changedFiles.join('\n')}`, verbose);
-      if (changedFilesOutputPath) {
-        await writeChangedFiles(changedFilesOutputPath, changedFiles);
+      if (changedFilesOutputFile) {
+        await writeChangedFiles(changedFilesOutputFile, changedFiles);
       }
 
       const { changes } = evaluateStatementsForChanges(statements, changedFiles);

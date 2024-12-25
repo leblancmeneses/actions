@@ -1,8 +1,39 @@
-if ! git diff --quiet --exit-code -- dist/apps/version-autopilot; then
-  npm run build
+set -e
 
-  if git diff --quiet --exit-code -- dist/apps/version-autopilot; then
-    echo "Error: Recommit as there are changes in the dist/apps/version-autopilot folder."
-    exit 1
+pwd
+
+# requires act, jq, unzip, npx, nx
+
+rm -rf .husky-ext-act/.artifacts/1/ || true
+
+act pull_request -W .husky-ext-act/act.yml -j calculate  -e .husky-ext-act/act.payload.json -s GITHUB_TOKEN="fakeToken123"  --action-offline-mode --artifact-server-path .husky-ext-act/.artifacts
+unzip .husky-ext-act/.artifacts/1/affected/affected.zip -d .husky-ext-act/.artifacts/1/affected/
+
+if [[ ! -f .husky-ext-act/.artifacts/1/affected/affected-changes.json ]]; then
+  echo "File does not exist: .husky-ext-act/.artifacts/1/affected/affected-changes.json"
+  exit 1
+fi
+
+# Check properties
+affected=$(jq '.affected' .husky-ext-act/.artifacts/1/affected/affected-changes.json)
+pragma=$(jq '.pragma' .husky-ext-act/.artifacts/1/affected/affected-changes.json)
+version_autopilot=$(jq '.["version-autopilot"]' .husky-ext-act/.artifacts/1/affected/affected-changes.json)
+
+if [[ $affected == "true" && $pragma == "true" && $version_autopilot == "true" ]]; then
+  # Run all tests without testPathPattern
+  npx nx run e2e:e2e
+else
+  # Run tests for individual properties
+  if [[ $affected == "true" ]]; then
+    npx nx run affected:lint
+    npx nx run e2e:e2e --testPathPattern='src/affect'
+  fi
+  if [[ $pragma == "true" ]]; then
+    npx nx run pragma:lint
+    npx nx run e2e:e2e --testPathPattern='src/pragma'
+  fi
+  if [[ $version_autopilot == "true" ]]; then
+    npx nx run version-autopilot:lint
+    npx nx run e2e:e2e --testPathPattern='src/version-autopilot'
   fi
 fi

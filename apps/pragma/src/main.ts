@@ -21,7 +21,7 @@ const convertValue = (value: string) => {
 
 const extractVariables = (input: string) => {
   const regex = /x__([a-zA-Z0-9._-]+)\s*=\s*['"]?([^'"\r\n]+)['"]?(?=[\r\n]|$)/g;
-  const result: { [key: string]: any } = {};
+  const result: { [key: string]: string | number | boolean } = {};
   let match;
 
   while ((match = regex.exec(input)) !== null) {
