@@ -17,4 +17,4 @@ outputs:
     description: 'A JSON object of the input variables and their values.'
 runs:
   using: 'node20'
-  main: 'main.js'
+  main: 'dist/apps/pragma/main.js'

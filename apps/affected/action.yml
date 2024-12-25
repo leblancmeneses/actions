@@ -43,4 +43,4 @@ outputs:
     description: 'A JSON object where the propery is the target and value is a boolean signifying if the target had changes'
 runs:
   using: 'node20'
-  main: 'main.js'
+  main: 'dist/apps/affected/main.js'
