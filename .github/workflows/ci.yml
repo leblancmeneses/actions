@@ -46,7 +46,7 @@ jobs:
 
       - name: calculate version-autopilot
         id: version-autopilot
-        uses: ./
+        uses: ./apps/version-autopilot
         with:
           major: 0
           minor: 0
@@ -61,7 +61,7 @@ jobs:
 
       - name: calculate pragma
         id: pragma
-        uses: ./
+        uses: ./apps/pragma
         with:
           variables: |
             lint-appname-ui = 'skip'
@@ -70,7 +70,7 @@ jobs:
 
       - name: calculate affected
         id: affected
-        uses: ./
+        uses: ./apps/affected
         with:
           rules: |
             peggy-parser: 'apps/affected/src/parser.peggy';

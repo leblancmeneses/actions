@@ -66,7 +66,7 @@ jobs:
 
       - name: calculate affected
         id: affected
-        uses: leblancmeneses/actions/dist/apps/affected@main
+        uses: leblancmeneses/actions/apps/affected@main
         with:
           verbose: false # optional
           recommended-imagetags-tag-prefix: '' # optional; The prefix to add to the image tag. target:<prefix>sha1
@@ -298,7 +298,7 @@ These variables will take precedence over the defaults specified in the variable
 ```yaml
       - name: calculate pragma
         id: pragma
-        uses: leblancmeneses/actions/dist/apps/pragma@main
+        uses: leblancmeneses/actions/apps/pragma@main
         with:
           variables: | # INI format to initialize default variables
             lint-appname-ui = ''
@@ -356,7 +356,7 @@ This will automatically increment the version on every **run** of your github ac
 ```yaml
   - name: calculate version autopilot
     id: version-autopilot
-    uses: leblancmeneses/actions/dist/apps/version-autopilot@main
+    uses: leblancmeneses/actions/apps/version-autopilot@main
     with:
       major: 0
       minor: 0
@@ -479,14 +479,14 @@ jobs:
 
       - name: calculate pragma outputs
         id: pragma
-        uses: leblancmeneses/actions/dist/apps/pragma@main
+        uses: leblancmeneses/actions/apps/pragma@main
         with:
           variables: |
             ...
 
       - name: calculate affected outputs
         id: affected
-        uses: leblancmeneses/actions/dist/apps/affected@main
+        uses: leblancmeneses/actions/apps/affected@main
         with:
           changed-files-output-path: .artifacts/affected.json
           rules: |
@@ -503,7 +503,7 @@ jobs:
 
       - name: calculate version-autopilot outputs
         id: version-autopilot
-        uses: leblancmeneses/actions/dist/apps/version-autopilot@main
+        uses: leblancmeneses/actions/apps/version-autopilot@main
         with:
           major: 0
           minor: 0
@@ -563,9 +563,9 @@ We recommend locking the `uses:` clause to a specific tag or sha to avoid pipeli
 breakage due to future changes in the action.
 
 ```yaml
-uses: leblancmeneses/actions/dist/apps/<taskname>@main # latest
-uses: leblancmeneses/actions/dist/apps/<taskname>@v1.1.1 # specific tag
-uses: leblancmeneses/actions/dist/apps/<taskname>@commit-sha # specific sha
+uses: leblancmeneses/actions/apps/<taskname>@main # latest
+uses: leblancmeneses/actions/apps/<taskname>@v1.1.1 # specific tag
+uses: leblancmeneses/actions/apps/<taskname>@commit-sha # specific sha
 ```
 
 # Run locally
