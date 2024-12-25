@@ -1,5 +1,9 @@
-name: 'Affected Processor'
+name: 'Affected Targets'
 description: 'Determines affected components and generates corresponding SHA, recommended image tags, and change status based on the provided rules.'
+author: Leblanc Meneses
+branding:
+  icon: 'target'
+  color: 'red'
 inputs:
   rules:
     description: 'Defines rules in DSL format specified in README.md.'
@@ -20,6 +24,10 @@ inputs:
     description: 'The registry to add to all image tags.'
     required: false
     default: ''
+  changed-files-output-path:
+    description: 'Writes a JSON array of ChangedFile objects, where each object has a file name and its change status.'
+    required: false
+    default: ''
   verbose:
     description: 'Enable verbose logging. Use "true" or "false".'
     required: false
@@ -35,4 +43,4 @@ outputs:
     description: 'A JSON object where the propery is the target and value is a boolean signifying if the target had changes'
 runs:
   using: 'node20'
-  main: 'main.js'
+  main: '../../dist/apps/affected/main.js'

@@ -66,13 +66,14 @@ jobs:
 
       - name: calculate affected
         id: affected
-        uses: leblancmeneses/actions/dist/apps/affected@main
+        uses: leblancmeneses/actions/apps/affected@main
         with:
           verbose: false # optional
           recommended-imagetags-tag-prefix: '' # optional; The prefix to add to the image tag. target:<prefix>sha1
           recommended-imagetags-tag-suffix: '' # optional; The suffix to add to the image tag. target:sha1<suffix>'
           recommended-imagetags-registry: '' # optional; used in recommended_imagetags.
           recommended-imagetags-tag-truncate-size: 0 # optional; The number of characters to keep from the sha1 value.
+          changed-files-output-path: '' # optional; The path to write the file containing the list of changed files.
           rules: |
             peggy-parser: 'apps/affected/src/parser.peggy';
             peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
@@ -297,7 +298,7 @@ These variables will take precedence over the defaults specified in the variable
 ```yaml
       - name: calculate pragma
         id: pragma
-        uses: leblancmeneses/actions/dist/apps/pragma@main
+        uses: leblancmeneses/actions/apps/pragma@main
         with:
           variables: | # INI format to initialize default variables
             lint-appname-ui = ''
@@ -355,7 +356,7 @@ This will automatically increment the version on every **run** of your github ac
 ```yaml
   - name: calculate version autopilot
     id: version-autopilot
-    uses: leblancmeneses/actions/dist/apps/version-autopilot@main
+    uses: leblancmeneses/actions/apps/version-autopilot@main
     with:
       major: 0
       minor: 0
@@ -444,6 +445,8 @@ If you are looking for semantic versioning research `git tags` and [release pipe
 
 # Recommendations for multi-job pipeline
 
+A [single job pipeline](https://github.com/leblancmeneses/actions/blob/main/.github/workflows/ci.yml) is a great starting point for CI/CD workflows. However, as your project evolves, you may need to divide your pipeline into multiple jobs to enhance performance, maintainability, and accommodate different operating systems for various tools.
+
 Create an init job to calculate variables needed across multiple jobs. This will avoid redundant checkouts and calculations across each job.
 
 Generate an init.yml file with the following content:
@@ -476,21 +479,31 @@ jobs:
 
       - name: calculate pragma outputs
         id: pragma
-        uses: leblancmeneses/actions/dist/apps/pragma@main
+        uses: leblancmeneses/actions/apps/pragma@main
         with:
           variables: |
             ...
 
       - name: calculate affected outputs
         id: affected
-        uses: leblancmeneses/actions/dist/apps/affected@main
+        uses: leblancmeneses/actions/apps/affected@main
         with:
+          changed-files-output-path: .artifacts/affected.json
           rules: |
             ...
 
+      - name: upload affected output
+        uses: actions/upload-artifact@v4
+        with:
+          name: affected
+          if-no-files-found: ignore
+          retention-days: 1
+          path: .artifacts/**
+          include-hidden-files: true
+
       - name: calculate version-autopilot outputs
         id: version-autopilot
-        uses: leblancmeneses/actions/dist/apps/version-autopilot@main
+        uses: leblancmeneses/actions/apps/version-autopilot@main
         with:
           major: 0
           minor: 0
@@ -520,6 +533,17 @@ jobs:
     needs: [vars]
     runs-on: ubuntu-latest
     steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: download affected
+        uses: actions/download-artifact@v4
+        with:
+          name: affected
+          path: .artifacts/
+
       - name: example output
         run: |
           echo "affected: "
@@ -528,15 +552,20 @@ jobs:
           echo '${{ needs.vars.outputs.pragma }}' | jq .
           echo "version-autopilot: "
           echo '${{ needs.vars.outputs.version-autopilot }}' | jq .
+
+          cat ./.artifacts/affected.json
+          for file in $(jq -r '.[] | .file' ./.artifacts/affected.json); do
+            echo "processing: $file"
+          done
 ```
 
 We recommend locking the `uses:` clause to a specific tag or sha to avoid pipeline
 breakage due to future changes in the action.
 
 ```yaml
-uses: leblancmeneses/actions/dist/apps/<taskname>@main # latest
-uses: leblancmeneses/actions/dist/apps/<taskname>@v1.1.1 # specific tag
-uses: leblancmeneses/actions/dist/apps/<taskname>@commit-sha # specific sha
+uses: leblancmeneses/actions/apps/<taskname>@main # latest
+uses: leblancmeneses/actions/apps/<taskname>@v1.1.1 # specific tag
+uses: leblancmeneses/actions/apps/<taskname>@commit-sha # specific sha
 ```
 
 # Run locally
