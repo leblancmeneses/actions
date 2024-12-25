@@ -18,7 +18,7 @@
         "thirdParty": true,
         "main": "apps/pragma/src/main.ts",
         "tsConfig": "apps/pragma/tsconfig.app.json",
-        "assets": ["apps/pragma/action.yml"],
+        "assets": [],
         "generatePackageJson": false,
         "esbuildOptions": {
           "sourcemap": true,

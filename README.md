@@ -73,6 +73,7 @@ jobs:
           recommended-imagetags-tag-suffix: '' # optional; The suffix to add to the image tag. target:sha1<suffix>'
           recommended-imagetags-registry: '' # optional; used in recommended_imagetags.
           recommended-imagetags-tag-truncate-size: 0 # optional; The number of characters to keep from the sha1 value.
+          changed-files-output-path: '' # optional; The path to write the file containing the list of changed files.
           rules: |
             peggy-parser: 'apps/affected/src/parser.peggy';
             peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
@@ -444,6 +445,8 @@ If you are looking for semantic versioning research `git tags` and [release pipe
 
 # Recommendations for multi-job pipeline
 
+A [single job pipeline](https://github.com/leblancmeneses/actions/blob/main/.github/workflows/ci.yml) is a great starting point for CI/CD workflows. However, as your project evolves, you may need to divide your pipeline into multiple jobs to enhance performance, maintainability, and accommodate different operating systems for various tools.
+
 Create an init job to calculate variables needed across multiple jobs. This will avoid redundant checkouts and calculations across each job.
 
 Generate an init.yml file with the following content:
@@ -485,8 +488,18 @@ jobs:
         id: affected
         uses: leblancmeneses/actions/dist/apps/affected@main
         with:
+          changed-files-output-path: .artifacts/affected.json
           rules: |
             ...
+
+      - name: upload affected output
+        uses: actions/upload-artifact@v4
+        with:
+          name: affected
+          if-no-files-found: ignore
+          retention-days: 1
+          path: .artifacts/**
+          include-hidden-files: true
 
       - name: calculate version-autopilot outputs
         id: version-autopilot
@@ -520,6 +533,17 @@ jobs:
     needs: [vars]
     runs-on: ubuntu-latest
     steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: download affected
+        uses: actions/download-artifact@v4
+        with:
+          name: affected
+          path: .artifacts/
+
       - name: example output
         run: |
           echo "affected: "
@@ -528,6 +552,11 @@ jobs:
           echo '${{ needs.vars.outputs.pragma }}' | jq .
           echo "version-autopilot: "
           echo '${{ needs.vars.outputs.version-autopilot }}' | jq .
+
+          cat ./.artifacts/affected.json
+          for file in $(jq -r '.[] | .file' ./.artifacts/affected.json); do
+            echo "processing: $file"
+          done
 ```
 
 We recommend locking the `uses:` clause to a specific tag or sha to avoid pipeline
