@@ -10,7 +10,7 @@ set -e
 # Our rule-based approach standardizes the process, making it adaptable to diverse tech stacks and monorepo structures.
 
 
-required_tools=("act" "jq" "unzip" "npx" "nx")
+required_tools=("act" "jq" "unzip" "npx")
 
 check_command() {
   if ! command -v "$1" &>/dev/null; then
