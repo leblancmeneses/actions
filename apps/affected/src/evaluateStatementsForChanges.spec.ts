@@ -1,7 +1,7 @@
-import { evaluateStatementsForChanges } from '../../../affected/src/evaluateStatementsForChanges';
-import { ChangeStatus, mapGitStatusCode } from "../../../affected/src/changedFiles";
-import { parse } from '../../../affected/src/parser';
-import { AST } from '../../../affected/src/parser.types';
+import { evaluateStatementsForChanges } from './evaluateStatementsForChanges';
+import { ChangeStatus, mapGitStatusCode } from "./changedFiles";
+import { parse } from './parser';
+import { AST } from './parser.types';
 
 describe('evaluate-statements-for-changes.spec', () => {
   describe('negate expressions', () => {
@@ -230,7 +230,7 @@ describe('evaluate-statements-for-changes.spec', () => {
   describe('regex expressions', () => {
     it('should evaluate case senstivity regex', () => {
       const statements = parse(`
-        <regex>: /readme\.md/;
+        <regex>: /readme.md/;
       `, undefined) as AST;
       const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/README.md', status: mapGitStatusCode('A') },
@@ -243,7 +243,7 @@ describe('evaluate-statements-for-changes.spec', () => {
 
     it('should evaluate ignore case in regex', () => {
       const statements = parse(`
-        <regex>: /readme\.md/i;
+        <regex>: /readme.md/i;
       `, undefined) as AST;
       const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/README.md', status: mapGitStatusCode('A') },
@@ -256,7 +256,7 @@ describe('evaluate-statements-for-changes.spec', () => {
 
     it('should evaluate ignore case in regex with matching status code', () => {
       const statements = parse(`
-        <regex>: /readme\.md/i:A;
+        <regex>: /readme.md/i:A;
       `, undefined) as AST;
       const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/README.md', status: mapGitStatusCode('A') },
@@ -269,7 +269,7 @@ describe('evaluate-statements-for-changes.spec', () => {
 
     it('should evaluate ignore case in regex without matching status code', () => {
       const statements = parse(`
-        <regex>: /readme\.md/i:D;
+        <regex>: /readme.md/i:D;
       `, undefined) as AST;
       const { changes, netFiles } = evaluateStatementsForChanges(statements, [
         { file: 'lib1/README.md', status: mapGitStatusCode('A') },

@@ -27,7 +27,11 @@ export async function evaluateStatementsForHashes(statements: AST, allFiles: str
 
   function evaluateStatement(statementKey: string, files: string[]): EvaluationResult {
     if (seen.has(statementKey)) {
-      return seen.get(statementKey)!;
+      const value = seen.get(statementKey);
+      if (value === undefined) {
+        throw new Error(`Unexpected undefined value for key: ${statementKey}`);
+      }
+      return value;
     }
 
     const statement = statements.find((s) => s.key.name === statementKey);
@@ -139,7 +143,7 @@ export async function evaluateStatementsForHashes(statements: AST, allFiles: str
       }
 
       default:
-        throw new Error(`Unsupported node type: ${(node as any).type}`);
+        throw new Error(`Unsupported node type: ${(node as { type: string }).type}`);
     }
   }
 

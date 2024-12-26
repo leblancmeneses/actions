@@ -1,0 +1,6 @@
+peggy-parser: 'apps/affected/src/parser.peggy';
+peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/affected/src/parser.spec.ts');
+
+<affected>: './apps/affected/**' './dist/apps/affected/**';
+<version-autopilot>: './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
+<pragma>: './apps/pragma/**' './dist/apps/pragma/**';

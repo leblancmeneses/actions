@@ -49,7 +49,9 @@ export const getChangedFiles = async (): Promise<ChangedFile[]> => {
   let changedFiles: ChangedFile[] = [];
   let baseDiffCommand: string;
 
-  if (eventName === 'pull_request' || eventName === 'workflow_dispatch') {
+  if (process.env['ACT'] === 'true') {
+    baseDiffCommand = 'git diff HEAD --name-status';
+  } else if (eventName === 'pull_request' || eventName === 'workflow_dispatch') {
     // Pull request or workflow dispatch event
     baseDiffCommand = `git diff --name-status ${baseSha} ${headSha}`;
   } else if (eventName === 'push') {

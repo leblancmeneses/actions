@@ -8,7 +8,7 @@ jest.mock('child_process', () => {
   };
 });
 import * as github from '@actions/github';
-import { run } from "../../../affected/src/main";
+import { run } from "./main";
 import * as core from "@actions/core";
 import * as cp from 'child_process';
 
@@ -94,8 +94,8 @@ M\tapps/affected/src/main.ts
   };
 
   beforeAll(() => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(jest.fn());
+    jest.spyOn(console, 'error').mockImplementation(jest.fn());
   });
 
   afterAll(() => {

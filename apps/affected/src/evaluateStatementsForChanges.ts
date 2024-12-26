@@ -31,7 +31,11 @@ export function evaluateStatementsForChanges(statements: AST, originalChangedFil
 
   function evaluateStatement(statementKey: string, changedFiles: ChangedFile[]): EvaluationResult {
     if (seen.has(statementKey)) {
-      return seen.get(statementKey)!;
+      const value = seen.get(statementKey);
+      if (value === undefined) {
+        throw new Error(`Unexpected undefined value for key: ${statementKey}`);
+      }
+      return value;
     }
 
     const statement = statements.find((s) => s.key.name === statementKey);
@@ -152,7 +156,7 @@ export function evaluateStatementsForChanges(statements: AST, originalChangedFil
       }
 
       default:
-        throw new Error(`Unsupported node type: ${(node as any).type}`);
+        throw new Error(`Unsupported node type: ${(node as { type: string }).type}`);
     }
   }
 
