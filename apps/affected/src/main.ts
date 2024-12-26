@@ -13,11 +13,11 @@ export const getRules = () => {
   const rulesFile = core.getInput('rules-file', { required: false }) || '';
 
   if (rulesInput && rulesFile) {
-      throw new Error("Only one of 'rules' or 'rules-file' can be specified. Please use either one.");
+    throw new Error("Only one of 'rules' or 'rules-file' can be specified. Please use either one.");
   }
 
   if (!rulesInput && !rulesFile) {
-      throw new Error("You must specify either 'rules' or 'rules-file'.");
+    throw new Error("You must specify either 'rules' or 'rules-file'.");
   }
 
   let rules = '';
@@ -26,7 +26,7 @@ export const getRules = () => {
   } else {
     const rulesFilePath = path.resolve(rulesFile);
     if (!fs.existsSync(rulesFilePath)) {
-        throw new Error(`The specified rules-file does not exist: ${rulesFilePath}`);
+      throw new Error(`The specified rules-file does not exist: ${rulesFilePath}`);
     }
 
     rules = fs.readFileSync(rulesFilePath, 'utf8');
