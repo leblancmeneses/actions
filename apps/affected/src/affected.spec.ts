@@ -7,10 +7,18 @@ jest.mock('child_process', () => {
     execSync: jest.fn(),
   };
 });
+jest.mock('fs', () => {
+  const originalModule = jest.requireActual('fs');
+  return {
+    ...originalModule,
+    existsSync: jest.fn(),
+  };
+});
 import { run } from "./main";
 import * as changedFilesModule from './changedFiles';
 import * as core from "@actions/core";
 import * as cp from 'child_process';
+import * as fs from 'fs';
 import crypto from 'crypto';
 import * as github from '@actions/github';
 
@@ -52,6 +60,11 @@ describe("affected.spec", () => {
         `;
       return "";
     });
+
+    jest.spyOn(fs, 'existsSync')
+      .mockImplementation((command: string) => {
+        return !command.includes('deleted');
+      });
 
     jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
 
@@ -151,11 +164,12 @@ describe("affected.spec", () => {
   describe('recommended_imagetags', () => {
     const files = [
       "project-api/file1.ts",
+      "project-api/deleted.ts",
       "project-ui/file1.ts",
     ];
 
     function getHash(folder: string) {
-      const matchedFiles = [...files.filter(f => f.startsWith(folder))].sort();
+      const matchedFiles = [...files.filter(f => f.startsWith(folder))].filter(x=>!x.includes('deleted')).sort();
       return crypto.createHash('sha1')
         .update(matchedFiles.join('\n') + '\n')
         .digest('hex');
@@ -165,9 +179,14 @@ describe("affected.spec", () => {
       jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
 
       const execSyncResponses = {
-        'git diff --name-status HEAD~1 HEAD': () => files.map(f => `M\t${f}`).join('\n'),
+        'git diff --name-status HEAD~1 HEAD': () => files.map(f => `${f.includes('deleted')? 'D':'M'}\t${f}`).join('\n'),
         'git ls-files': () => files.join('\n'),
       };
+
+      jest.spyOn(fs, 'existsSync')
+        .mockImplementation((command: string) => {
+          return !command.includes('deleted');
+        });
 
       jest.spyOn(cp, 'execSync')
         .mockImplementation((command: string) => {
@@ -177,11 +196,15 @@ describe("affected.spec", () => {
               throw new Error(`Unexpected command: ${command}`);
             }
 
+            if(match[1].includes('deleted')) {
+              throw new Error('Deleted files should not be part of the hash-object');
+            }
+
             return match[1];
           }
 
           if (command.startsWith('git diff --name-status')) {
-            return files.map(f => `M\t${f}`).join('\n');
+            return files.map(f => `${f.includes('deleted')? 'D':'M'}\t${f}`).join('\n');
           }
 
           if (execSyncResponses[command]) {
