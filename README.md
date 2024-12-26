@@ -17,6 +17,7 @@
       - [Wrapping up example](#wrapping-up-example)
     - [Consuming the JSON object](#consuming-the-json-object)
     - [Real world usage](#real-world-usage)
+    - [Run locally for Husky integration](#run-locally-for-husky-integration)
   - [Pragma Action](#pragma-action)
     - [Features](#features)
     - [Inputs](#inputs)
@@ -74,7 +75,7 @@ jobs:
           recommended-imagetags-registry: '' # optional; used in recommended_imagetags.
           recommended-imagetags-tag-truncate-size: 0 # optional; The number of characters to keep from the sha1 value.
           changed-files-output-file: '' # optional; The path to write the file containing the list of changed files.
-          rules-file: '' # optional; The path to the file containing the rules if you perfer externalizing the rules.
+          rules-file: '' # optional; The path to the file containing the rules if you perfer externalizing the rules for husky integration.
           rules: |
             peggy-parser: 'apps/affected/src/parser.peggy';
             peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/affected/src/parser.spec.ts');
@@ -260,6 +261,14 @@ jobs:
 
   # ...
 ```
+
+### Run locally for Husky integration
+
+After installing [Husky](https://typicode.github.io/husky/) in your project, you can integrate the `affected` action.
+Our rule-based approach standardizes the process, making it adaptable to diverse tech stacks and monorepo structures.
+
+[Husky sample](./husky/pre-commit)
+
 
 <br>
 <br>
