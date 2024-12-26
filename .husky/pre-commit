@@ -10,14 +10,12 @@ set -e
 # Our rule-based approach standardizes the process, making it adaptable to diverse tech stacks and monorepo structures.
 
 
-required_tools=("act" "jq" "unzip" "npx")
+required_tools=("gh" "act" "jq" "unzip" "npx")
 
 check_command() {
   if ! command -v "$1" &>/dev/null; then
     echo "Notice: $1 is not installed. Skipping further processing."
     exit 0
-  else
-    echo "$1 is already installed."
   fi
 }
 
@@ -31,7 +29,7 @@ echo "All required tools are installed. Proceeding..."
 
 rm -rf .husky-ext-act/.artifacts/1/ || true
 
-act pull_request -W .husky-ext-act/act.yml -j calculate  -e .husky-ext-act/act.payload.json -s GITHUB_TOKEN="fakeToken123"  --action-offline-mode --artifact-server-path .husky-ext-act/.artifacts
+act pull_request -s GITHUB_TOKEN="$(gh auth token)" -W .husky-ext-act/act.yml -j calculate  -e .husky-ext-act/act.payload.json --action-offline-mode --artifact-server-path .husky-ext-act/.artifacts
 unzip .husky-ext-act/.artifacts/1/affected/affected.zip -d .husky-ext-act/.artifacts/1/affected/
 
 if [[ ! -f .husky-ext-act/.artifacts/1/affected/affected-changes.json ]]; then
