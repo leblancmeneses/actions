@@ -16,8 +16,6 @@ check_command() {
   if ! command -v "$1" &>/dev/null; then
     echo "Notice: $1 is not installed. Skipping further processing."
     exit 0
-  else
-    echo "$1 is already installed."
   fi
 }
 
