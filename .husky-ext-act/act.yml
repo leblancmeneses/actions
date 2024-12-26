@@ -10,14 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: ls
-        run: |
-          git diff HEAD --name-status
-          echo ""
-          echo "==========="
-          cat .github/affected.rules
-          echo ""
-
       - name: calculate affected
         id: affected
         uses: ./apps/affected
