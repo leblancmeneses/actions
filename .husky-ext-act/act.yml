@@ -12,7 +12,7 @@ jobs:
 
       - name: calculate affected
         id: affected
-        uses: ./apps/affected
+        uses: leblancmeneses/actions/apps/affected@main
         with:
           changed-files-output-file: .artifacts/changed-files.json
           rules-file: .github/affected.rules
