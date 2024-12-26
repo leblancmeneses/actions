@@ -1,8 +1,33 @@
 set -e
 
-pwd
+# Nx provides built-in commands to run tasks for affected projects:
+# - Run tests for affected projects:
+#   pnpm nx affected --target=test
+# - Run linting for affected projects:
+#   pnpm nx affected --target=lint
+#
+# This script demonstrates how to manually calculate affected projects without relying on Nx.
+# Our rule-based approach standardizes the process, making it adaptable to diverse tech stacks and monorepo structures.
 
-# requires act, jq, unzip, npx, nx
+
+required_tools=("act" "jq" "unzip" "npx" "nx")
+
+check_command() {
+  if ! command -v "$1" &>/dev/null; then
+    echo "Notice: $1 is not installed. Skipping further processing."
+    exit 0
+  else
+    echo "$1 is already installed."
+  fi
+}
+
+# Check each tool
+for tool in "${required_tools[@]}"; do
+  check_command "$tool"
+done
+
+echo "All required tools are installed. Proceeding..."
+
 
 rm -rf .husky-ext-act/.artifacts/1/ || true
 
@@ -19,21 +44,18 @@ affected=$(jq '.affected' .husky-ext-act/.artifacts/1/affected/affected-changes.
 pragma=$(jq '.pragma' .husky-ext-act/.artifacts/1/affected/affected-changes.json)
 version_autopilot=$(jq '.["version-autopilot"]' .husky-ext-act/.artifacts/1/affected/affected-changes.json)
 
-if [[ $affected == "true" && $pragma == "true" && $version_autopilot == "true" ]]; then
-  # Run all tests without testPathPattern
-  npx nx run e2e:e2e
-else
-  # Run tests for individual properties
-  if [[ $affected == "true" ]]; then
-    npx nx run affected:lint
-    npx nx run e2e:e2e --testPathPattern='src/affect'
-  fi
-  if [[ $pragma == "true" ]]; then
-    npx nx run pragma:lint
-    npx nx run e2e:e2e --testPathPattern='src/pragma'
-  fi
-  if [[ $version_autopilot == "true" ]]; then
-    npx nx run version-autopilot:lint
-    npx nx run e2e:e2e --testPathPattern='src/version-autopilot'
-  fi
+if [[ $affected == "true" ]]; then
+  npx nx run affected:lint
+  npx nx run affected:test
+  npx nx run affected:build:production
+fi
+if [[ $pragma == "true" ]]; then
+  npx nx run pragma:lint
+  npx nx run pragma:test
+  npx nx run pragma:build:production
+fi
+if [[ $version_autopilot == "true" ]]; then
+  npx nx run version-autopilot:lint
+  npx nx run version-autopilot:test
+  npx nx run version-autopilot:build:production
 fi

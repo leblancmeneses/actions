@@ -1,7 +1,7 @@
 import { execSync } from 'child_process';
 import * as github from '@actions/github';
-import { ChangeStatus, mapGitStatusCode, getChangedFiles } from  "../../../affected/src/changedFiles";
-import { EXEC_SYNC_MAX_BUFFER } from '../../../affected/src/constants';
+import { ChangeStatus, mapGitStatusCode, getChangedFiles } from  "./changedFiles";
+import { EXEC_SYNC_MAX_BUFFER } from './constants';
 
 jest.mock('child_process');
 jest.mock('@actions/github', () => {
@@ -22,8 +22,12 @@ jest.mock('@actions/github', () => {
 describe('changed-files.spec', () => {
 
   beforeAll(() => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {
+      // Noop.
+    });
+    jest.spyOn(console, 'error').mockImplementation(() => {
+      // Noop.
+    });
   });
 
   afterAll(() => {

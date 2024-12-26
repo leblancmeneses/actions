@@ -1,20 +1,6 @@
-// jobs:
-//   init:
-//     runs-on: ubuntu-latest
-//     steps:
-//       - name: Checkout code
-//         uses: actions/checkout@v4
-
-//       - name: pragma action
-//         id: pragma
-//         uses: leblancmeneses/actions/dist/apps/pragma@main
-//         with:
-//           variables: |
-//             var1=test
-//             var2=${{ github.event.pull_request.base.ref || github.ref_name }}
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { run } from '@pragma/main';
+import { run } from './main';
 
 jest.mock('@actions/core');
 jest.mock('@actions/github');

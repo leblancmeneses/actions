@@ -23,6 +23,10 @@
     "lint": {
       "inputs": ["default"],
       "cache": true
+    },
+    "test": {
+      "inputs": ["default", "{workspaceRoot}/jest.preset.js"],
+      "cache": true
     }
   },
   "tasksRunnerOptions": {
@@ -44,10 +48,7 @@
       "plugin": "@nx/jest/plugin",
       "options": {
         "targetName": "test"
-      },
-      "exclude": [
-        "apps/e2e/**/*"
-      ]
+      }
     }
   ]
 }

@@ -1,5 +1,5 @@
-import { parse } from '../../../affected/src/parser';
-import { AST, Expression, Statement, ValueOfInterest } from '../../../affected/src/parser.types';
+import { parse } from './parser';
+import { AST, Expression, Statement, ValueOfInterest } from './parser.types';
 
 function stmt(name: string, value: Expression, path?: string): Statement {
   const key = path ? { name, path } : { name };

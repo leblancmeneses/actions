@@ -77,20 +77,18 @@ jobs:
           rules-file: '' # optional; The path to the file containing the rules if you perfer externalizing the rules.
           rules: |
             peggy-parser: 'apps/affected/src/parser.peggy';
-            peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/e2e/src/affected/parser.spec.ts');
+            peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts' OR !'apps/affected/src/parser.spec.ts');
               # peggy was updated but not the generated parser file or its tests.
 
             markdown: '**/*.md';
 
-            ui-core: 'libs/ui-core/**';
             third-party-deprecated: 'libs/third-party-deprecated/**';
+            ui-core: 'libs/ui-core/**';
             ui-libs: ui-core third-party-deprecated;
 
             <project-ui>: ui-libs 'project-ui/**' EXCEPT (markdown '**/*.spec.ts');
             <project-api>: 'project-api/**' EXCEPT ('**/README.md');
             <project-dbmigrations>: './databases/project/**';
-
-            project-e2e: ('e2e/**' project-ui project-api project-dbmigrations) EXCEPT (markdown);
 
 ```
 ### Rule DSL
@@ -105,7 +103,7 @@ These rules map a *project name* and the *expression* to check for changes and t
 
 #### Composing Rules
 
-The `project-e2e` rule is composed of `project-ui`, `project-api`, and `project-dbmigrations`, enabling you to reference and combine multiple expressions. For example, `e2e` runs when files change in any of these projects but excludes runs triggered by markdown-only changes.
+The `project-ui` rule is composed of `ui-libs` and `project-ui's definition`, enabling you to reference and combine multiple expressions. For example, `project-ui` runs when files change in any of these projects but excludes runs triggered by markdown or test only changes.
 
 Expressions can combine multiple conditions using `AND` or `OR` operators. If no operator is specified, `OR` is used by default.
 
@@ -187,7 +185,6 @@ The `affected` action will generate the following JSON objects:
     "project-api": false,
     "project-ui": true,
     "project-dbmigrations": false,
-    "project-e2e": true,
     "third-party-deprecated": false,
     "ui-core": false,
     "ui-libs": false
@@ -223,12 +220,12 @@ The `affected` action will generate the following JSON objects:
           echo '${{ steps.affected.outputs.affected }}' | jq .
 
           # You can use env values for naming complex expressions.
-          HAS_CHANGED_PROJECT_E2E=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["project-e2e"]')
-          echo "HAS_CHANGED_PROJECT_E2E=$HAS_CHANGED_PROJECT_E2E" >> $GITHUB_ENV
+          HAS_CHANGED_PROJECT_UI=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["project-ui"]')
+          echo "HAS_CHANGED_PROJECT_UI=$HAS_CHANGED_PROJECT_UI" >> $GITHUB_ENV
 
-      - name: e2e tests
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.project-e2e }}
-        run: npx nx run e2e:e2e
+      - name: ui tests
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.project-ui }}
+        run: npx nx run project-ui:test
 ```
 
 ### Real world usage
@@ -574,7 +571,7 @@ uses: leblancmeneses/actions/apps/<taskname>@commit-sha # specific sha
 ```bash
 nvm use
 pnpm i
-npx nx run e2e:e2e
+pnpm nx run-many --target=test --parallel
 ```
 
 # Contributing

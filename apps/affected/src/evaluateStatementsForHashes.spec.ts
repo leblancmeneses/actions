@@ -1,6 +1,6 @@
-import { evaluateStatementsForHashes } from '../../../affected/src/evaluateStatementsForHashes';
-import { parse } from '../../../affected/src/parser';
-import { AST } from '../../../affected/src/parser.types';
+import { evaluateStatementsForHashes } from './evaluateStatementsForHashes';
+import { parse } from './parser';
+import { AST } from './parser.types';
 import { execSync } from 'child_process';
 import crypto from 'crypto';
 

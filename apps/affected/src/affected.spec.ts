@@ -7,8 +7,8 @@ jest.mock('child_process', () => {
     execSync: jest.fn(),
   };
 });
-import { run } from "../../../affected/src/main";
-import * as changedFilesModule from '../../../affected/src/changedFiles';
+import { run } from "./main";
+import * as changedFilesModule from './changedFiles';
 import * as core from "@actions/core";
 import * as cp from 'child_process';
 import crypto from 'crypto';
@@ -352,7 +352,7 @@ describe("affected.spec", () => {
         return "";
       });
       let fileWritten = false;
-      jest.spyOn(changedFilesModule, 'writeChangedFiles').mockImplementation(async (changedFiles) => {
+      jest.spyOn(changedFilesModule, 'writeChangedFiles').mockImplementation(async () => {
         fileWritten = true;
       });
 
@@ -374,7 +374,7 @@ describe("affected.spec", () => {
         return "";
       });
       let fileWritten = false;
-      jest.spyOn(changedFilesModule, 'writeChangedFiles').mockImplementation(async (changedFiles) => {
+      jest.spyOn(changedFilesModule, 'writeChangedFiles').mockImplementation(async () => {
         fileWritten = true;
       });
 
@@ -426,7 +426,7 @@ describe("affected.spec", () => {
 
     test("should require either rules or rules-file", async () => {
       // Arrange
-      jest.spyOn(core, "getInput").mockImplementation((_inputName: string) => {
+      jest.spyOn(core, "getInput").mockImplementation(() => {
         return "";
       });
       const mockSetFailed = jest.spyOn(core, 'setFailed').mockImplementation(jest.fn());
