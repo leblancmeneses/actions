@@ -6,7 +6,7 @@ set -e
 # - Run linting for affected projects:
 #   pnpm nx affected --target=lint
 #
-# This script demonstrates how to manually calculate affected projects without relying on Nx.
+# This script demonstrates how to manually calculate affected projects without relying on Nx, Bazel, or Make.
 # Our rule-based approach standardizes the process, making it adaptable to diverse tech stacks and monorepo structures.
 
 

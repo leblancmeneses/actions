@@ -18,6 +18,7 @@
     - [Consuming the JSON object](#consuming-the-json-object)
     - [Real world usage](#real-world-usage)
     - [Run locally for Husky integration](#run-locally-for-husky-integration)
+      - [Benefits of This Approach](#benefits-of-this-approach)
   - [Pragma Action](#pragma-action)
     - [Features](#features)
     - [Inputs](#inputs)
@@ -265,9 +266,16 @@ jobs:
 ### Run locally for Husky integration
 
 After installing [Husky](https://typicode.github.io/husky/) in your project, you can integrate the `affected` action.
-Our rule-based approach standardizes the process, making it adaptable to diverse tech stacks and monorepo structures.
 
-[Husky sample](./husky/pre-commit)
+#### Benefits of This Approach
+
+* **Speed:** Only runs checks on changed files, making pre-commit hooks faster.
+* **Efficiency:** Avoids running checks on the entire codebase unnecessarily.
+* **Automation:** Automatically adds fixed files back to the staging area, streamlining the commit process.
+
+Our rule-based approach standardizes the process to identify which targets have changed, making it adaptable to diverse tech stacks and monorepo structures.
+
+[See Husky sample](./husky/pre-commit)
 
 
 <br>
