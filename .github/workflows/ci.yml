@@ -79,7 +79,8 @@ jobs:
         run: |
           echo "affected: "
           echo '${{ steps.affected.outputs.affected }}' | jq .
-          # cat ./.artifacts/changed.json
+          echo "==========="
+          cat ./.artifacts/changed.json
 
       - name: incomplete parser changes
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.peggy-parser-checkIf-incomplete }}
