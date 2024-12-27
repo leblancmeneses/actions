@@ -26,6 +26,9 @@ importers:
       tslib:
         specifier: ^2.3.0
         version: 2.6.2
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
     devDependencies:
       '@nx/esbuild':
         specifier: 19.1.0
