@@ -37,4 +37,4 @@ if [[ $version_autopilot == "true" ]]; then
   npx nx run version-autopilot:build:production --no-cache
 fi
 
-# rm .temp-changes.json
+rm .temp-changes.json
