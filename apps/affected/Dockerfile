@@ -4,4 +4,4 @@ WORKDIR /usr/src/app
 
 COPY dist/apps/affected/cli/main.cli.js ./
 
-ENTRYPOINT ["node", "/usr/src/app/main.js"]
+ENTRYPOINT ["node", "/usr/src/app/main.cli.js"]
