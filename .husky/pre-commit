@@ -17,9 +17,9 @@ if [[ ! -f .temp-changes.json ]]; then
 fi
 
 # Check properties
-affected=$(jq '.affected' .temp-changes.json)
-pragma=$(jq '.pragma' .temp-changes.json)
-version_autopilot=$(jq '.["version-autopilot"]' .temp-changes.json)
+affected=$(jq '.changes.affected' .temp-changes.json)
+pragma=$(jq '.changes.pragma' .temp-changes.json)
+version_autopilot=$(jq '.changes.["version-autopilot"]' .temp-changes.json)
 
 if [[ $affected == "true" ]]; then
   npx nx run affected:lint
