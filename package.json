@@ -1,6 +1,6 @@
 {
   "name": "@./actions/source",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "license": "MIT",
   "scripts": {
     "apps:affected:generate-parser": "peggy -o apps/affected/src/parser.ts --format es apps/affected/src/parser.peggy",
