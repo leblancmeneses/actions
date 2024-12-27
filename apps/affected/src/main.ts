@@ -1,60 +1,9 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { parse } from './parser';
-import { getChangedFiles, writeChangedFiles } from './changedFiles';
-import { evaluateStatementsForChanges } from './evaluateStatementsForChanges';
-import { allGitFiles, evaluateStatementsForHashes } from './evaluateStatementsForHashes';
-import { AST } from './parser.types';
-import fs from 'fs';
-import path from 'path';
+import { getRules, processRules } from './common';
 
-export const getRules = () => {
-  const rulesInput = core.getInput('rules', { required: false }) || '';
-  const rulesFile = core.getInput('rules-file', { required: false }) || '';
 
-  if (rulesInput && rulesFile) {
-    throw new Error("Only one of 'rules' or 'rules-file' can be specified. Please use either one.");
-  }
-
-  if (!rulesInput && !rulesFile) {
-    throw new Error("You must specify either 'rules' or 'rules-file'.");
-  }
-
-  let rules = '';
-  if (rulesInput) {
-    rules = rulesInput;
-  } else {
-    const rulesFilePath = path.resolve(rulesFile);
-    if (!fs.existsSync(rulesFilePath)) {
-      throw new Error(`The specified rules-file does not exist: ${rulesFilePath}`);
-    }
-
-    rules = fs.readFileSync(rulesFilePath, 'utf8');
-  }
-  return rules;
-};
-
-export const getImageName = (appTarget: string, sha: string, truncateSha1Size = 0, imageTagRegistry = '', imageTagPrefix = '', imageTagSuffix = '') => {
-  let sha1 = sha;
-  if (isNaN(truncateSha1Size) || truncateSha1Size === 0) {
-    sha1 = sha;
-  } else if (truncateSha1Size > 0) {
-    sha1 = sha.slice(0, truncateSha1Size);
-  } else {
-    sha1 = sha.slice(truncateSha1Size);
-  }
-
-  const imageName1 = `${appTarget}:${imageTagPrefix}${sha1}${imageTagSuffix}`;
-
-  let imageName2 = `${appTarget}:latest`;
-  if (github.context.eventName === 'pull_request') {
-    imageName2 = `${appTarget}:pr-${github.context.payload.pull_request.number}`;
-  }
-
-  return [imageName1, imageName2].map((imageName) => `${imageTagRegistry || ''}${imageName}`);
-}
-
-export const log = (message: string, verbose: boolean) => {
+export const log = (verbose: boolean, message: string) => {
   if (verbose) {
     core.info(message);
   }
@@ -62,11 +11,7 @@ export const log = (message: string, verbose: boolean) => {
 
 export async function run() {
   try {
-    const affectedImageTags: Record<string, string[]> = {};
-    const affectedShas: Record<string, string> = {};
-    const affectedChanges: Record<string, boolean> = {};
-
-    const rulesInput = getRules();
+    const rulesInput = getRules(core.getInput('rules', { required: false }), core.getInput('rules-file', { required: false }));
     const verbose = core.getInput('verbose', { required: false }) === 'true';
     const truncateSha1Size = parseInt(core.getInput('recommended-imagetags-tag-truncate-size', { required: false }) || '0');
     const imageTagPrefix = core.getInput('recommended-imagetags-tag-prefix', { required: false }) || '';
@@ -74,54 +19,17 @@ export async function run() {
     const imageTagRegistry = core.getInput('recommended-imagetags-registry', { required: false }) || '';
     const changedFilesOutputFile = core.getInput('changed-files-output-file', { required: false }) || '';
 
-    log(`github.context: ${JSON.stringify(github.context, undefined, 2)}`, verbose);
+    log(verbose, `github.context: ${JSON.stringify(github.context, undefined, 2)}`);
 
-    if (rulesInput) {
-      const statements = parse(rulesInput, undefined) as AST;
+    const affectedOutput = await processRules(
+      log.bind(null, verbose),
+      rulesInput, truncateSha1Size, imageTagRegistry, imageTagPrefix, imageTagSuffix, changedFilesOutputFile,
+      {event: github.context.eventName, pull_request_number: github.context.payload?.pull_request?.number});
 
-      if (!Array.isArray(statements)) {
-        throw new Error('Rules must be an array of statements');
-      }
-
-      const changedFiles = await getChangedFiles();
-      log(`Changed Files: ${changedFiles.join('\n')}`, verbose);
-      if (changedFilesOutputFile) {
-        await writeChangedFiles(changedFilesOutputFile, changedFiles);
-      }
-
-      const { changes } = evaluateStatementsForChanges(statements, changedFiles);
-      for (const [key, value] of Object.entries(changes)) {
-        affectedChanges[key] = value;
-      }
-
-      const allFiles = await allGitFiles();
-      log(`All Git Files: ${allFiles.join('\n')}`, verbose);
-      const commitSha = await evaluateStatementsForHashes(statements, allFiles);
-
-      for (const statement of statements) {
-        if (statement.type !== 'STATEMENT') continue;
-
-        const { key } = statement;
-        if (key.path) {
-          affectedShas[key.name] = commitSha[key.name];
-
-          const imageName = getImageName(key.name, commitSha[key.name], truncateSha1Size, imageTagRegistry, imageTagPrefix, imageTagSuffix);
-          affectedImageTags[key.name] = imageName;
-
-          log(`Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`, verbose);
-        }
-      }
-    }
-
-    const affectedOutput = {
-      shas: affectedShas,
-      changes: affectedChanges,
-      recommended_imagetags: affectedImageTags,
-    };
     core.setOutput('affected', affectedOutput);
-    core.setOutput('affected_shas', affectedShas);
-    core.setOutput('affected_changes', affectedChanges);
-    core.setOutput('affected_recommended_imagetags', affectedImageTags);
+    core.setOutput('affected_shas', affectedOutput.shas);
+    core.setOutput('affected_changes', affectedOutput.changes);
+    core.setOutput('affected_recommended_imagetags', affectedOutput.recommended_imagetags);
     core.info(`affected: ${JSON.stringify(affectedOutput, null, 2)}!`);
   } catch (error) {
     core.setFailed(error.message);

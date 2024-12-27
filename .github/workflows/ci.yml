@@ -95,6 +95,12 @@ jobs:
           sed -i '1i /* eslint-disable @typescript-eslint/ban-ts-comment */\n// @ts-nocheck' apps/affected/src/parser.ts
           git diff --exit-code -- ./
 
+      - name: ensure version bump
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name == 'pull_request' }}
+        run: |
+          # package.json bump required by affected.
+          git diff ${{ github.event.pull_request.base.sha }} ${{ github.sha }} package.json | grep version
+
       - name: build affected
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected }}
         run: |

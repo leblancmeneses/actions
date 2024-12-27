@@ -5,13 +5,13 @@
   "projectType": "application",
   "tags": [],
   "targets": {
-    "build": {
+    "build-main": {
       "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
         "platform": "node",
-        "outputPath": "dist/apps/affected",
+        "outputPath": "dist/apps/affected/main",
         "format": ["cjs"],
         "bundle": true,
         "minify": true,
@@ -38,6 +38,51 @@
             }
           }
         }
+      }
+    },
+    "build-cli": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/apps/affected/cli",
+        "format": ["cjs"],
+        "bundle": true,
+        "minify": true,
+        "thirdParty": true,
+        "main": "apps/affected/src/main.cli.ts",
+        "tsConfig": "apps/affected/tsconfig.app.json",
+        "assets": [],
+        "generatePackageJson": false,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "legalComments": "none",
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          { "command": "nx run affected:build-main:production" },
+          { "command": "nx run affected:build-cli:production" }
+        ],
+        "parallel": false
       }
     },
     "serve": {

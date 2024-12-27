@@ -9,51 +9,32 @@ set -e
 # This script demonstrates how to manually calculate affected projects without relying on Nx, Bazel, or Make.
 # Our rule-based approach standardizes the process, making it adaptable to diverse tech stacks and monorepo structures.
 
+node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules > affected.json
 
-required_tools=("gh" "act" "jq" "unzip" "npx")
-
-check_command() {
-  if ! command -v "$1" &>/dev/null; then
-    echo "Notice: $1 is not installed. Skipping further processing."
-    exit 0
-  fi
-}
-
-# Check each tool
-for tool in "${required_tools[@]}"; do
-  check_command "$tool"
-done
-
-echo "All required tools are installed. Proceeding..."
-
-
-rm -rf .husky-ext-act/.artifacts/1/ || true
-
-act pull_request -s GITHUB_TOKEN="$(gh auth token)" -W .husky-ext-act/act.yml -j calculate  -e .husky-ext-act/act.payload.json --action-offline-mode --artifact-server-path .husky-ext-act/.artifacts
-unzip .husky-ext-act/.artifacts/1/affected/affected.zip -d .husky-ext-act/.artifacts/1/affected/
-
-if [[ ! -f .husky-ext-act/.artifacts/1/affected/affected-changes.json ]]; then
-  echo "File does not exist: .husky-ext-act/.artifacts/1/affected/affected-changes.json"
+if [[ ! -f affected.json ]]; then
+  echo "File does not exist: affected.json"
   exit 1
 fi
 
 # Check properties
-affected=$(jq '.affected' .husky-ext-act/.artifacts/1/affected/affected-changes.json)
-pragma=$(jq '.pragma' .husky-ext-act/.artifacts/1/affected/affected-changes.json)
-version_autopilot=$(jq '.["version-autopilot"]' .husky-ext-act/.artifacts/1/affected/affected-changes.json)
+affected=$(jq '.changes.affected' affected.json)
+pragma=$(jq '.changes.pragma' affected.json)
+version_autopilot=$(jq '.changes.["version-autopilot"]' affected.json)
 
 if [[ $affected == "true" ]]; then
   npx nx run affected:lint
   npx nx run affected:test
-  npx nx run affected:build:production
+  npx nx run affected:build:production --no-cache
 fi
 if [[ $pragma == "true" ]]; then
   npx nx run pragma:lint
   npx nx run pragma:test
-  npx nx run pragma:build:production
+  npx nx run pragma:build:production --no-cache
 fi
 if [[ $version_autopilot == "true" ]]; then
   npx nx run version-autopilot:lint
   npx nx run version-autopilot:test
-  npx nx run version-autopilot:build:production
+  npx nx run version-autopilot:build:production --no-cache
 fi
+
+rm affected.json
