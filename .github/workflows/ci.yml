@@ -172,7 +172,7 @@ jobs:
         # if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.IMAGE_AFFECTED }}:${{ env.PACKAGE_VERSION }}
+          subject-name: ${{ env.IMAGE_AFFECTED }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 

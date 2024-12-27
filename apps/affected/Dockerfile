@@ -7,7 +7,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
 WORKDIR /usr/src/app
 
 COPY dist/apps/affected/cli/main.cli.js ./
-RUN chmod +x main.cli.js && git config --global --add safe.directory /app
+RUN chmod +x main.cli.js
 
 USER appuser
 
