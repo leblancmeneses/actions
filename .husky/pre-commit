@@ -24,17 +24,17 @@ version_autopilot=$(jq '.changes.["version-autopilot"]' .temp-changes.json)
 if [[ $affected == "true" ]]; then
   npx nx run affected:lint
   npx nx run affected:test
-  npx nx run affected:build:production
+  npx nx run affected:build:production --no-cache
 fi
 if [[ $pragma == "true" ]]; then
   npx nx run pragma:lint
   npx nx run pragma:test
-  npx nx run pragma:build:production
+  npx nx run pragma:build:production --no-cache
 fi
 if [[ $version_autopilot == "true" ]]; then
   npx nx run version-autopilot:lint
   npx nx run version-autopilot:test
-  npx nx run version-autopilot:build:production
+  npx nx run version-autopilot:build:production --no-cache
 fi
 
 # rm .temp-changes.json

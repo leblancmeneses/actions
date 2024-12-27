@@ -1,8 +1,10 @@
-// node dist/apps/affected/cli/main.cli.js calculate --rules-file ./github/affected.rules --verbose 
-// node dist/apps/affected/cli/main.cli.js calculate --rules-file ./github/affected.rules
+// node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules --verbose 
+// node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { processRules, getRules } from './common';
+
+import * as packageJson from '../../../package.json';
 
 export const log = (verbose: boolean, message: string) => {
   if (verbose) {
@@ -11,6 +13,9 @@ export const log = (verbose: boolean, message: string) => {
 };
 
 yargs(hideBin(process.argv))
+  .scriptName("main.cli.js") // Optional: Set a custom script name for the help output
+  .usage('$0 <command> [options]')
+  .version(packageJson.version)
   .command(
     'calculate',
     'Calculate affected targets',
