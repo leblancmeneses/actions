@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ARTIFACT_REGISTRY: docker.io
+      IMAGE_AFFECTED: docker.io/leblancmeneses/actions-affected
       NX_CLOUD: false
     steps:
       - uses: actions/checkout@v4
@@ -145,7 +146,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: build and push Docker image
         id: push
         #if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
         uses: docker/build-push-action@v3
@@ -153,7 +154,7 @@ jobs:
           context: .
           file: ./apps/affected/Dockerfile
           push: true
-          tags: ${{ env.ARTIFACT_REGISTRY }}/leblancmeneses/actions-affected:${{ env.PACKAGE_VERSION }}
+          tags: ${{ env.IMAGE_AFFECTED }}:${{ env.PACKAGE_VERSION }}
           labels: |
             org.opencontainers.image.created=${{ github.event.created_at }}
             org.opencontainers.image.version=${{ env.PACKAGE_VERSION }}
@@ -167,11 +168,11 @@ jobs:
             org.opencontainers.image.documentation=https://github.com/${{ github.repository }}/README.md
             org.opencontainers.image.vendor=Improving Startups LLC
 
-      - name: Generate artifact attestation
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+      - name: generate artifact attestation
+        # if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.ARTIFACT_REGISTRY }}/actions-affected:${{ env.PACKAGE_VERSION }}
+          subject-name: ${{ env.IMAGE_AFFECTED }}:${{ env.PACKAGE_VERSION }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
