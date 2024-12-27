@@ -169,7 +169,7 @@ jobs:
             org.opencontainers.image.vendor=Improving Startups LLC
 
       - name: generate artifact attestation
-        # if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ${{ env.IMAGE_AFFECTED }}
