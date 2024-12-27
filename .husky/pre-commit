@@ -9,17 +9,17 @@ set -e
 # This script demonstrates how to manually calculate affected projects without relying on Nx, Bazel, or Make.
 # Our rule-based approach standardizes the process, making it adaptable to diverse tech stacks and monorepo structures.
 
-node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules > .temp-changes.json
+node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules > affected.json
 
-if [[ ! -f .temp-changes.json ]]; then
-  echo "File does not exist: .temp-changes.json"
+if [[ ! -f affected.json ]]; then
+  echo "File does not exist: affected.json"
   exit 1
 fi
 
 # Check properties
-affected=$(jq '.changes.affected' .temp-changes.json)
-pragma=$(jq '.changes.pragma' .temp-changes.json)
-version_autopilot=$(jq '.changes.["version-autopilot"]' .temp-changes.json)
+affected=$(jq '.changes.affected' affected.json)
+pragma=$(jq '.changes.pragma' affected.json)
+version_autopilot=$(jq '.changes.["version-autopilot"]' affected.json)
 
 if [[ $affected == "true" ]]; then
   npx nx run affected:lint
@@ -37,4 +37,4 @@ if [[ $version_autopilot == "true" ]]; then
   npx nx run version-autopilot:build:production --no-cache
 fi
 
-rm .temp-changes.json
+rm affected.json
