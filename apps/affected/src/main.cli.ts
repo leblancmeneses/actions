@@ -1,3 +1,5 @@
+// node dist/apps/affected/cli/main.cli.js calculate --rules-file ./github/affected.rules --verbose 
+// node dist/apps/affected/cli/main.cli.js calculate --rules-file ./github/affected.rules
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { processRules, getRules } from './common';
@@ -10,8 +12,8 @@ export const log = (verbose: boolean, message: string) => {
 
 yargs(hideBin(process.argv))
   .command(
-    'run',
-    'Process rules',
+    'calculate',
+    'Calculate affected targets',
     (yargs) => {
       yargs
         .option('rules', { type: 'string', describe: 'Rules as a string', demandOption: false })
@@ -35,7 +37,7 @@ yargs(hideBin(process.argv))
           argv['image-tag-suffix'] as string,
           argv['changed-files-output-file'] as string | undefined
         );
-        console.info(`Affected: ${JSON.stringify(affectedOutput, null, 2)}`);
+        console.info(`${JSON.stringify(affectedOutput, null, 2)}`);
       } catch (error) {
         console.error(error.message);
         process.exit(1);
