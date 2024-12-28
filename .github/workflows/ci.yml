@@ -168,13 +168,13 @@ jobs:
             org.opencontainers.image.documentation=https://github.com/${{ github.repository }}/README.md
             org.opencontainers.image.vendor=Improving Startups LLC
 
-      - name: generate artifact attestation
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ${{ env.IMAGE_AFFECTED }}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
+      # - name: generate artifact attestation
+      #   if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+      #   uses: actions/attest-build-provenance@v2
+      #   with:
+      #     subject-name: ${{ env.IMAGE_AFFECTED }}
+      #     subject-digest: ${{ steps.push.outputs.digest }}
+      #     push-to-registry: true
 
       - name: debug
         if: ${{ failure() && !cancelled() }}
