@@ -139,7 +139,7 @@ jobs:
         run: git diff --exit-code -- ./dist
 
       - name: Log in to Docker Hub
-        #if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
         uses: docker/login-action@v3
         with:
           registry: ${{ env.ARTIFACT_REGISTRY }}
@@ -148,7 +148,7 @@ jobs:
 
       - name: build and push Docker image
         id: push
-        #if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
         uses: docker/build-push-action@v3
         with:
           context: .

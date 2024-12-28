@@ -9,6 +9,7 @@ set -e
 # This script demonstrates how to manually calculate affected projects without relying on Nx, Bazel, or Make.
 # Our rule-based approach standardizes the process, making it adaptable to diverse tech stacks and monorepo structures.
 
+#  docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v3.0.4-60aac9c calculate --rules-file ./.github/affected.rules > affected.json
 node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules > affected.json
 
 if [[ ! -f affected.json ]]; then
