@@ -11,11 +11,21 @@ interface EvaluationResult {
 }
 
 export function allGitFiles() {
-  return execSync('git ls-files', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER }).split('\n').filter(Boolean)
-    .filter(file => existsSync(file));
+  return execSync('git ls-files -s', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER })
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const [mode, hash, stage, ...fileParts] = line.split(/\s+/);
+      const file = fileParts.join('');
+      return { mode, hash, stage, file };
+    })
+    .filter(f => existsSync(f.file));
 };
 
-export async function evaluateStatementsForHashes(statements: AST, allFiles: string[]): Promise<Record<string, string>> {
+export async function evaluateStatementsForHashes(statements: AST): Promise<Record<string, string>> {
+  const stageFiles = await allGitFiles();
+  const allFiles = stageFiles.map(f => f.file);
+
   // A cache to avoid re-evaluating the same statement multiple times
   const seen = new Map<string, EvaluationResult>();
 
@@ -161,7 +171,7 @@ export async function evaluateStatementsForHashes(statements: AST, allFiles: str
         const sortedFiles = netFiles.slice().sort();
         const hash = crypto.createHash('sha1');
         for (const f of sortedFiles) {
-          const fileHash = execSync(`git hash-object "${f}"`, { encoding: 'utf-8' }).trim();
+          const fileHash = stageFiles.find(s => s.file === f).hash.trim();
           hash.update(fileHash + '\n');
         }
 

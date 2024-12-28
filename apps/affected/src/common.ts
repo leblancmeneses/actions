@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { getChangedFiles, writeChangedFiles } from './changedFiles';
 import { evaluateStatementsForChanges } from './evaluateStatementsForChanges';
-import { allGitFiles, evaluateStatementsForHashes } from './evaluateStatementsForHashes';
+import { evaluateStatementsForHashes } from './evaluateStatementsForHashes';
 import { parse } from './parser';
 import { AST } from './parser.types';
 
@@ -87,9 +87,7 @@ export const processRules = async (
       affectedChanges[key] = value;
     }
 
-    const allFiles = await allGitFiles();
-    log(`All Git Files: ${allFiles.join('\n')}`);
-    const commitSha = await evaluateStatementsForHashes(statements, allFiles);
+    const commitSha = await evaluateStatementsForHashes(statements);
 
     for (const statement of statements) {
       if (statement.type !== 'STATEMENT') continue;
