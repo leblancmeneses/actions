@@ -275,7 +275,7 @@ After installing [Husky](https://typicode.github.io/husky/) in your project, you
 
 Our rule-based approach standardizes the process to identify which targets have changed, making it adaptable to diverse tech stacks and monorepo structures.
 
-[See Husky Example](./husky/pre-commit).
+[See Husky Example](./.husky/pre-commit).
 
 ```bash
 # runs cli version of the tool
