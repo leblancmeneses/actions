@@ -1,19 +1,3 @@
-// jobs:
-//   init:
-//     runs-on: ubuntu-latest
-//     steps:
-//       - name: Checkout code
-//         uses: actions/checkout@v4
-//
-//       - name: patch major rollover
-//         id: version
-//         uses: leblancmeneses/actions/dist/apps/version-autopilot@main
-//         env:
-//           PATCH_OVERRIDE: 51
-//         with:
-//           major: 0
-//           minor: 99
-//           shift: 50
 jest.mock("@actions/core");
 jest.mock("@actions/github");
 /* eslint-disable @nx/enforce-module-boundaries */
