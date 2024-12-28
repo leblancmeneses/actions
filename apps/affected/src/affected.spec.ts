@@ -68,33 +68,29 @@ describe("affected.spec", () => {
 
     jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
 
-    const files = [
-      "project-api/file1.js",
-      "project-api/README.md",
-      "databases/project/0001-change-script.sql",
-      "databases/project/0002-change-script.sql",
-      "project-ui/file1.ts",
+    const lines = [
+      "100644 a 0\tproject-api/file1.js",
+      "100644 b 0\tproject-api/README.md",
+      "100644 c 0\tdatabases/project/0001-change-script.sql",
+      "100644 d 0\tdatabases/project/0002-change-script.sql",
+      "100644 e 0\tproject-ui/file1.ts",
     ];
+    const files = lines.map((line) => {
+      const [mode, hash, stage, ...fileParts] = line.split(/\s+/);
+      const file = fileParts.join('');
+      return { mode, hash, stage, file };
+    });
 
     const execSyncResponses = {
       'git diff --name-status HEAD~1 HEAD': () => [
         "project-ui/file1.ts",
         "project-api/README.md",
       ].map(f => `M\t${f}`).join('\n'),
-      'git ls-files': () => files.join('\n'),
+      'git ls-files -s': () => lines.join('\n'),
     };
 
     jest.spyOn(cp, 'execSync')
       .mockImplementation((command: string) => {
-        if (command.startsWith('git hash-object')) {
-          const match = command.match(/git hash-object\s+"([^"]+)"/);
-          if (!match) {
-            throw new Error(`Unexpected command: ${command}`);
-          }
-
-          return match[1];
-        }
-
         if (command.startsWith('git diff --name-status')) {
           return [
             "project-ui/file1.ts",
@@ -119,7 +115,7 @@ describe("affected.spec", () => {
 
 
     function getHash(folder: string) {
-      const matchedFiles = [...files.filter(f => (f.startsWith(folder)) && !f.endsWith('.md'))].sort();
+      const matchedFiles = [...files.filter(f => (f.file.startsWith(folder)) && !f.file.endsWith('.md'))].sort((a, b) => a.file.localeCompare(b.file)).map(x => x.hash);
       return crypto.createHash('sha1')
         .update(matchedFiles.join('\n') + '\n')
         .digest('hex');
@@ -162,14 +158,19 @@ describe("affected.spec", () => {
 
 
   describe('recommended_imagetags', () => {
-    const files = [
-      "project-api/file1.ts",
-      "project-api/deleted.ts",
-      "project-ui/file1.ts",
+    const lines = [
+      "100644 a 0\tproject-api/file1.ts",
+      "100644 a 0\tproject-api/deleted.ts",
+      "100644 a 0\tproject-ui/file1.ts",
     ];
+    const files = lines.map((line) => {
+      const [mode, hash, stage, ...fileParts] = line.split(/\s+/);
+      const file = fileParts.join('');
+      return { mode, hash, stage, file };
+    });
 
     function getHash(folder: string) {
-      const matchedFiles = [...files.filter(f => f.startsWith(folder))].filter(x=>!x.includes('deleted')).sort();
+      const matchedFiles = [...files.filter(f => f.file.startsWith(folder))].filter(x=>!x.file.includes('deleted')).sort((a, b) => a.file.localeCompare(b.file)).map(x => x.hash);
       return crypto.createHash('sha1')
         .update(matchedFiles.join('\n') + '\n')
         .digest('hex');
@@ -179,8 +180,8 @@ describe("affected.spec", () => {
       jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
 
       const execSyncResponses = {
-        'git diff --name-status HEAD~1 HEAD': () => files.map(f => `${f.includes('deleted')? 'D':'M'}\t${f}`).join('\n'),
-        'git ls-files': () => files.join('\n'),
+        'git diff --name-status HEAD~1 HEAD': () => files.map(f => `${f.file.includes('deleted')? 'D':'M'}\t${f}`).join('\n'),
+        'git ls-files -s': () => lines.join('\n'),
       };
 
       jest.spyOn(fs, 'existsSync')
@@ -190,21 +191,8 @@ describe("affected.spec", () => {
 
       jest.spyOn(cp, 'execSync')
         .mockImplementation((command: string) => {
-          if (command.startsWith('git hash-object')) {
-            const match = command.match(/git hash-object\s+"([^"]+)"/);
-            if (!match) {
-              throw new Error(`Unexpected command: ${command}`);
-            }
-
-            if(match[1].includes('deleted')) {
-              throw new Error('Deleted files should not be part of the hash-object');
-            }
-
-            return match[1];
-          }
-
           if (command.startsWith('git diff --name-status')) {
-            return files.map(f => `${f.includes('deleted')? 'D':'M'}\t${f}`).join('\n');
+            return files.map(f => `${f.file.includes('deleted')? 'D':'M'}\t${f}`).join('\n');
           }
 
           if (execSyncResponses[command]) {
@@ -331,32 +319,29 @@ describe("affected.spec", () => {
 
 
   describe('changed-files-output-file', () => {
-    const files = [
-      "project-api/file1.ts",
-      "project-ui/file1.ts",
+    const lines = [
+      "100644 a 0\tproject-api/file1.ts",
+      "100644 b 0\tproject-ui/file1.ts",
     ];
+    const files = lines.map((line) => {
+      const [mode, hash, stage, ...fileParts] = line.split(/\s+/);
+      const file = fileParts.join('');
+      return { mode, hash, stage, file };
+    });
+
 
     beforeEach(() => {
       jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
 
       const execSyncResponses = {
-        'git diff --name-status HEAD~1 HEAD': () => files.map(f => `M\t${f}`).join('\n'),
-        'git ls-files': () => files.join('\n'),
+        'git diff --name-status HEAD~1 HEAD': () => files.map(f => `M\t${f.file}`).join('\n'),
+        'git ls-files -s': () => lines.join('\n'),
       };
 
       jest.spyOn(cp, 'execSync')
         .mockImplementation((command: string) => {
-          if (command.startsWith('git hash-object')) {
-            const match = command.match(/git hash-object\s+"([^"]+)"/);
-            if (!match) {
-              throw new Error(`Unexpected command: ${command}`);
-            }
-
-            return match[1];
-          }
-
           if (command.startsWith('git diff --name-status')) {
-            return files.map(f => `M\t${f}`).join('\n');
+            return files.map(f => `M\t${f.file}`).join('\n');
           }
 
           if (execSyncResponses[command]) {
@@ -406,36 +391,34 @@ describe("affected.spec", () => {
 
       // Assert
       expect(fileWritten).toBe(true);
-      expect(changedFilesModule.writeChangedFiles).toHaveBeenCalledWith('abc.txt', files.map(f => ({ file: f, status: changedFilesModule.ChangeStatus.Modified })));
+      const fileWrittenContent = files.map(f => ({ file: f.file, status: changedFilesModule.ChangeStatus.Modified }));
+      expect(changedFilesModule.writeChangedFiles).toHaveBeenCalledWith('abc.txt', fileWrittenContent);
     });
   });
 
 
   describe('rules', () => {
-    const files = [
-      "project-api/file1.ts",
-      "project-ui/file1.ts",
+    const lines = [
+      "100644 a 0\tproject-api/file1.ts",
+      "100644 a 0\tproject-ui/file1.ts",
     ];
+
+    const files = lines.map((line) => {
+      const [mode, hash, stage, ...fileParts] = line.split(/\s+/);
+      const file = fileParts.join('');
+      return { mode, hash, stage, file };
+    });
 
     beforeEach(() => {
       jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
 
       const execSyncResponses = {
         'git diff --name-status HEAD~1 HEAD': () => files.map(f => `M\t${f}`).join('\n'),
-        'git ls-files': () => files.join('\n'),
+        'git ls-files -s': () => lines.join('\n'),
       };
 
       jest.spyOn(cp, 'execSync')
         .mockImplementation((command: string) => {
-          if (command.startsWith('git hash-object')) {
-            const match = command.match(/git hash-object\s+"([^"]+)"/);
-            if (!match) {
-              throw new Error(`Unexpected command: ${command}`);
-            }
-
-            return match[1];
-          }
-
           if (command.startsWith('git diff --name-status')) {
             return files.map(f => `M\t${f}`).join('\n');
           }

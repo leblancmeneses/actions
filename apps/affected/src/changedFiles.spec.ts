@@ -1,9 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { execSync } from 'child_process';
-import * as github from '@actions/github';
-import { ChangeStatus, mapGitStatusCode, getChangedFiles } from  "./changedFiles";
-import { EXEC_SYNC_MAX_BUFFER } from './constants';
-
 jest.mock('child_process');
 jest.mock('@actions/github', () => {
   return {
@@ -19,6 +14,19 @@ jest.mock('@actions/github', () => {
     }
   };
 });
+jest.mock('fs', () => {
+  const originalModule = jest.requireActual('fs');
+  return {
+    ...originalModule,
+    existsSync: jest.fn(),
+  };
+});
+import { execSync } from 'child_process';
+import * as github from '@actions/github';
+import { ChangeStatus, mapGitStatusCode, getChangedFiles } from  "./changedFiles";
+import { EXEC_SYNC_MAX_BUFFER } from './constants';
+import * as fs from 'fs';
+
 
 describe('changed-files.spec', () => {
 
@@ -29,6 +37,10 @@ describe('changed-files.spec', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {
       // Noop.
     });
+    jest.spyOn(fs, 'existsSync')
+      .mockImplementation(() => {
+        return true;
+      });
   });
 
   afterAll(() => {

@@ -10,6 +10,8 @@ on:
 permissions:
   actions: read
   contents: read
+  id-token: write
+  attestations: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
@@ -19,6 +21,8 @@ jobs:
   main:
     runs-on: ubuntu-latest
     env:
+      ARTIFACT_REGISTRY: docker.io
+      IMAGE_AFFECTED: docker.io/leblancmeneses/actions-affected
       NX_CLOUD: false
     steps:
       - uses: actions/checkout@v4
@@ -101,6 +105,15 @@ jobs:
           # package.json bump required by affected.
           git diff ${{ github.event.pull_request.base.sha }} ${{ github.sha }} package.json | grep version
 
+      - name: ensure version bump
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected }}
+        run: |
+          SHORT_SHA=$(echo "${{ fromJson(steps.affected.outputs.affected_shas).affected }}" | cut -c 1-7)
+          VERSION=$(jq -r '.version' package.json)
+          PACKAGE_VERSION="v${VERSION}-${SHORT_SHA}"
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
+          echo "${PACKAGE_VERSION}"
+
       - name: build affected
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected }}
         run: |
@@ -124,6 +137,44 @@ jobs:
 
       - name: assert dist is deterministic
         run: git diff --exit-code -- ./dist
+
+      - name: Log in to Docker Hub
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ARTIFACT_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: build and push Docker image
+        id: push
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./apps/affected/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_AFFECTED }}:${{ env.PACKAGE_VERSION }}
+          labels: |
+            org.opencontainers.image.created=${{ github.event.created_at }}
+            org.opencontainers.image.version=${{ env.PACKAGE_VERSION }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.authors=Leblanc Meneses
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.title=Actions Affected
+            org.opencontainers.image.description=Allows you to calculate affected externally of GitHub
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}
+            org.opencontainers.image.documentation=https://github.com/${{ github.repository }}/README.md
+            org.opencontainers.image.vendor=Improving Startups LLC
+
+      - name: generate artifact attestation
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.IMAGE_AFFECTED }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
       - name: debug
         if: ${{ failure() && !cancelled() }}

@@ -275,7 +275,14 @@ After installing [Husky](https://typicode.github.io/husky/) in your project, you
 
 Our rule-based approach standardizes the process to identify which targets have changed, making it adaptable to diverse tech stacks and monorepo structures.
 
-[See Husky Example](./husky/pre-commit).  You will need a copy of [husky-ext-act](./husky-ext-act/) folder.
+[See Husky Example](./husky/pre-commit).
+
+```bash
+# runs cli version of the tool
+# https://hub.docker.com/repository/docker/leblancmeneses/actions-affected/general
+docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v3.0.4-60aac9c calculate --rules-file ./.github/affected.rules > affected.json
+```
+
 
 
 <br>
