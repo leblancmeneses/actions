@@ -11,4 +11,4 @@ RUN chmod +x main.cli.js
 
 USER appuser
 
-ENTRYPOINT ["sh", "-c", "git config --global --add safe.directory /app && node /usr/src/app/main.cli.js"]
+ENTRYPOINT ["sh", "-c", "git config --global --add safe.directory /app && node /usr/src/app/main.cli.js \"$@\"", "--"]
