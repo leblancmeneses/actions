@@ -12,6 +12,6 @@ outputs:
     description: "Indicates if the cache exists"
 runs:
   using: 'node20'
-  main: '../../dist/apps/gcp-build-cache/main/main.js'
-  post: '../../dist/apps/gcp-build-cache/main/post.js'
+  main: '../../dist/apps/gcp-build-cache/main.js'
+  post: '../../dist/apps/gcp-build-cache/post.js'
   post-if: "success()"
