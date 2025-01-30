@@ -13,5 +13,5 @@ outputs:
 runs:
   using: 'node20'
   main: '../../dist/apps/gcp-build-cache/main/main.js'
-  main: '../../dist/apps/gcp-build-cache/main/post.js'
+  post: '../../dist/apps/gcp-build-cache/main/post.js'
   post-if: "success()"
