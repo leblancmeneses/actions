@@ -4,3 +4,4 @@ peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts
 <affected>: './apps/affected/**' './dist/apps/affected/**' './package.json';
 <version-autopilot>: './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
 <pragma>: './apps/pragma/**' './dist/apps/pragma/**';
+<gcp-build-cache>: './apps/gcp-build-cache/**' './dist/apps/gcp-build-cache/**';

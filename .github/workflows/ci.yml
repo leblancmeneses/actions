@@ -135,6 +135,13 @@ jobs:
           npx nx run pragma:test
           npx nx run pragma:build:production
 
+      - name: build gcp-build-cache
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.gcp-build-cache }}
+        run:  |
+          npx nx run gcp-build-cache:lint
+          npx nx run gcp-build-cache:test
+          npx nx run gcp-build-cache:build:production
+
       - name: assert dist is deterministic
         run: git diff --exit-code -- ./dist
 

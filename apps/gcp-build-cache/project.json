@@ -1,0 +1,60 @@
+{
+  "name": "gcp-build-cache",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/gcp-build-cache/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/apps/gcp-build-cache",
+        "format": ["cjs"],
+        "bundle": true,
+        "minify": true,
+        "thirdParty": true,
+        "main": "apps/gcp-build-cache/src/main.ts",
+        "additionalEntryPoints": ["apps/gcp-build-cache/src/post.ts"],
+        "tsConfig": "apps/gcp-build-cache/tsconfig.app.json",
+        "assets": [],
+        "generatePackageJson": false,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "legalComments": "none",
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "gcp-build-cache:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "gcp-build-cache:build:development"
+        },
+        "production": {
+          "buildTarget": "gcp-build-cache:build:production"
+        }
+      }
+    }
+  }
+}
