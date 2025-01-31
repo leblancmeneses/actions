@@ -16,13 +16,14 @@ export async function run() {
     const imageTagFormat = core.getInput('recommended-imagetags-tag-format', { required: false }) || '';
     const imageTagFormatWhenChanged = core.getInput('recommended-imagetags-tag-format-whenchanged', { required: false }) || '';
     const imageTagRegistry = core.getInput('recommended-imagetags-registry', { required: false }) || '';
+    const removeTarget = core.getInput('recommended-imagetags-tag-remove-target', { required: false }) === 'true';
     const changedFilesOutputFile = core.getInput('changed-files-output-file', { required: false }) || '';
 
     log(verbose, `github.context: ${JSON.stringify(github.context, undefined, 2)}`);
 
     const affectedResults = await processRules(
       log.bind(null, verbose),
-      rulesInput, imageTagRegistry, imageTagFormat, imageTagFormatWhenChanged, changedFilesOutputFile,
+      rulesInput, imageTagRegistry, imageTagFormat, imageTagFormatWhenChanged, removeTarget, changedFilesOutputFile,
       {event: github.context.eventName, pull_request_number: github.context.payload?.pull_request?.number});
 
 

@@ -98,8 +98,8 @@ jobs:
           # recommended-imagetags-registry: "${{ env.IMAGE_REGISTERY_PATH }}/${{ env.GCP_PROJECT_ID }}/${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}/"
           changed-files-output-file: .artifacts/affected.json
           rules-file: .github/affected.rules
-          recommended-imagetags-tag-format: '{sha}'
-          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha:10}') || '{sha}' }}
+          recommended-imagetags-tag-format: '{target}{sha}'
+          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha|10}') || '{sha}' }}
 
       - name: gcp cache
         id: cache

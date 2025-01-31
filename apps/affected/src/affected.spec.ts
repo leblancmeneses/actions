@@ -252,7 +252,7 @@ describe("affected.spec", () => {
         if (inputName === "rules") return `
             <project-api>: 'project-api/**/*.ts';
           `;
-        if (inputName === "recommended-imagetags-tag-format") return `{sha:7}`;
+        if (inputName === "recommended-imagetags-tag-format") return `{sha|7}`;
         if (inputName === "recommended-imagetags-registry") return `registry.cool/`;
         return "";
       });
@@ -275,7 +275,7 @@ describe("affected.spec", () => {
         if (inputName === "rules") return `
             <project-api>: 'project-api/**/*.ts';
           `;
-        if (inputName === "recommended-imagetags-tag-format") return `{sha:-7}`;
+        if (inputName === "recommended-imagetags-tag-format") return `{sha|-7}`;
         return "";
       });
 
@@ -297,7 +297,7 @@ describe("affected.spec", () => {
         if (inputName === "rules") return `
             <project-api>: 'project-api/**/*.ts';
           `;
-        if (inputName === "recommended-imagetags-tag-format") return `prefix-{sha:7}-suffix`;
+        if (inputName === "recommended-imagetags-tag-format") return `prefix-{sha|7}-suffix`;
         if (inputName === "recommended-imagetags-registry") return `registry.cool/`;
         return "";
       });

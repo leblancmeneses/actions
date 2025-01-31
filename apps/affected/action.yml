@@ -14,11 +14,15 @@ inputs:
     required: false
     default: ''
   recommended-imagetags-tag-format-whenchanged:
-    description: 'The prefix to add to the image tag. target:<prefix>{sha:10}<suffix>'
+    description: 'The prefix to add to the image tag. <prefix>{sha|10}<suffix>'
     required: false
     default: ''
   recommended-imagetags-tag-format:
-    description: 'The prefix to add to the image tag. target:<prefix>{sha:10}<suffix>'
+    description: 'The prefix to add to the image tag. <prefix>{sha|10}<suffix>'
+    required: false
+    default: ''
+  recommended-imagetags-tag-remove-target:
+    description: 'Should the target prefix be removed?'
     required: false
     default: ''
   recommended-imagetags-registry:

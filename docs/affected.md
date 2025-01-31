@@ -55,7 +55,7 @@ jobs:
         with:
           verbose: false # optional
           recommended-imagetags-tag-format: '{sha}' # optional
-          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha:10}') || '{sha}' }} # optional to add prefix, suffix to the image tag.
+          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha|10}') || '{sha}' }} # optional to add prefix, suffix to the image tag.
           recommended-imagetags-registry: '' # optional; used in recommended_imagetags.
           changed-files-output-file: '' # optional; The path to write the file containing the list of changed files.
           rules-file: '' # optional; The path to the file containing the rules if you perfer externalizing the rules for husky integration.

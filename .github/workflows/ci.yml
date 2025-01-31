@@ -86,8 +86,9 @@ jobs:
         with:
           changed-files-output-file: ./.artifacts/changed.json
           rules-file: .github/affected.rules
-          recommended-imagetags-tag-format: '{sha:10}'
-          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha:10}') || '{sha}' }}
+          recommended-imagetags-tag-remove-target: true
+          recommended-imagetags-tag-format: '{sha|10}'
+          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha|10}') || '{sha}' }}
 
       - name: calculate gcp cache
         id: cache
@@ -97,11 +98,6 @@ jobs:
           pragma: ${{steps.pragma.outputs.pragma}}
           gcs-root-path: gs://opensource-github-integration/build-cache
 
-      - name: cache output
-        run: |
-          echo "cache: "
-          echo '${{ steps.cache.outputs.cache }}' | jq .
-          
       - name: write affected cache
         uses: ./apps/gcp-build-cache
         with:
@@ -122,12 +118,20 @@ jobs:
         with:
           cache_key_path: ${{fromJson(steps.cache.outputs.cache).gcp-build-cache.path}}
 
-      - name: affected output
+      - name: task outputs
         run: |
+          echo "pragma: "
+          echo '${{ steps.pragma.outputs.pragma }}' | jq .
+
+          echo "==========="
           echo "affected: "
           echo '${{ steps.affected.outputs.affected }}' | jq .
           echo "==========="
           cat ./.artifacts/changed.json
+
+          echo "==========="
+          echo "gcp-build-cache: "
+          echo '${{ steps.cache.outputs.cache }}' | jq .
 
       - name: incomplete parser changes
         if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).peggy-parser-checkIf-incomplete.changes }}

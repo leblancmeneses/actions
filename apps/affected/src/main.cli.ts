@@ -26,6 +26,7 @@ yargs(hideBin(process.argv))
         .option('verbose', { type: 'boolean', default: false, describe: 'Verbose logging' })
         .option('image-tag-format', { type: 'string', default: '', describe: 'Image tag format' })
         .option('image-tag-format-whenchanged', { type: 'string', default: '', describe: 'Image tag format when changed' })
+        .option('image-tag-remove-target', { type: 'string', default: '', describe: 'Image tag format' })
         .option('image-tag-registry', { type: 'string', default: '', describe: 'Image tag registry' })
         .option('changed-files-output-file', { type: 'string', describe: 'Path to write changed files', demandOption: false });
     },
@@ -38,6 +39,7 @@ yargs(hideBin(process.argv))
           argv['image-tag-registry'] as string,
           argv['image-tag-format'] as string,
           argv['image-tag-format-whenchanged'] as string,
+          argv['image-tag-remove-target'] === 'true',
           argv['changed-files-output-file'] as string | undefined
         );
         console.info(`${JSON.stringify(affectedOutput, null, 2)}`);
