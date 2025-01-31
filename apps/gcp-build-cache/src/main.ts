@@ -61,6 +61,7 @@ export async function run() {
           cacheExists = true;
         } catch (error) {
           // no-op
+          core.info(`🚀 Cache not found: ${cache.path}.`);
         }
         cache['cache-hit'] = cacheExists && !(
           pragma[`${key}-cache`.toLocaleUpperCase()]?.trim().toLocaleUpperCase() === 'SKIP' ||

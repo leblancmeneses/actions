@@ -95,7 +95,7 @@ jobs:
         with:
           affected: ${{steps.affected.outputs.affected}}
           pragma: ${{steps.pragma.outputs.pragma}}
-          gcs-root-path: gs://abc-123-github/build-cache
+          gcs-root-path: gs://opensource-github-integration/build-cache
 
       - name: cache output
         run: |
@@ -105,22 +105,22 @@ jobs:
       - name: write affected cache
         uses: ./apps/gcp-build-cache
         with:
-          CACHE_KEY_PATH: ${{fromJson(steps.cache.outputs.cache).affected.path}}
+          cache_key_path: ${{fromJson(steps.cache.outputs.cache).affected.path}}
 
       - name: write version-autopilot cache
         uses: ./apps/gcp-build-cache
         with:
-          CACHE_KEY_PATH: ${{fromJson(steps.cache.outputs.cache).version-autopilot.path}}
+          cache_key_path: ${{fromJson(steps.cache.outputs.cache).version-autopilot.path}}
 
       - name: write pragma cache
         uses: ./apps/gcp-build-cache
         with:
-          CACHE_KEY_PATH: ${{fromJson(steps.cache.outputs.cache).pragma.path}}
+          cache_key_path: ${{fromJson(steps.cache.outputs.cache).pragma.path}}
 
       - name: write gcp-build-cache cache
         uses: ./apps/gcp-build-cache
         with:
-          CACHE_KEY_PATH: ${{fromJson(steps.cache.outputs.cache).gcp-build-cache.path}}
+          cache_key_path: ${{fromJson(steps.cache.outputs.cache).gcp-build-cache.path}}
 
       - name: affected output
         run: |
