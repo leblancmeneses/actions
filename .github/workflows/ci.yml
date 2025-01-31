@@ -86,6 +86,8 @@ jobs:
         with:
           changed-files-output-file: ./.artifacts/changed.json
           rules-file: .github/affected.rules
+          recommended-imagetags-tag-format: '{sha:10}'
+          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha:10}') || '{sha}' }}
 
       - name: calculate gcp cache
         id: cache
@@ -226,7 +228,7 @@ jobs:
           context: .
           file: ./apps/affected/Dockerfile
           push: true
-          tags: ${{ env.IMAGE_AFFECTED }}:${{github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, env.PACKAGE_VERSION) || env.PACKAGE_VERSION}}
+          tags: ${{ env.IMAGE_AFFECTED }}:${{github.event_name == 'pull_request' && fromJson(steps.affected.outputs.affected).affected.recommended_imagetags[0] || env.PACKAGE_VERSION}}
           labels: |
             org.opencontainers.image.created=${{ github.event.created_at }}
             org.opencontainers.image.version=${{ env.PACKAGE_VERSION }}
