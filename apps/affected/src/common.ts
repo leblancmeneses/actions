@@ -36,7 +36,6 @@ export const getRules = (rulesInput: string, rulesFile: string) => {
 
 export const getImageName = (appTarget: string, hasChanges: boolean, sha: string, imageTagRegistry = '', imageTagFormat = '', imageTagFormatWhenChanged = '', imageContext?: ImageContext) => {
   let format = (hasChanges ? imageTagFormatWhenChanged : imageTagFormat) || '{sha}';
-  console.log(format);
   format = format
     .replace(/{sha(?::(-?\d+))?}/g, (_, size) => {
       if (!size) return sha; // No truncation

@@ -15,8 +15,7 @@ describe("run", () => {
     jest.clearAllMocks();
     jest.resetModules();
     mockGetInput.mockImplementation((name: string) => {
-      if (name === "CACHE_KEY_PATH") return "path/to/cache";
-      if (name === "credentials_json") return "credentials";
+      if (name === "cache_key_path") return "path/to/cache";
       return "";
     });
   });
@@ -34,7 +33,7 @@ describe("run", () => {
 
     await run();
 
-    expect(core.setOutput).toHaveBeenCalledWith("CACHE_HIT", "true");
+    expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "true");
     expect(core.exportVariable).toHaveBeenCalledWith("CACHE_HIT", "true");
     expect(mockSetFailed).not.toHaveBeenCalled();
   });
@@ -52,7 +51,7 @@ describe("run", () => {
 
     await run();
 
-    expect(core.setOutput).toHaveBeenCalledWith("CACHE_HIT", "false");
+    expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "false");
     expect(core.exportVariable).toHaveBeenCalledWith("CACHE_HIT", "false");
     expect(mockInfo).toHaveBeenCalledWith("🚀 Cache not found: path/to/cache, proceeding with build.");
     expect(mockSetFailed).not.toHaveBeenCalled();

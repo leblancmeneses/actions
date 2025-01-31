@@ -1,16 +1,17 @@
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
+import * as fs from 'fs';
 
 async function run() {
   try {
-    const cacheKeyPath = core.getInput("CACHE_KEY_PATH");
+    const cacheKeyPath = core.getInput("cache_key_path");
 
     if (process.env.CACHE_HIT === "true") {
       core.info("🔄 Skipping cache upload: cache already exists.");
       return;
     }
 
-    await exec.exec("touch", ["file.txt"]);
+    fs.writeFileSync('file.txt', '');
     await exec.exec("gsutil", ["cp", "file.txt", cacheKeyPath]);
 
     core.info("✅ Cache stored successfully.");

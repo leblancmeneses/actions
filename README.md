@@ -205,8 +205,7 @@ The `affected` action will generate the following JSON objects:
       "project-api:pr-6"
     ],
     "project-dbmigrations": [
-      "project-dbmigrations:7b367954a3ca29a02e2b570112d85718e56429c9",
-      "project-dbmigrations:pr-6"
+      "project-dbmigrations:7b367954a3ca29a02e2b570112d85718e56429c9"
     ],
   }
 }

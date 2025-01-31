@@ -1,15 +1,26 @@
 name: "GCP Build Cache"
 description: "Check and store build cache in GCS"
 inputs:
-  CACHE_KEY_PATH:
-    description: "Path to cache file in GCS"
+  cache_key_path:
+    description: "Required path to cache file in GCS"
+    required: false
+  gcs-root-path:
+    description: "Required gcs root path"
     required: true
-  credentials_json:
-    description: "Google Cloud Service Account JSON"
-    required: true
+  affected:
+    description: "affected output"
+    required: false
+  pragma:
+    description: "pragma output"
+    required: false
+  additional-keys:
+    description: "check keys against gcs"
+    required: false
 outputs:
-  CACHE_HIT:
+  cache-hit:
     description: "Indicates if the cache exists"
+  cache:
+    description: "Set when not using cache_key_path"
 runs:
   using: 'node20'
   main: '../../dist/apps/gcp-build-cache/main.js'
