@@ -8,7 +8,7 @@ export async function run() {
     const cacheKeyPath = core.getInput("cache_key_path", { required: false });
     const affected = JSON.parse(core.getInput("affected", { required: false }) || '{}');
     const pragma = JSON.parse(core.getInput("pragma", { required: false }) || '{}');
-    const gcsRootPath = core.getInput("gcs-root-path", { required: true });
+    const gcsRootPath = core.getInput("gcs-root-path", { required: false });
     const additionalKeys = JSON.parse(core.getInput("additional-keys", { required: false }) || '{}');
 
     try {

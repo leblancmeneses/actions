@@ -6,7 +6,7 @@ inputs:
     required: false
   gcs-root-path:
     description: "Required gcs root path"
-    required: true
+    required: false
   affected:
     description: "affected output"
     required: false
