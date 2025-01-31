@@ -22,16 +22,19 @@ export async function run() {
     const prefix = context.eventName == 'pull_request' ? `pr-${context.payload.pull_request.number}`: context.ref.replace(/^refs\/heads\//, '');
 
     const gcpBuildCache = {} as Record<string, {'cache-hit': boolean, 'path': string}>;
-    Object.keys(affected.shas || {}).reduce((accumulator, key) => {
+    Object.keys(affected || {}).reduce((accumulator, key) => {
+      if (!affected[key]?.sha) {
+        return accumulator;
+      }
       gcpBuildCache[key] = {
         'cache-hit': false,
-        'path': `${gcsRootPath}/${prefix}-${key}-${affected.shas[key]}`,
+        'path': `${gcsRootPath}/${prefix}-${key}-${affected[key].sha}`,
       };
 
       for(const target of additionalKeys[key] || []) {
         gcpBuildCache[`${key}-${target}`] = {
           'cache-hit': false,
-          'path': `${gcsRootPath}/${prefix}-${key}-${target}-${affected.shas[key]}`,
+          'path': `${gcsRootPath}/${prefix}-${key}-${target}-${affected[key].sha}`,
         };
       }
 

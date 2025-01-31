@@ -102,8 +102,10 @@ describe("run", () => {
       if (name === "gcs-root-path") return "gs://abc-123/github-integration";
       if (name === "affected") {
         return JSON.stringify({
-          changes: { "project-ui": true },
-          shas: { "project-ui": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5" },
+          "project-ui": {
+            changes: true ,
+            sha: "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+          }
         });
       }
       if (name === "additional-keys") {
@@ -183,8 +185,10 @@ describe("run", () => {
       if (name === "gcs-root-path") return "gs://abc-123/github-integration";
       if (name === "affected") {
         return JSON.stringify({
-          changes: { "project-ui": true },
-          shas: { "project-ui": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5" },
+          "project-ui": {
+            changes: true ,
+            sha: "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+          }
         });
       }
       if (name === "additional-keys") {
@@ -256,8 +260,10 @@ describe("run", () => {
       if (name === "gcs-root-path") return "gs://abc-123/github-integration";
       if (name === "affected") {
         return JSON.stringify({
-          changes: { "project-ui": true },
-          shas: { "project-ui": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5" },
+          "project-ui": {
+            changes: true ,
+            sha: "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+          }
         });
       }
       if (name === "additional-keys") {
@@ -296,8 +302,10 @@ describe("run", () => {
       if (name === "gcs-root-path") return "gs://abc-123/github-integration";
       if (name === "affected") {
         return JSON.stringify({
-          changes: { "project-ui": true },
-          shas: { "project-ui": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5" },
+          "project-ui": {
+            changes: true ,
+            sha: "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+          }
         });
       }
       if (name === "additional-keys") {
@@ -335,8 +343,10 @@ describe("run", () => {
       if (name === "gcs-root-path") return "gs://abc-123/github-integration";
       if (name === "affected") {
         return JSON.stringify({
-          changes: { "project-ui": true },
-          shas: { "project-ui": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5" },
+          "project-ui": {
+            changes: true ,
+            sha: "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+          }
         });
       }
       if (name === "additional-keys") {
