@@ -90,7 +90,7 @@ describe("run", () => {
       throw new Error("Input error");
     });
 
-    await run();
+    await expect(run()).rejects.toThrow();
 
     expect(mockSetFailed).toHaveBeenCalledWith(
       "Error checking cache: Input error",
@@ -194,11 +194,11 @@ describe("run", () => {
     });
 
     mockExec.mockImplementation(async (command: string, args?: string[]) => {
+      if ((command === "gcloud" || command === "gsutil") && args?.includes("--version")) {
+        return 0;
+      }
       if (command === "gsutil" && args?.includes("stat")) {
         throw new Error("Cache not found"); // Simulate cache does not exist
-      }
-      if (command === "gcloud" && args?.includes("--version")) {
-        return 0;
       }
       throw new Error("Command failed");
     });
