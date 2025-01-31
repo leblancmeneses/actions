@@ -34,10 +34,9 @@ export const getRules = (rulesInput: string, rulesFile: string) => {
   return rules;
 };
 
-
-
 export const getImageName = (appTarget: string, hasChanges: boolean, sha: string, imageTagRegistry = '', imageTagFormat = '', imageTagFormatWhenChanged = '', imageContext?: ImageContext) => {
   let format = (hasChanges ? imageTagFormatWhenChanged : imageTagFormat) || '{sha}';
+  console.log(format);
   format = format
     .replace(/{sha(?::(-?\d+))?}/g, (_, size) => {
       if (!size) return sha; // No truncation
@@ -51,7 +50,7 @@ export const getImageName = (appTarget: string, hasChanges: boolean, sha: string
   const imageName1 = `${appTarget}:${format}`;
 
   let imageName2 = `${appTarget}:latest`;
-  if (imageContext && imageContext.event === 'pull_request') {
+  if (imageContext && imageContext.event === 'pull_request' && hasChanges) {
     imageName2 = `${appTarget}:pr-${imageContext.pull_request_number}`;
   }
 

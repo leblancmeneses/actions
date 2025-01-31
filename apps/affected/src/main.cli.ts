@@ -24,9 +24,8 @@ yargs(hideBin(process.argv))
         .option('rules', { type: 'string', describe: 'Rules as a string', demandOption: false })
         .option('rules-file', { type: 'string', describe: 'Path to rules file', demandOption: false })
         .option('verbose', { type: 'boolean', default: false, describe: 'Verbose logging' })
-        .option('truncate-sha1-size', { type: 'number', default: 0, describe: 'SHA1 truncation size' })
-        .option('image-tag-prefix', { type: 'string', default: '', describe: 'Image tag prefix' })
-        .option('image-tag-suffix', { type: 'string', default: '', describe: 'Image tag suffix' })
+        .option('image-tag-format', { type: 'string', default: '', describe: 'Image tag format' })
+        .option('image-tag-format-whenchanged', { type: 'string', default: '', describe: 'Image tag format when changed' })
         .option('image-tag-registry', { type: 'string', default: '', describe: 'Image tag registry' })
         .option('changed-files-output-file', { type: 'string', describe: 'Path to write changed files', demandOption: false });
     },
@@ -36,10 +35,9 @@ yargs(hideBin(process.argv))
         const affectedOutput = await processRules(
           log.bind(null, argv.verbose as boolean),
           rules,
-          argv['truncate-sha1-size'] as number,
           argv['image-tag-registry'] as string,
-          argv['image-tag-prefix'] as string,
-          argv['image-tag-suffix'] as string,
+          argv['image-tag-format'] as string,
+          argv['image-tag-format-whenchanged'] as string,
           argv['changed-files-output-file'] as string | undefined
         );
         console.info(`${JSON.stringify(affectedOutput, null, 2)}`);
