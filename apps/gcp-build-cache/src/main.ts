@@ -21,7 +21,7 @@ export async function run() {
     const prefix = context.eventName == 'pull_request' ? `pr-${context.payload.pull_request.number}`: context.ref.replace(/^refs\/heads\//, '');
 
     const gcpBuildCache = {} as Record<string, {'cache-hit': boolean, 'path': string}>;
-    Object.keys(affected.changes || {}).reduce((accumulator, key) => {
+    Object.keys(affected.shas || {}).reduce((accumulator, key) => {
       gcpBuildCache[key] = {
         'cache-hit': false,
         'path': `${gcsRootPath}/${prefix}-${key}-${affected.shas[key]}`,
