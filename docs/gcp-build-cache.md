@@ -5,7 +5,7 @@
 
 # GCP Build Cache Action
 
-This task is designed to help you cache work completed to speed up your build process in a multi-job pipeline. It consumes outputs from the Affected Action to key off the SHA version of the target. Additionally, it leverages the Pragma Action to handle scenarios where caching should be bypassed, such as when a pull request requires skipping the cache. `x__skip-cache=true` or `x__target-cache='skip'`
+This task is designed to help you cache jobs completed to speed up your build process in a multi-job pipeline. It consumes outputs from the Affected Action to key off the SHA version of the target. Additionally, it leverages the Pragma Action to handle scenarios where caching should be bypassed, such as when a pull request requires skipping the cache. `x__skip-cache=true` or `x__target-cache='skip'`
 
 By using this Cache Action in conjunction with the Affected Action, you can significantly reduce build times and enhance the efficiency of your pipelines.
 

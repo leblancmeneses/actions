@@ -36,7 +36,7 @@ Have a polyglot build system? This task is for you. This task is designed for pr
 
 ## GCP Build Cache Action
 
-This task is designed to help you cache work completed to speed up your build process in a multi-job pipeline. It consumes outputs from the Affected Action to key off the SHA version of the target. Additionally, it leverages the Pragma Action to handle scenarios where caching should be bypassed, such as when a pull request requires skipping the cache. `x__skip-cache=true` or `x__target-cache='skip'`
+This task is designed to help you cache jobs completed to speed up your build process in a multi-job pipeline. It consumes outputs from the Affected Action to key off the SHA version of the target. Additionally, it leverages the Pragma Action to handle scenarios where caching should be bypassed, such as when a pull request requires skipping the cache. `x__skip-cache=true` or `x__target-cache='skip'`
 
 By using this Cache Action in conjunction with the Affected Action, you can significantly reduce build times and enhance the efficiency of your pipelines.
 For single job pipelines, the Affected Action is sufficient to determine if a task should run.
@@ -46,11 +46,14 @@ For single job pipelines, the Affected Action is sufficient to determine if a ta
 
 # Recommendations for multi-job pipeline
 
-A [single job pipeline](https://github.com/leblancmeneses/actions/blob/main/.github/workflows/ci.yml) is a great starting point for CI/CD workflows. However, as your project evolves, you may need to divide your pipeline into multiple jobs to enhance speed (parallel jobs), maintainability, and accommodate different operating systems for various tools.
+A [single job pipeline](https://github.com/leblancmeneses/actions/blob/main/.github/workflows/ci.yml) is a great starting point for CI/CD workflows.
+Start here if you are new to GitHub Actions or have a simple project.
+
+As your project evolves, you may need to divide your pipeline into multiple jobs to enhance speed (parallel jobs), maintainability, and accommodate different operating systems for various tools.
 
 Create an init job to calculate variables needed across multiple jobs. This will avoid redundant checkouts and calculations across each job.
 
-Generate an init.yml file with the following content:
+Generate an template.job.init.yml file with the following content:
 
 ```yaml
 name: template.job.init
@@ -131,7 +134,7 @@ jobs:
 ```
 
 ```yaml
-name: build-app-name
+name: build
 
 on:
   push:
