@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { getRules, processRules } from './common';
+import { getRules, mapResultToOutput, processRules } from './common';
 
 
 export const log = (verbose: boolean, message: string) => {
@@ -27,16 +27,7 @@ export async function run() {
       {event: github.context.eventName, pull_request_number: github.context.payload?.pull_request?.number});
 
 
-    const affectedOutput = Object.keys(affectedResults.changes).reduce((accumulator, key) => {
-      accumulator[key] = {
-        changes: affectedResults.changes[key] ?? false,
-        ...(affectedResults.shas[key] ? {sha: affectedResults.shas[key]} : {}),
-        ...(affectedResults.recommended_imagetags[key] ? {recommended_imagetags: affectedResults.recommended_imagetags[key]} : {}),
-      }
-      return accumulator;
-    }, {});
-
-    core.setOutput('affected', affectedOutput);
+    core.setOutput('affected', mapResultToOutput(affectedResults));
     core.setOutput('affected_shas', affectedResults.shas);
     core.setOutput('affected_changes', affectedResults.changes);
     core.setOutput('affected_recommended_imagetags', affectedResults.recommended_imagetags);

@@ -2,7 +2,7 @@
 // node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { processRules, getRules } from './common';
+import { processRules, getRules, mapResultToOutput } from './common';
 
 import * as packageJson from '../../../package.json';
 
@@ -42,7 +42,7 @@ yargs(hideBin(process.argv))
           argv['image-tag-remove-target'] === 'true',
           argv['changed-files-output-file'] as string | undefined
         );
-        console.info(`${JSON.stringify(affectedOutput, null, 2)}`);
+        console.info(`${JSON.stringify(mapResultToOutput(affectedOutput), null, 2)}`);
       } catch (error) {
         console.error(error.message);
         process.exit(1);
