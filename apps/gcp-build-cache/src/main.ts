@@ -52,15 +52,14 @@ export async function run() {
         try {
           await exec.exec("gsutil", ["-q", "stat", cacheKey.path], { silent: false });
           cacheExists = true;
-          core.info(`✅ Cache exists: ${cacheKey.path}`);
         } catch (error) {
-          core.info(`🚀 Cache not found: ${cacheKey.path}`);
+          // no-op
         }
         gcpBuildCache[key]['cache-hit'] = cacheExists && (pragma[`${cacheKey}-cache`.toLocaleUpperCase()]?.().trim().toLocaleUpperCase() !== 'SKIP');
       }
       core.setOutput("cache", gcpBuildCache);
+      core.info(`Cache: ${JSON.stringify(gcpBuildCache, null, 2)}`);
     }
-
   } catch (error) {
     core.setFailed(`Error checking cache: ${(error as Error).message}`);
   }
