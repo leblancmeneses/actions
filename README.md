@@ -207,7 +207,7 @@ We recommend locking the `uses:` clause to a specific tag or sha to avoid pipeli
 breakage due to future changes in the action.
 
 ```yaml
-uses: leblancmeneses/actions/apps/<taskname>@main # latest
+uses: leblancmeneses/actions/apps/<taskname>@main # latest (only if you are okay with breakage)
 uses: leblancmeneses/actions/apps/<taskname>@v1.1.1 # specific tag
 uses: leblancmeneses/actions/apps/<taskname>@commit-sha # specific sha
 ```
