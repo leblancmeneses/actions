@@ -1,5 +1,21 @@
 jest.mock("@actions/core");
 jest.mock("@actions/exec");
+jest.mock('@actions/github', () => {
+  return {
+    context: {
+      ref: 'refs/heads/main',
+      eventName: 'pull_request',
+      payload: {
+        pull_request: {
+          number: 123,
+          base: { sha: 'base-sha' },
+          head: { sha: 'head-sha' }
+        }
+      },
+      sha: 'commit-sha'
+    }
+  };
+});
 
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
