@@ -179,34 +179,46 @@ The `affected` action will generate the following JSON objects:
 
 ```json
 {
-  "changes": {
-    "peggy-parser": false,
-    "peggy-parser-checkIf-incomplete": false,
-    "markdown": true,
-    "project-api": false,
-    "project-ui": true,
-    "project-dbmigrations": false,
-    "third-party-deprecated": false,
-    "ui-core": false,
-    "ui-libs": false
+  "peggy-parser": {
+    "changes": false
   },
-  "shas": {
-    "project-ui": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-    "project-api": "dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
-    "project-dbmigrations": "7b367954a3ca29a02e2b570112d85718e56429c9"
+  "peggy-parser-checkIf-incomplete": {
+    "changes": false
   },
-  "recommended_imagetags": {
-    "project-ui": [
-      "project-ui:38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-      "project-ui:pr-6"
-    ],
-    "project-api": [
+  "markdown": {
+    "changes": true
+  },
+  "project-api": {
+    "changes": false,
+    "shas": "dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
+    "recommended_imagetags": [
       "project-api:dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
       "project-api:pr-6"
-    ],
-    "project-dbmigrations": [
+    ]
+  },
+  "project-ui": {
+    "changes": true,
+    "shas": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+    "recommended_imagetags": [
+      "project-ui:38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+      "project-ui:pr-6"
+    ]
+  },
+  "project-dbmigrations": {
+    "changes": false,
+    "shas": "7b367954a3ca29a02e2b570112d85718e56429c9",
+    "recommended_imagetags": [
       "project-dbmigrations:7b367954a3ca29a02e2b570112d85718e56429c9"
-    ],
+    ]
+  },
+  "third-party-deprecated": {
+    "changes": false
+  },
+  "ui-core": {
+    "changes": false
+  },
+  "ui-libs": {
+    "changes": false
   }
 }
 ```
@@ -220,11 +232,11 @@ The `affected` action will generate the following JSON objects:
           echo '${{ steps.affected.outputs.affected }}' | jq .
 
           # You can use env values for naming complex expressions.
-          HAS_CHANGED_PROJECT_UI=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.changes["project-ui"]')
+          HAS_CHANGED_PROJECT_UI=$(echo '${{ steps.affected.outputs.affected }}' | jq -r '.["project-ui"].changes')
           echo "HAS_CHANGED_PROJECT_UI=$HAS_CHANGED_PROJECT_UI" >> $GITHUB_ENV
 
       - name: ui tests
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.project-ui }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).project-ui.changes }}
         run: npx nx run project-ui:test
 ```
 
@@ -244,7 +256,7 @@ jobs:
     if: |
       !failure() && !cancelled() && (
         inputs.MANUAL_FORCE_BUILD == 'true' || (
-          fromJson(needs.vars.outputs.affected).changes.build-api == true &&
+          fromJson(needs.vars.outputs.affected).build-api.changes == true &&
           fromJson(needs.vars.outputs.cache).build-api.cache-hit == false
         )
       )
@@ -254,8 +266,8 @@ jobs:
       DOCKER_BUILD_ARGS: "IS_PULL_REQUEST=${{github.event_name == 'pull_request'}}"
       DOCKER_CONTEXT: "./build-api"
       DOCKER_LABELS: ${{needs.vars.outputs.IMAGE_LABELS}}
-      DOCKER_IMAGE_TAGS: ${{ fromJson(needs.vars.outputs.affected).recommended_imagetags.build-api &&
-           toJson(fromJson(needs.vars.outputs.affected).recommended_imagetags.build-api) || '[]' }}
+      DOCKER_IMAGE_TAGS: ${{ fromJson(needs.vars.outputs.affected).build-api.recommended_imagetags &&
+           toJson(fromJson(needs.vars.outputs.affected).build-api.recommended_imagetags) || '[]' }}
     secrets:
       GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
 
