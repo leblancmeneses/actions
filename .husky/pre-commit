@@ -18,10 +18,10 @@ if [[ ! -f affected.json ]]; then
 fi
 
 # Check properties
-affected=$(jq '.changes.affected' affected.json)
-pragma=$(jq '.changes.pragma' affected.json)
-version_autopilot=$(jq '.changes.["version-autopilot"]' affected.json)
-gcp_build_cache=$(jq '.changes.["gcp-build-cache"]' affected.json)
+affected=$(jq '.affected.changes' affected.json)
+pragma=$(jq '.pragma.changes' affected.json)
+version_autopilot=$(jq '.["version-autopilot"].changes' affected.json)
+gcp_build_cache=$(jq '.["gcp-build-cache"].changes' affected.json)
 
 if [[ $affected == "true" ]]; then
   npx nx run affected:lint

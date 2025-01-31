@@ -87,26 +87,30 @@ jobs:
           cat ./.artifacts/changed.json
 
       - name: incomplete parser changes
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.peggy-parser-checkIf-incomplete }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).peggy-parser-checkIf-incomplete.changes }}
         run: |
           echo "Missing parser.ts or parser.spec.ts in changeset."
           exit 1
 
       - name: check if parser changes are incomplete
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.peggy-parser }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).peggy-parser.changes }}
         run: |
           pnpm apps:affected:generate-parser
           sed -i '1i /* eslint-disable @typescript-eslint/ban-ts-comment */\n// @ts-nocheck' apps/affected/src/parser.ts
           git diff --exit-code -- ./
 
       - name: ensure version bump
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name == 'pull_request' }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).affected.changes && github.event_name == 'pull_request' }}
         run: |
           # package.json bump required by affected.
           git diff ${{ github.event.pull_request.base.sha }} ${{ github.sha }} package.json | grep version
 
       - name: ensure version bump
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected }}
+        if: |
+          !failure() && !cancelled() && (fromJson(steps.affected.outputs.affected).affected.changes ||
+          fromJson(steps.affected.outputs.affected).version-autopilot.changes
+          fromJson(steps.affected.outputs.affected).pragma.changes
+          fromJson(steps.affected.outputs.affected).gcp-build-cache.changes)
         run: |
           SHORT_SHA=$(echo "${{ fromJson(steps.affected.outputs.affected_shas).affected }}" | cut -c 1-7)
           VERSION=$(jq -r '.version' package.json)
@@ -115,28 +119,28 @@ jobs:
           echo "${PACKAGE_VERSION}"
 
       - name: build affected
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).affected.changes }}
         run: |
           npx nx run affected:lint
           npx nx run affected:test
           npx nx run affected:build:production
 
       - name: build version-autopilot
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.version-autopilot }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).version-autopilot.changes }}
         run: |
           npx nx run version-autopilot:lint
           npx nx run version-autopilot:test
           npx nx run version-autopilot:build:production
 
       - name: build pragma
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.pragma }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).pragma.changes }}
         run:  |
           npx nx run pragma:lint
           npx nx run pragma:test
           npx nx run pragma:build:production
 
       - name: build gcp-build-cache
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.gcp-build-cache }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).gcp-build-cache.changes }}
         run:  |
           npx nx run gcp-build-cache:lint
           npx nx run gcp-build-cache:test
@@ -146,7 +150,7 @@ jobs:
         run: git diff --exit-code -- ./dist
 
       - name: Log in to Docker Hub
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).affected.changes && github.event_name != 'pull_request' }}
         uses: docker/login-action@v3
         with:
           registry: ${{ env.ARTIFACT_REGISTRY }}
@@ -155,7 +159,7 @@ jobs:
 
       - name: build and push Docker image
         id: push
-        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+        if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).affected.changes && github.event_name != 'pull_request' }}
         uses: docker/build-push-action@v3
         with:
           context: .
@@ -176,7 +180,7 @@ jobs:
             org.opencontainers.image.vendor=Improving Startups LLC
 
       # - name: generate artifact attestation
-      #   if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).changes.affected && github.event_name != 'pull_request' }}
+      #   if: ${{ !failure() && !cancelled() && fromJson(steps.affected.outputs.affected).affected.changes && github.event_name != 'pull_request' }}
       #   uses: actions/attest-build-provenance@v2
       #   with:
       #     subject-name: ${{ env.IMAGE_AFFECTED }}
