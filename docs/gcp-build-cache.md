@@ -1,3 +1,7 @@
+- [GCP Build Cache Action](#gcp-build-cache-action)
+  - [Dependencies](#dependencies)
+  - [Usage](#usage)
+
 
 # GCP Build Cache Action
 
