@@ -60,7 +60,7 @@ This is useful for parallel jobs that build different parts of the same target.
     - name: write cache
       uses: leblancmeneses/actions/apps/gcp-build-cache@main
       with:
-        CACHE_KEY_PATH: fromJson(steps.gcp-cache.outputs.cache).target-ui.path
+        CACHE_KEY_PATH: ${{fromJson(steps.gcp-cache.outputs.cache).target-ui.path}}
 
 ```
 

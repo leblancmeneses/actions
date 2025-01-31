@@ -95,25 +95,30 @@ jobs:
           pragma: ${{steps.pragma.outputs.pragma}}
           gcs-root-path: gs://abc-123-github/build-cache
 
+      - name: cache output
+        run: |
+          echo "cache: "
+          echo '${{ steps.cache.outputs.cache }}' | jq .
+          
       - name: write affected cache
         uses: ./apps/gcp-build-cache
         with:
-          CACHE_KEY_PATH: fromJson(steps.cache.outputs.cache).affected.path
+          CACHE_KEY_PATH: ${{fromJson(steps.cache.outputs.cache).affected.path}}
 
       - name: write version-autopilot cache
         uses: ./apps/gcp-build-cache
         with:
-          CACHE_KEY_PATH: fromJson(steps.cache.outputs.cache).version-autopilot.path
+          CACHE_KEY_PATH: ${{fromJson(steps.cache.outputs.cache).version-autopilot.path}}
 
       - name: write pragma cache
         uses: ./apps/gcp-build-cache
         with:
-          CACHE_KEY_PATH: fromJson(steps.cache.outputs.cache).pragma.path
+          CACHE_KEY_PATH: ${{fromJson(steps.cache.outputs.cache).pragma.path}}
 
       - name: write gcp-build-cache cache
         uses: ./apps/gcp-build-cache
         with:
-          CACHE_KEY_PATH: fromJson(steps.cache.outputs.cache).gcp-build-cache.path
+          CACHE_KEY_PATH: ${{fromJson(steps.cache.outputs.cache).gcp-build-cache.path}}
 
       - name: affected output
         run: |
