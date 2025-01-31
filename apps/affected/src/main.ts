@@ -29,7 +29,7 @@ export async function run() {
     const affectedOutput = Object.keys(affectedResults.changes).reduce((accumulator, key) => {
       accumulator[key] = {
         changes: affectedResults.changes[key] ?? false,
-        ...(affectedResults.shas[key] ? {shas: affectedResults.shas[key]} : {}),
+        ...(affectedResults.shas[key] ? {sha: affectedResults.shas[key]} : {}),
         ...(affectedResults.recommended_imagetags[key] ? {recommended_imagetags: affectedResults.recommended_imagetags[key]} : {}),
       }
       return accumulator;

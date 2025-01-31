@@ -31,7 +31,7 @@ This task is designed for projects in mono repos that are not *fully* covered by
 ## Recommendations:
 
 * Use `changes` for pull requests to detect and act upon specific updates.
-* Use `shas` for core branches like `main`, `develop`, and `prod` as a key for caching purposes, improving build efficiency.
+* Use `shas` for core branches like `main`, `develop`, and `prod` as a key for caching purposes, improving build speed and efficiency.
 
 This approach helps optimize pipelines, reduce execution time, and maintain reliable caching across your development workflow.
 
@@ -173,7 +173,7 @@ The `affected` action will generate the following JSON objects:
   },
   "project-api": {
     "changes": false,
-    "shas": "dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
+    "sha": "dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
     "recommended_imagetags": [
       "project-api:dd65064e5d3e4b0a21b867fa02561e37b2cf7f01",
       "project-api:pr-6"
@@ -181,7 +181,7 @@ The `affected` action will generate the following JSON objects:
   },
   "project-ui": {
     "changes": true,
-    "shas": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+    "sha": "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
     "recommended_imagetags": [
       "project-ui:38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
       "project-ui:pr-6"
@@ -189,7 +189,7 @@ The `affected` action will generate the following JSON objects:
   },
   "project-dbmigrations": {
     "changes": false,
-    "shas": "7b367954a3ca29a02e2b570112d85718e56429c9",
+    "sha": "7b367954a3ca29a02e2b570112d85718e56429c9",
     "recommended_imagetags": [
       "project-dbmigrations:7b367954a3ca29a02e2b570112d85718e56429c9"
     ]

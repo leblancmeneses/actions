@@ -26,13 +26,13 @@ export async function run() {
       if (!affected[key]?.sha) {
         return accumulator;
       }
-      gcpBuildCache[key] = {
+      accumulator[key] = {
         'cache-hit': false,
         'path': `${gcsRootPath}/${prefix}-${key}-${affected[key].sha}`,
       };
 
       for(const target of additionalKeys[key] || []) {
-        gcpBuildCache[`${key}-${target}`] = {
+        accumulator[`${key}-${target}`] = {
           'cache-hit': false,
           'path': `${gcsRootPath}/${prefix}-${key}-${target}-${affected[key].sha}`,
         };
