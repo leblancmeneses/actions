@@ -58,7 +58,10 @@ export async function run() {
         } catch (error) {
           // no-op
         }
-        gcpBuildCache[key]['cache-hit'] = cacheExists && (pragma[`${cacheKey}-cache`.toLocaleUpperCase()]?.().trim().toLocaleUpperCase() !== 'SKIP');
+        gcpBuildCache[key]['cache-hit'] = cacheExists && !(
+          pragma[`${cacheKey}-cache`.toLocaleUpperCase()]?.trim().toLocaleUpperCase() === 'SKIP' ||
+          pragma['SKIP-CACHE'] === true
+        );
       }
       core.setOutput("cache", gcpBuildCache);
       core.info(`Cache: ${JSON.stringify(gcpBuildCache, null, 2)}`);
