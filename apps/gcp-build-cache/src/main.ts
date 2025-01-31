@@ -48,18 +48,18 @@ export async function run() {
       }
       core.setOutput("cache-hit", cacheExists.toString());
       core.exportVariable("CACHE_HIT", cacheExists.toString());
-    } else if (Object.keys(gcpBuildCache).length === 0) {
+    } else if (Object.keys(gcpBuildCache).length !== 0) {
       for (const key in gcpBuildCache) {
-        const cacheKey = gcpBuildCache[key];
+        const cache = gcpBuildCache[key];
         let cacheExists = false;
         try {
-          await exec.exec("gsutil", ["-q", "stat", cacheKey.path], { silent: false });
+          await exec.exec("gsutil", ["-q", "stat", cache.path], { silent: false });
           cacheExists = true;
         } catch (error) {
           // no-op
         }
-        gcpBuildCache[key]['cache-hit'] = cacheExists && !(
-          pragma[`${cacheKey}-cache`.toLocaleUpperCase()]?.trim().toLocaleUpperCase() === 'SKIP' ||
+        cache['cache-hit'] = cacheExists && !(
+          pragma[`${key}-cache`.toLocaleUpperCase()]?.trim().toLocaleUpperCase() === 'SKIP' ||
           pragma['SKIP-CACHE'] === true
         );
       }
