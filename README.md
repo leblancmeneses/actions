@@ -512,6 +512,16 @@ jobs:
           rules: |
             ...
 
+      - name: gcp cache
+        id: gcp-cache
+        uses: leblancmeneses/actions/apps/gcp-build-cache@main
+        with:
+          affected: steps.affected.outputs.affected
+          pragma: steps.pragma.outputs.pragma
+          gcs-root-path: gs://xxx-my-github-integration/build-cache
+          additional-keys: |
+            { "project-ui": ["lint", "build", "e2e"], "project-api": [] }
+
       - name: upload affected output
         uses: actions/upload-artifact@v4
         with:
@@ -572,6 +582,8 @@ jobs:
           echo '${{ needs.vars.outputs.pragma }}' | jq .
           echo "version-autopilot: "
           echo '${{ needs.vars.outputs.version-autopilot }}' | jq .
+          echo "cache: "
+          echo '${{ needs.vars.outputs.cache }}' | jq .
 
           cat ./.artifacts/affected.json
           for file in $(jq -r '.[] | .file' ./.artifacts/affected.json); do

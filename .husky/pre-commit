@@ -21,6 +21,7 @@ fi
 affected=$(jq '.changes.affected' affected.json)
 pragma=$(jq '.changes.pragma' affected.json)
 version_autopilot=$(jq '.changes.["version-autopilot"]' affected.json)
+gcp_build_cache=$(jq '.changes.["gcp-build-cache"]' affected.json)
 
 if [[ $affected == "true" ]]; then
   npx nx run affected:lint
@@ -36,6 +37,11 @@ if [[ $version_autopilot == "true" ]]; then
   npx nx run version-autopilot:lint
   npx nx run version-autopilot:test
   npx nx run version-autopilot:build:production --no-cache
+fi
+if [[ $gcp_build_cache == "true" ]]; then
+  npx nx run gcp-build-cache:lint
+  npx nx run gcp-build-cache:test
+  npx nx run gcp-build-cache:build:production --no-cache
 fi
 
 rm affected.json
