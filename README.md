@@ -71,10 +71,9 @@ jobs:
         uses: leblancmeneses/actions/apps/affected@main
         with:
           verbose: false # optional
-          recommended-imagetags-tag-prefix: '' # optional; The prefix to add to the image tag. target:<prefix>sha1
-          recommended-imagetags-tag-suffix: '' # optional; The suffix to add to the image tag. target:sha1<suffix>'
+          recommended-imagetags-tag-format: '{sha}' # optional; The prefix to add to the image tag. target:<prefix>sha1<suffix>
+          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{sha:10}', github.event.number) || '{sha}' }} # optional; The prefix to add to the image tag. target:<prefix>sha1<suffix>
           recommended-imagetags-registry: '' # optional; used in recommended_imagetags.
-          recommended-imagetags-tag-truncate-size: 0 # optional; The number of characters to keep from the sha1 value.
           changed-files-output-file: '' # optional; The path to write the file containing the list of changed files.
           rules-file: '' # optional; The path to the file containing the rules if you perfer externalizing the rules for husky integration.
           rules: |

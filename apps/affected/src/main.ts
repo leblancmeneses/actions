@@ -13,9 +13,8 @@ export async function run() {
   try {
     const rulesInput = getRules(core.getInput('rules', { required: false }), core.getInput('rules-file', { required: false }));
     const verbose = core.getInput('verbose', { required: false }) === 'true';
-    const truncateSha1Size = parseInt(core.getInput('recommended-imagetags-tag-truncate-size', { required: false }) || '0');
-    const imageTagPrefix = core.getInput('recommended-imagetags-tag-prefix', { required: false }) || '';
-    const imageTagSuffix = core.getInput('recommended-imagetags-tag-suffix', { required: false }) || '';
+    const imageTagFormat = core.getInput('recommended-imagetags-tag-format', { required: false }) || '';
+    const imageTagFormatWhenChanged = core.getInput('recommended-imagetags-tag-format-whenchanged', { required: false }) || '';
     const imageTagRegistry = core.getInput('recommended-imagetags-registry', { required: false }) || '';
     const changedFilesOutputFile = core.getInput('changed-files-output-file', { required: false }) || '';
 
@@ -23,7 +22,7 @@ export async function run() {
 
     const affectedOutput = await processRules(
       log.bind(null, verbose),
-      rulesInput, truncateSha1Size, imageTagRegistry, imageTagPrefix, imageTagSuffix, changedFilesOutputFile,
+      rulesInput, imageTagRegistry, imageTagFormat, imageTagFormatWhenChanged, changedFilesOutputFile,
       {event: github.context.eventName, pull_request_number: github.context.payload?.pull_request?.number});
 
     core.setOutput('affected', affectedOutput);

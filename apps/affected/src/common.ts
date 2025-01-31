@@ -36,17 +36,19 @@ export const getRules = (rulesInput: string, rulesFile: string) => {
 
 
 
-export const getImageName = (appTarget: string, sha: string, truncateSha1Size = 0, imageTagRegistry = '', imageTagPrefix = '', imageTagSuffix = '', imageContext?: ImageContext) => {
-  let sha1 = sha;
-  if (isNaN(truncateSha1Size) || truncateSha1Size === 0) {
-    sha1 = sha;
-  } else if (truncateSha1Size > 0) {
-    sha1 = sha.slice(0, truncateSha1Size);
-  } else {
-    sha1 = sha.slice(truncateSha1Size);
-  }
+export const getImageName = (appTarget: string, hasChanges: boolean, sha: string, imageTagRegistry = '', imageTagFormat = '', imageTagFormatWhenChanged = '', imageContext?: ImageContext) => {
+  let format = (hasChanges ? imageTagFormatWhenChanged : imageTagFormat) || '{sha}';
+  format = format
+    .replace(/{sha(?::(-?\d+))?}/g, (_, size) => {
+      if (!size) return sha; // No truncation
+      const n = parseInt(size, 10);
+      if(isNaN(n)) return sha; // Invalid size
+      if (n > 0) return sha.substring(0, n); // Keep first N characters
+      if (n < 0) return sha.slice(n); // Keep last N characters
+      return sha; // Default full SHA
+    })
 
-  const imageName1 = `${appTarget}:${imageTagPrefix}${sha1}${imageTagSuffix}`;
+  const imageName1 = `${appTarget}:${format}`;
 
   let imageName2 = `${appTarget}:latest`;
   if (imageContext && imageContext.event === 'pull_request') {
@@ -59,10 +61,9 @@ export const getImageName = (appTarget: string, sha: string, truncateSha1Size = 
 export const processRules = async (
   log: (message: string) => void,
   rulesInput: string,
-  truncateSha1Size: number,
   imageTagRegistry: string,
-  imageTagPrefix: string,
-  imageTagSuffix: string,
+  imageTagFormat: string,
+  imageTagFormatWhenChanged: string,
   changedFilesOutputFile?: string,
   imageContext?: ImageContext) => {
   const affectedImageTags: Record<string, string[]> = {};
@@ -96,7 +97,7 @@ export const processRules = async (
       if (key.path) {
         affectedShas[key.name] = commitSha[key.name];
 
-        const imageName = getImageName(key.name, commitSha[key.name], truncateSha1Size, imageTagRegistry, imageTagPrefix, imageTagSuffix, imageContext);
+        const imageName = getImageName(key.name, affectedChanges[key.name], commitSha[key.name], imageTagRegistry, imageTagFormat, imageTagFormatWhenChanged, imageContext);
         affectedImageTags[key.name] = imageName;
 
         log(`Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`);
