@@ -1,11 +1,11 @@
 import * as core from "@actions/core";
-import * as exec from "@actions/exec";
-import * as fs from 'fs';
-import * as path from 'path';
+import { writeCacheFileToGcs } from "./util";
+import { WriteOn } from "./types";
 
 async function run() {
   try {
     const cacheKeyPath = core.getInput("cache_key_path");
+    const writeOn = core.getInput("write-on", { required: false }) as WriteOn;
 
     if(!cacheKeyPath) {
       core.info("Cache key path not provided, skipping cache upload.");
@@ -17,8 +17,12 @@ async function run() {
       return;
     }
 
-    fs.writeFileSync('file.txt', '');
-    await exec.exec("gsutil", ["cp", path.resolve('file.txt'), cacheKeyPath]);
+    if (writeOn !== WriteOn.POST) {
+      core.info("🔄 Skipping cache upload on post.");
+      return;
+    }
+
+    await writeCacheFileToGcs(cacheKeyPath);
 
     core.info("✅ Cache stored successfully.");
   } catch (error) {

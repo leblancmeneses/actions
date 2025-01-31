@@ -1,6 +1,13 @@
 name: "GCP Build Cache"
 description: "Check and store build cache in GCS"
 inputs:
+  write-on:
+    description: "When to write file to GCS"
+    required: false
+    default: 'post'
+    options:
+      - 'now' # useful for inline writes in single job
+      - 'post'
   cache_key_path:
     description: "Required path to cache file in GCS"
     required: false

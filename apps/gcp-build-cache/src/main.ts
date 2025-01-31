@@ -1,10 +1,13 @@
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as github from '@actions/github';
+import { writeCacheFileToGcs } from "./util";
+import { WriteOn } from "./types";
 
 export async function run() {
   try {
     const context = github.context;
+    const writeOn = core.getInput("write-on", { required: false }) as WriteOn;
     const cacheKeyPath = core.getInput("cache_key_path", { required: false });
     const affected = JSON.parse(core.getInput("affected", { required: false }) || '{}');
     const pragma = JSON.parse(core.getInput("pragma", { required: false }) || '{}');
@@ -50,6 +53,11 @@ export async function run() {
       } catch (error) {
         core.info(`🚀 Cache not found: ${cacheKeyPath}, proceeding with build.`);
       }
+
+      if (cacheExists === false && writeOn === WriteOn.NOW) {
+        await writeCacheFileToGcs(cacheKeyPath);
+      }
+
       core.setOutput("cache-hit", cacheExists.toString());
       core.exportVariable("CACHE_HIT", cacheExists.toString());
     } else if (Object.keys(gcpBuildCache).length !== 0) {
