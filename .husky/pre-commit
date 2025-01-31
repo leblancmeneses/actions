@@ -27,7 +27,6 @@ if [[ $affected == "true" ]]; then
   npx nx run affected:lint
   npx nx run affected:test
   npx nx run affected:build:production --no-cache
-  npx nx run affected:build-cli:production --no-cache
 fi
 if [[ $pragma == "true" ]]; then
   npx nx run pragma:lint

@@ -1,8 +1,10 @@
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
+import * as github from '@actions/github';
 
 export async function run() {
   try {
+    const context = github.context;
     const cacheKeyPath = core.getInput("cache_key_path", { required: false });
     const affected = JSON.parse(core.getInput("affected", { required: false }) || '{}');
     const pragma = JSON.parse(core.getInput("pragma", { required: false }) || '{}');
@@ -16,18 +18,19 @@ export async function run() {
       core.info(`❌ Cache tools not installed`);
     }
 
+    const prefix = context.eventName == 'pull_request' ? `pr-${context.payload.pull_request.number}`: context.ref.replace(/^refs\/heads\//, '');
 
     const gcpBuildCache = {} as Record<string, {'cache-hit': boolean, 'path': string}>;
     Object.keys(affected.changes || {}).reduce((accumulator, key) => {
       gcpBuildCache[key] = {
         'cache-hit': false,
-        'path': `${gcsRootPath}/${key}-${affected.shas[key]}`,
+        'path': `${gcsRootPath}/${prefix}-${key}-${affected.shas[key]}`,
       };
 
       for(const target of additionalKeys[key] || []) {
         gcpBuildCache[`${key}-${target}`] = {
           'cache-hit': false,
-          'path': `${gcsRootPath}/${key}-${target}-${affected.shas[key]}`,
+          'path': `${gcsRootPath}/${prefix}-${key}-${target}-${affected.shas[key]}`,
         };
       }
 
