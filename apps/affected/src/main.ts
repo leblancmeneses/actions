@@ -20,16 +20,26 @@ export async function run() {
 
     log(verbose, `github.context: ${JSON.stringify(github.context, undefined, 2)}`);
 
-    const affectedOutput = await processRules(
+    const affectedResults = await processRules(
       log.bind(null, verbose),
       rulesInput, imageTagRegistry, imageTagFormat, imageTagFormatWhenChanged, changedFilesOutputFile,
       {event: github.context.eventName, pull_request_number: github.context.payload?.pull_request?.number});
 
+
+    const affectedOutput = Object.keys(affectedResults.changes).reduce((accumulator, key) => {
+      accumulator[key] = {
+        changes: affectedResults.changes[key] ?? false,
+        ...(affectedResults.shas[key] ? {shas: affectedResults.shas[key]} : {}),
+        ...(affectedResults.recommended_imagetags[key] ? {recommended_imagetags: affectedResults.recommended_imagetags[key]} : {}),
+      }
+      return accumulator;
+    }, {});
+
     core.setOutput('affected', affectedOutput);
-    core.setOutput('affected_shas', affectedOutput.shas);
-    core.setOutput('affected_changes', affectedOutput.changes);
-    core.setOutput('affected_recommended_imagetags', affectedOutput.recommended_imagetags);
-    core.info(`affected: ${JSON.stringify(affectedOutput, null, 2)}!`);
+    core.setOutput('affected_shas', affectedResults.shas);
+    core.setOutput('affected_changes', affectedResults.changes);
+    core.setOutput('affected_recommended_imagetags', affectedResults.recommended_imagetags);
+    core.info(`affected: ${JSON.stringify(affectedResults, null, 2)}!`);
   } catch (error) {
     core.setFailed(error.message);
     throw error;

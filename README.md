@@ -238,23 +238,24 @@ jobs:
     secrets:
       GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
 
-  build-ui:
-    needs: [vars, lint-ui, lint-api]
+  build-api:
+    needs: [vars]
     uses: ./.github/workflows/template.job.build.yml
     if: |
-      !failure() && !cancelled() && needs.lint-ui.result != 'failure'
+      !failure() && !cancelled() && (
+        inputs.MANUAL_FORCE_BUILD == 'true' || (
+          fromJson(needs.vars.outputs.affected).changes.build-api == true &&
+          fromJson(needs.vars.outputs.cache).build-api.cache-hit == false
+        )
+      )
     with:
-      ENABLED: ${{fromJson(needs.vars.outputs.affected).changes.app-ui}}
-      FORCE_BUILD: ${{ github.event.inputs.MANUAL_FORCE_BUILD == 'true' ||
-        fromJson(needs.vars.outputs.pragma).FORCE-BUILD == true }}
-      PRE_BUILD_HOOK: .github/_prebuild.app-ui.sh
-      DOCKER_FILE: "./app-ui/Dockerfile"
-      DOCKER_CONTEXT: "./app-api"
-      DOCKER_BUILD_ARGS: "ENV_TYPE=production"
+      CACHE: ${{toJson(fromJson(needs.vars.outputs.cache).build-api)}}
+      DOCKER_FILE: "./build-api/Dockerfile"
+      DOCKER_BUILD_ARGS: "IS_PULL_REQUEST=${{github.event_name == 'pull_request'}}"
+      DOCKER_CONTEXT: "./build-api"
       DOCKER_LABELS: ${{needs.vars.outputs.IMAGE_LABELS}}
-      DOCKER_IMAGE_TAGS: ${{ fromJson(needs.vars.outputs.affected).recommended_imagetags.app-ui &&
-           toJson(fromJson(needs.vars.outputs.affected).recommended_imagetags.app-ui) || '[]' }}
-      CHECKOUT_REF: ${{needs.vars.outputs.CHECKOUT_REF}}
+      DOCKER_IMAGE_TAGS: ${{ fromJson(needs.vars.outputs.affected).recommended_imagetags.build-api &&
+           toJson(fromJson(needs.vars.outputs.affected).recommended_imagetags.build-api) || '[]' }}
     secrets:
       GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
 
@@ -481,6 +482,8 @@ on:
         value: ${{ jobs.init.outputs.affected }}
       pragma:
         value: ${{ jobs.init.outputs.pragma }}
+      cache:
+        value: ${{ jobs.init.outputs.cache }}
       version-autopilot:
         value: ${{ jobs.init.outputs.version-autopilot }}
 
@@ -490,6 +493,7 @@ jobs:
     outputs:
       affected: ${{steps.affected.outputs.affected}}
       pragma: ${{steps.pragma.outputs.pragma}}
+      cache: ${{steps.cache.outputs.cache}}
       version-autopilot: ${{steps.version-autopilot.outputs.version_autopilot}}
     steps:
       - name: Checkout code
@@ -513,7 +517,7 @@ jobs:
             ...
 
       - name: gcp cache
-        id: gcp-cache
+        id: cache
         uses: leblancmeneses/actions/apps/gcp-build-cache@main
         with:
           affected: steps.affected.outputs.affected
