@@ -16,6 +16,7 @@ export async function run() {
       await exec.exec("gsutil", ["--version"]);
     } catch (error) {
       core.info(`❌ Cache tools not installed`);
+      throw error;
     }
 
     const prefix = context.eventName == 'pull_request' ? `pr-${context.payload.pull_request.number}`: context.ref.replace(/^refs\/heads\//, '');
@@ -68,6 +69,7 @@ export async function run() {
     }
   } catch (error) {
     core.setFailed(`Error checking cache: ${(error as Error).message}`);
+    throw error;
   }
 }
 
