@@ -54,7 +54,7 @@ export const getImageName = (appTarget: string, hasChanges: boolean, sha: string
   }
 
   return [imageName1, imageName2]
-    .map(imageName => removeTarget ? imageName.substring(appTarget.length + 1) : imageName)
+    .map(imageName => removeTarget ? imageName.substring(appTarget.length) : imageName)
     .map((imageName) => `${imageTagRegistry || ''}${imageName}`);
 }
 
