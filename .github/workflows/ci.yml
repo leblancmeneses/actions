@@ -107,10 +107,12 @@ jobs:
 
       - name: ensure version bump
         if: |
-          !failure() && !cancelled() && (fromJson(steps.affected.outputs.affected).affected.changes ||
-          fromJson(steps.affected.outputs.affected).version-autopilot.changes
-          fromJson(steps.affected.outputs.affected).pragma.changes
-          fromJson(steps.affected.outputs.affected).gcp-build-cache.changes)
+          !failure() && !cancelled() && (
+            fromJson(steps.affected.outputs.affected).affected.changes ||
+            fromJson(steps.affected.outputs.affected).version-autopilot.changes ||
+            fromJson(steps.affected.outputs.affected).pragma.changes ||
+            fromJson(steps.affected.outputs.affected).gcp-build-cache.changes
+          )
         run: |
           SHORT_SHA=$(echo "${{ fromJson(steps.affected.outputs.affected_shas).affected }}" | cut -c 1-7)
           VERSION=$(jq -r '.version' package.json)
