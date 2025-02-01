@@ -150,6 +150,7 @@ jobs:
       - name: version bump to env
         if: |
           !failure() && !cancelled() && (
+            inputs.MANUAL_FORCE_DEPLOY_AFFECTED ||
             fromJson(steps.affected.outputs.affected).affected.changes ||
             fromJson(steps.affected.outputs.affected).version-autopilot.changes ||
             fromJson(steps.affected.outputs.affected).pragma.changes ||
