@@ -123,6 +123,23 @@ describe("version-autopilot action", () => {
     expect(outputMock).toHaveBeenCalledWith("version_autopilot_string_recommended", "1.0.1-mockedBranch-mockedSha123");
   });
 
+  it("should handle negative shift", async () => {
+    jest.spyOn(core, "getInput").mockImplementation((name) => {
+      if (name === "major") return "0";
+      if (name === "minor") return "0";
+      if (name === "shift") return "-50";
+      return null;
+    });
+    github.context.runNumber = 51;
+    const outputMock = jest.spyOn(core, "setOutput");
+
+    await run();
+
+    expect(outputMock).toHaveBeenCalledWith("version_autopilot_code", 1);
+    expect(outputMock).toHaveBeenCalledWith("version_autopilot_string", "0.0.1");
+    expect(outputMock).toHaveBeenCalledWith("version_autopilot_string_recommended", "0.0.1-mockedBranch-mockedSha123");
+  });
+
   it("should handle pull request event and generate appropriate version string", async () => {
     jest.spyOn(core, "getInput").mockImplementation((name) => {
       if (name === "major") return "0";

@@ -38,7 +38,8 @@ export async function run() {
     };
 
     core.setOutput('version_autopilot', versionAutopilot);
-    core.info(`version_autopilot: ${JSON.stringify(versionAutopilot, null, 2)}!`);
+    core.info(`runNumber: ${github.context.runNumber}`);
+    core.info(`version_autopilot: ${JSON.stringify(versionAutopilot, null, 2)}`);
   } catch (error) {
     core.setFailed(error.message);
     throw error;

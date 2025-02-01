@@ -79,8 +79,8 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          { "command": "nx run affected:build-main:production" },
-          { "command": "nx run affected:build-cli:production" }
+          { "command": "nx run affected:build-main:production --no-cache" },
+          { "command": "nx run affected:build-cli:production --no-cache" }
         ],
         "parallel": false
       }

@@ -13,18 +13,18 @@ inputs:
     description: 'Reference to file containing rules in a DSL format specified in README.md.'
     required: false
     default: ''
-  recommended-imagetags-tag-prefix:
-    description: 'The prefix to add to the image tag. target:<prefix>sha'
+  recommended-imagetags-tag-format-whenchanged:
+    description: 'The prefix to add to the image tag. <prefix>{sha|10}<suffix>'
     required: false
     default: ''
-  recommended-imagetags-tag-suffix:
-    description: 'The suffix to add to the image tag. target:sha<suffix>'
+  recommended-imagetags-tag-format:
+    description: 'The prefix to add to the image tag. <prefix>{sha|10}<suffix>'
     required: false
     default: ''
-  recommended-imagetags-tag-truncate-size:
-    description: 'The number of characters to keep from the sha1 value. Positive values retain characters from the start (left), negative values retain characters from the end (right), and 0 keeps the entire value.'
+  recommended-imagetags-tag-remove-target:
+    description: 'Should the target prefix be removed?'
     required: false
-    default: 0
+    default: ''
   recommended-imagetags-registry:
     description: 'The registry to add to all image tags.'
     required: false

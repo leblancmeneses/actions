@@ -1,0 +1,35 @@
+name: "GCP Build Cache"
+description: "Check and store build cache in GCS"
+inputs:
+  write-on:
+    description: "When to write file to GCS"
+    required: false
+    default: 'post'
+    options:
+      - 'immediate' # useful for inline writes in single job
+      - 'post'
+  cache_key_path:
+    description: "Required path to cache file in GCS"
+    required: false
+  gcs-root-path:
+    description: "Required gcs root path"
+    required: false
+  affected:
+    description: "affected output"
+    required: false
+  pragma:
+    description: "pragma output"
+    required: false
+  additional-keys:
+    description: "check keys against gcs"
+    required: false
+outputs:
+  cache-hit:
+    description: "Indicates if the cache exists"
+  cache:
+    description: "Set when not using cache_key_path"
+runs:
+  using: 'node20'
+  main: '../../dist/apps/gcp-build-cache/main.js'
+  post: '../../dist/apps/gcp-build-cache/post.js'
+  post-if: "success()"

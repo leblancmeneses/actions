@@ -9,7 +9,8 @@ set -e
 # This script demonstrates how to manually calculate affected projects without relying on Nx, Bazel, or Make.
 # Our rule-based approach standardizes the process, making it adaptable to diverse tech stacks and monorepo structures.
 
-#  docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v3.0.4-60aac9c calculate --rules-file ./.github/affected.rules > affected.json
+# @see: https://hub.docker.com/repository/docker/leblancmeneses/actions-affected/tags
+# docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:<tag> calculate --rules-file ./.github/affected.rules > affected.json
 node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules > affected.json
 
 if [[ ! -f affected.json ]]; then
@@ -18,9 +19,10 @@ if [[ ! -f affected.json ]]; then
 fi
 
 # Check properties
-affected=$(jq '.changes.affected' affected.json)
-pragma=$(jq '.changes.pragma' affected.json)
-version_autopilot=$(jq '.changes.["version-autopilot"]' affected.json)
+affected=$(jq '.affected.changes' affected.json)
+pragma=$(jq '.pragma.changes' affected.json)
+version_autopilot=$(jq '.["version-autopilot"].changes' affected.json)
+gcp_build_cache=$(jq '.["gcp-build-cache"].changes' affected.json)
 
 if [[ $affected == "true" ]]; then
   npx nx run affected:lint
@@ -36,6 +38,11 @@ if [[ $version_autopilot == "true" ]]; then
   npx nx run version-autopilot:lint
   npx nx run version-autopilot:test
   npx nx run version-autopilot:build:production --no-cache
+fi
+if [[ $gcp_build_cache == "true" ]]; then
+  npx nx run gcp-build-cache:lint
+  npx nx run gcp-build-cache:test
+  npx nx run gcp-build-cache:build:production --no-cache
 fi
 
 rm affected.json
