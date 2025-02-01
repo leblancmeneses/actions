@@ -43,6 +43,17 @@ By using this Cache Action in conjunction with the Affected Action, you can sign
 [Documentation](docs/gcp-build-cache.md)
 
 
+> [!CAUTION]
+> We recommend locking the `uses:` clause to a specific tag or sha to avoid pipeline
+> breakage due to future changes in the action.
+
+```yaml
+uses: leblancmeneses/actions/apps/<taskname>@main # latest (only if you are okay with breakage)
+uses: leblancmeneses/actions/apps/<taskname>@v1.1.1 # specific tag
+uses: leblancmeneses/actions/apps/<taskname>@commit-sha # specific sha
+```
+
+
 # Recommendations for multi-job pipeline
 
 A [single job pipeline](https://github.com/leblancmeneses/actions/blob/main/.github/workflows/ci.yml) is a great starting point for CI/CD workflows.
@@ -202,14 +213,6 @@ jobs:
   #     GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
 ```
 
-We recommend locking the `uses:` clause to a specific tag or sha to avoid pipeline
-breakage due to future changes in the action.
-
-```yaml
-uses: leblancmeneses/actions/apps/<taskname>@main # latest (only if you are okay with breakage)
-uses: leblancmeneses/actions/apps/<taskname>@v1.1.1 # specific tag
-uses: leblancmeneses/actions/apps/<taskname>@commit-sha # specific sha
-```
 
 # Run locally
 
