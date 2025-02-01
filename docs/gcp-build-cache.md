@@ -194,6 +194,7 @@ jobs:
         uses: 'google-github-actions/setup-gcloud@v2'
 
       # can be put anywhere in the job but after the gcp dependencies.
+      # cache will be written on success of the entire job.
       - name: write cache
         uses: leblancmeneses/actions/apps/gcp-build-cache@main
         with:

@@ -1,10 +1,10 @@
 ![GitHub Actions](./docs/graphics/repository-open-graph-template.png)
 
 - [Actions](#actions)
-  - [Version Autopilot Action](#version-autopilot-action)
-  - [Pragma Action](#pragma-action)
-  - [Affected Action](#affected-action)
-  - [GCP Build Cache Action](#gcp-build-cache-action)
+  - [1. Version Autopilot Action](#1-version-autopilot-action)
+  - [2. Pragma Action](#2-pragma-action)
+  - [3. Affected Action](#3-affected-action)
+  - [4. GCP Build Cache Action](#4-gcp-build-cache-action)
 - [Referencing Actions](#referencing-actions)
 - [Recommendations for multi-job pipeline](#recommendations-for-multi-job-pipeline)
 - [Run locally](#run-locally)
@@ -14,7 +14,7 @@
 
 # Actions
 
-## Version Autopilot Action
+## 1. Version Autopilot Action
 
 This is perfect for packages that are not meant to be **consumed** by other packages, like a website or a mobile app,
 where semantic versioning is not required and is continuously deployed.
@@ -23,19 +23,19 @@ This will automatically increment the version on every **run** of your github ac
 
 [Documentation](docs/version-autopilot.md)
 
-## Pragma Action
+## 2. Pragma Action
 
 This GitHub Action allows pull requests to change behavior allowing builds to accept `[skip,deploy,force]` style flags.
 
 [Documentation](docs/pragma.md)
 
-## Affected Action
+## 3. Affected Action
 
 Have a polyglot build system? This task is for you. This task is designed for projects in mono repos that are not *fully* covered by a single build tool similar to Make, Bazel, or Nx. It helps track the dependency graph and streamline your pipeline by identifying and executing only the steps impacted by recent changes.
 
 [Documentation](docs/affected.md)
 
-## GCP Build Cache Action
+## 4. GCP Build Cache Action
 
 This task is designed to help you cache jobs or tasks completed to speed up your pipeline. It consumes outputs from the Affected Action to identify the project targets and their corresponding SHA revision. Additionally, it leverages the Pragma Action to handle scenarios where caching should be bypassed, such as when a pull request requires skipping the cache. `x__skip-cache=true` or `x__target-cache='skip'`
 
