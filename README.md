@@ -5,6 +5,7 @@
   - [Pragma Action](#pragma-action)
   - [Affected Action](#affected-action)
   - [GCP Build Cache Action](#gcp-build-cache-action)
+- [Referencing Actions](#referencing-actions)
 - [Recommendations for multi-job pipeline](#recommendations-for-multi-job-pipeline)
 - [Run locally](#run-locally)
 - [Contributing](#contributing)
@@ -42,6 +43,8 @@ By using this Cache Action in conjunction with the Affected Action, you can sign
 
 [Documentation](docs/gcp-build-cache.md)
 
+
+# Referencing Actions
 
 > [!CAUTION]
 > We recommend locking the `uses:` clause to a specific tag or sha to avoid pipeline
