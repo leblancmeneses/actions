@@ -1,5 +1,6 @@
-// node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules --verbose 
+// node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules --verbose
 // node dist/apps/affected/cli/main.cli.js calculate --rules-file ./.github/affected.rules
+
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { processRules, getRules, mapResultToOutput } from './common';
