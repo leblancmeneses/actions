@@ -222,7 +222,8 @@ jobs:
 ```bash
 nvm use
 pnpm i
-pnpm nx run-many --target=test --parallel
+pnpm nx run-many --target=test --parallel --skip-nx-cache
+pnpm nx run-many --target=build --parallel --skip-nx-cache
 ```
 
 # Contributing

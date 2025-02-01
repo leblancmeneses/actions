@@ -198,7 +198,7 @@ jobs:
       - name: write cache
         uses: leblancmeneses/actions/apps/gcp-build-cache@main
         with:
-          CACHE_KEY_PATH: ${{fromJson(inputs.CACHE).path}}
+          cache_key_path: ${{fromJson(inputs.CACHE).path}}
 
       - name: apk generation for prod
         if:  |
