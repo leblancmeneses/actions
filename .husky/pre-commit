@@ -27,7 +27,7 @@ gcp_build_cache=$(jq '.["gcp-build-cache"].changes' affected.json)
 if [[ $affected == "true" ]]; then
   npx nx run affected:lint
   npx nx run affected:test
-  npx nx run affected:build:production --no-cache
+  npx nx run affected:build:production
 fi
 if [[ $pragma == "true" ]]; then
   npx nx run pragma:lint
