@@ -54,7 +54,7 @@ export async function run() {
         core.info(`🚀 Cache not found: ${cacheKeyPath}, proceeding with build.`);
       }
 
-      if (cacheExists === false && writeOn === WriteOn.NOW) {
+      if (cacheExists === false && writeOn === WriteOn.IMMEDIATE) {
         await writeCacheFileToGcs(cacheKeyPath);
       }
 

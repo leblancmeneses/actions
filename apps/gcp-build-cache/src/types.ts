@@ -1,4 +1,4 @@
 export enum WriteOn {
-  NOW = 'now',
+  IMMEDIATE = 'immediate',
   POST = 'post',
 }

@@ -108,7 +108,7 @@ Globally using `x__skip-cache=true` or on a per target basis, `x__affected-docke
       - name: write pragma cache
         uses: ./apps/gcp-build-cache
         with:
-          write-on: now
+          write-on: immediate
           cache_key_path: ${{fromJson(steps.cache.outputs.cache).pragma.path}}
 ```
 

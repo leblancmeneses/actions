@@ -169,7 +169,7 @@ jobs:
       - name: write affected-build cache
         uses: ./apps/gcp-build-cache
         with:
-          write-on: now
+          write-on: immediate
           cache_key_path: ${{fromJson(steps.cache.outputs.cache).affected-build.path}}
 
       - name: build version-autopilot
@@ -185,7 +185,7 @@ jobs:
       - name: write version-autopilot cache
         uses: ./apps/gcp-build-cache
         with:
-          write-on: now
+          write-on: immediate
           cache_key_path: ${{fromJson(steps.cache.outputs.cache).version-autopilot.path}}
 
       - name: build pragma
@@ -201,7 +201,7 @@ jobs:
       - name: write pragma cache
         uses: ./apps/gcp-build-cache
         with:
-          write-on: now
+          write-on: immediate
           cache_key_path: ${{fromJson(steps.cache.outputs.cache).pragma.path}}
 
       - name: build gcp-build-cache
@@ -217,7 +217,7 @@ jobs:
       - name: write gcp-build-cache cache
         uses: ./apps/gcp-build-cache
         with:
-          write-on: now
+          write-on: immediate
           cache_key_path: ${{fromJson(steps.cache.outputs.cache).gcp-build-cache.path}}
 
       - name: assert dist is deterministic
@@ -256,7 +256,7 @@ jobs:
       - name: write affected-docker cache
         uses: ./apps/gcp-build-cache
         with:
-          write-on: now
+          write-on: immediate
           cache_key_path: ${{fromJson(steps.cache.outputs.cache).affected-docker.path}}
 
       # - name: generate artifact attestation
