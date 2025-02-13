@@ -77,7 +77,10 @@ export async function run() {
             const [exists] = await storage.bucket(bucketName).file(fileName).exists();
             cacheExists = exists;
           } catch (error) {
-            // Log cache not found
+            // noop.
+          }
+
+          if (!cacheExists) {
             core.info(`🚀 Cache not found: ${cache.path}.`);
           }
           cache['cache-hit'] = cacheExists && !(
