@@ -4,6 +4,9 @@ import * as github from '@actions/github';
 import { writeCacheFileToGcs } from "./util";
 import { WriteOn } from "./types";
 import { from, lastValueFrom, mergeMap } from "rxjs";
+import { exec as nativeExec } from 'child_process';
+import util from 'util';
+const execPromise = util.promisify(nativeExec);
 
 export async function run() {
   try {
@@ -67,7 +70,7 @@ export async function run() {
           const cache = gcpBuildCache[key];
           let cacheExists = false;
           try {
-            await exec.exec("gsutil", ["-q", "stat", cache.path], { silent: false });
+            await execPromise(`gsutil -q stat '${cache.path}'`);
             cacheExists = true;
           } catch (error) {
             // Log cache not found
