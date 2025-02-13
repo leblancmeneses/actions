@@ -4,9 +4,7 @@ import * as github from '@actions/github';
 import { writeCacheFileToGcs } from "./util";
 import { WriteOn } from "./types";
 import { from, lastValueFrom, mergeMap } from "rxjs";
-import { exec as nativeExec } from 'child_process';
-import util from 'util';
-const execPromise = util.promisify(nativeExec);
+import { Storage } from '@google-cloud/storage';
 
 export async function run() {
   try {
@@ -65,13 +63,18 @@ export async function run() {
       core.setOutput("cache-hit", cacheExists.toString());
       core.exportVariable("CACHE_HIT", cacheExists.toString());
     } else if (Object.keys(gcpBuildCache).length !== 0) {
+      const storage = new Storage();
       await lastValueFrom(from(Object.keys(gcpBuildCache)).pipe(
         mergeMap(async (key) => {
           const cache = gcpBuildCache[key];
+
+          const bucketName = cache.path.split('/')[0];
+          const fileName = cache.path.substring(bucketName.length + 1);
+
           let cacheExists = false;
           try {
-            await execPromise(`gsutil -q stat '${cache.path}'`);
-            cacheExists = true;
+            const [exists] = await storage.bucket(bucketName).file(fileName).exists();
+            cacheExists = exists;
           } catch (error) {
             // Log cache not found
             core.info(`🚀 Cache not found: ${cache.path}.`);
