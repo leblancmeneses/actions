@@ -1,11 +1,11 @@
-- [GCP Build Cache Action](#gcp-build-cache-action)
+- [Affected GCP Build Cache Action](#affected-gcp-build-cache-action)
   - [Problems with doing this manually?](#problems-with-doing-this-manually)
   - [Dependencies](#dependencies)
   - [Single Job Pipeline Usage](#single-job-pipeline-usage)
   - [Multi Job Pipeline Usage](#multi-job-pipeline-usage)
 
 
-# GCP Build Cache Action
+# Affected GCP Build Cache Action
 
 This task is designed to help you cache jobs or tasks completed to speed up your pipeline. It consumes outputs from the Affected Action to identify the project targets and their corresponding SHA revision. Additionally, it leverages the Pragma Action to handle scenarios where caching should be bypassed, such as when a pull request requires skipping the cache. `x__skip-cache=true` or `x__target-cache='skip'`
 
@@ -53,12 +53,12 @@ This sample shows that consideration is required in constructing your cache keys
 
 In a multi-job pipeline, this job would still need to be executed to determine if the expensive work should be skipped. If the cache-hits could be effeciently pre calculated upfront, the pipeline would be faster and shave minutes by pruning jobs that have a cache-hit and not needed.
 
-Using the GCP Build Cache Action simplifies this process, efficiently handling caching in both single and multi-job pipelines, and reducing the amount of manual work required.
+Using the Affected GCP Build Cache Action simplifies this process, efficiently handling caching in both single and multi-job pipelines, and reducing the amount of manual work required.
 
 
 ## Dependencies
 
-This task depends on `gcloud` and `gsutil`. Ensure you have the Google Cloud SDK installed and authenticated in your runner.
+This task depends on `google-github-actions/auth@v2`. Ensure you have the Google Cloud SDK authenticated in your runner.
 
 Whenever you use `leblancmeneses/actions/apps/gcp-build-cache@main` in a job, you should include the following dependencies in your workflow:
 
@@ -68,9 +68,6 @@ Whenever you use `leblancmeneses/actions/apps/gcp-build-cache@main` in a job, yo
       with:
         # choose your style: workload identity, or json file. @see: https://github.com/google-github-actions/auth
         credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV_FILE }}'
-
-    - name: set up gcloud cli with gsutil
-      uses: 'google-github-actions/setup-gcloud@v2'
 ```
 
 
@@ -189,9 +186,6 @@ jobs:
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV }}'
-
-      - name: set up gcloud cli with gsutil
-        uses: 'google-github-actions/setup-gcloud@v2'
 
       # can be put anywhere in the job but after the gcp dependencies.
       # cache will be written on success of the entire job.

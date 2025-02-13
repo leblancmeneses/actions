@@ -1,8 +1,10 @@
 import * as core from "@actions/core";
-import * as exec from "@actions/exec";
 import * as github from '@actions/github';
 import { writeCacheFileToGcs } from "./util";
 import { WriteOn } from "./types";
+import { from, lastValueFrom, mergeMap } from "rxjs";
+import { Storage } from '@google-cloud/storage';
+import {GoogleCloudAuthException} from './exceptions/google-cloud-auth.exception';
 
 export async function run() {
   try {
@@ -14,44 +16,47 @@ export async function run() {
     const gcsRootPath = core.getInput("gcs-root-path", { required: false });
     const additionalKeys = JSON.parse(core.getInput("additional-keys", { required: false }) || '{}');
 
-    try {
-      await exec.exec("gcloud", ["--version"]);
-      await exec.exec("gsutil", ["--version"]);
-    } catch (error) {
-      core.info(`❌ Cache tools not installed`);
-      throw error;
+    const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    if (!credentialsPath) {
+      throw new GoogleCloudAuthException();
     }
 
     const prefix = context.eventName == 'pull_request' ? `pr-${context.payload.pull_request.number}`: context.ref.replace(/^refs\/heads\//, '');
 
-    const gcpBuildCache = {} as Record<string, {'cache-hit': boolean, 'path': string}>;
-    Object.keys(affected || {}).reduce((accumulator, key) => {
-      if (!affected[key]?.sha) {
+    const gcpBuildCache = Object.keys(affected || {}).reduce((accumulator, key) => {
+      const target = affected[key];
+      if (!target?.sha || target?.changes !== true) {
         return accumulator;
       }
       accumulator[key] = {
         'cache-hit': false,
-        'path': `${gcsRootPath}/${prefix}-${key}-${affected[key].sha}`,
+        'path': `${gcsRootPath}/${prefix}-${key}-${target.sha}`,
       };
 
-      for(const target of additionalKeys[key] || []) {
-        accumulator[`${key}-${target}`] = {
+      for(const targetSuffix of additionalKeys[key] || []) {
+        accumulator[`${key}-${targetSuffix}`] = {
           'cache-hit': false,
-          'path': `${gcsRootPath}/${prefix}-${key}-${target}-${affected[key].sha}`,
+          'path': `${gcsRootPath}/${prefix}-${key}-${targetSuffix}-${target.sha}`,
         };
       }
 
       return accumulator;
-    }, gcpBuildCache);
+    }, {} as Record<string, {'cache-hit': boolean, 'path': string}>);
 
+    const storage = new Storage();
     if (cacheKeyPath) {
       let cacheExists = false;
       try {
-        await exec.exec("gsutil", ["-q", "stat", cacheKeyPath], { silent: false });
-        cacheExists = true;
-        core.info(`✅ Cache exists: ${cacheKeyPath}`);
+        const bucketName = cacheKeyPath.substring(0, cacheKeyPath.indexOf('/', 5));
+        const fileName = cacheKeyPath.substring(bucketName.length + 1);
+        const [exists] = await storage.bucket(bucketName).file(fileName).exists();
+        cacheExists = exists;
       } catch (error) {
-        core.info(`🚀 Cache not found: ${cacheKeyPath}, proceeding with build.`);
+        // noop.
+      }
+
+      if (!cacheExists) {
+        core.info(`🚀 Cache not found: ${cacheKeyPath}.`);
       }
 
       if (cacheExists === false && writeOn === WriteOn.IMMEDIATE) {
@@ -61,26 +66,39 @@ export async function run() {
       core.setOutput("cache-hit", cacheExists.toString());
       core.exportVariable("CACHE_HIT", cacheExists.toString());
     } else if (Object.keys(gcpBuildCache).length !== 0) {
-      for (const key in gcpBuildCache) {
-        const cache = gcpBuildCache[key];
-        let cacheExists = false;
-        try {
-          await exec.exec("gsutil", ["-q", "stat", cache.path], { silent: false });
-          cacheExists = true;
-        } catch (error) {
-          // no-op
-          core.info(`🚀 Cache not found: ${cache.path}.`);
-        }
-        cache['cache-hit'] = cacheExists && !(
-          pragma[`${key}-cache`.toLocaleUpperCase()]?.trim().toLocaleUpperCase() === 'SKIP' ||
-          pragma['SKIP-CACHE'] === true
-        );
-      }
+      await lastValueFrom(from(Object.keys(gcpBuildCache)).pipe(
+        mergeMap(async (key) => {
+          const cache = gcpBuildCache[key];
+
+          const bucketName = cache.path.substring(0, cache.path.indexOf('/', 5));
+          const fileName = cache.path.substring(bucketName.length + 1);
+
+          let cacheExists = false;
+          try {
+            const [exists] = await storage.bucket(bucketName).file(fileName).exists();
+            cacheExists = exists;
+          } catch (error) {
+            // noop.
+          }
+
+          if (!cacheExists) {
+            core.info(`🚀 Cache not found: ${cache.path}.`);
+          }
+          cache['cache-hit'] = cacheExists && !(
+            pragma[`${key}-cache`.toLocaleUpperCase()]?.trim().toLocaleUpperCase() === 'SKIP' ||
+            pragma['SKIP-CACHE'] === true
+          );
+        }, 5) // Concurrency: Only 5 tasks run at a time
+      ));
       core.setOutput("cache", gcpBuildCache);
       core.info(`Cache: ${JSON.stringify(gcpBuildCache, null, 2)}`);
     }
   } catch (error) {
-    core.setFailed(`Error checking cache: ${(error as Error).message}`);
+    if (error instanceof GoogleCloudAuthException) {
+      core.setFailed((error as GoogleCloudAuthException).message);
+    } else {
+      core.setFailed(`Error checking cache: ${(error as Error).message}`);
+    }
     throw error;
   }
 }

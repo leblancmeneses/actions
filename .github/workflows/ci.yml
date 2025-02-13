@@ -48,9 +48,6 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT }}'
 
-      - name: set up gcloud cli with gsutil
-        uses: 'google-github-actions/setup-gcloud@v2'
-
       - name: install dependencies
         run: |
           npm install -g pnpm
@@ -221,7 +218,7 @@ jobs:
           npx nx run gcp-build-cache:test
           npx nx run gcp-build-cache:build:production
 
-      - name: write gcp-build-cache cache
+      - name: write affected gcp-build-cache
         uses: ./apps/gcp-build-cache
         with:
           write-on: immediate
