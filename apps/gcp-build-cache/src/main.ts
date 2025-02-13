@@ -3,6 +3,7 @@ import * as exec from "@actions/exec";
 import * as github from '@actions/github';
 import { writeCacheFileToGcs } from "./util";
 import { WriteOn } from "./types";
+import { from, lastValueFrom, mergeMap } from "rxjs";
 
 export async function run() {
   try {
@@ -61,21 +62,23 @@ export async function run() {
       core.setOutput("cache-hit", cacheExists.toString());
       core.exportVariable("CACHE_HIT", cacheExists.toString());
     } else if (Object.keys(gcpBuildCache).length !== 0) {
-      for (const key in gcpBuildCache) {
-        const cache = gcpBuildCache[key];
-        let cacheExists = false;
-        try {
-          await exec.exec("gsutil", ["-q", "stat", cache.path], { silent: false });
-          cacheExists = true;
-        } catch (error) {
-          // no-op
-          core.info(`🚀 Cache not found: ${cache.path}.`);
-        }
-        cache['cache-hit'] = cacheExists && !(
-          pragma[`${key}-cache`.toLocaleUpperCase()]?.trim().toLocaleUpperCase() === 'SKIP' ||
-          pragma['SKIP-CACHE'] === true
-        );
-      }
+      await lastValueFrom(from(Object.keys(gcpBuildCache)).pipe(
+        mergeMap(async (key) => {
+          const cache = gcpBuildCache[key];
+          let cacheExists = false;
+          try {
+            await exec.exec("gsutil", ["-q", "stat", cache.path], { silent: false });
+            cacheExists = true;
+          } catch (error) {
+            // Log cache not found
+            core.info(`🚀 Cache not found: ${cache.path}.`);
+          }
+          cache['cache-hit'] = cacheExists && !(
+            pragma[`${key}-cache`.toLocaleUpperCase()]?.trim().toLocaleUpperCase() === 'SKIP' ||
+            pragma['SKIP-CACHE'] === true
+          );
+        }, 5) // Concurrency: Only 5 tasks run at a time
+      ));
       core.setOutput("cache", gcpBuildCache);
       core.info(`Cache: ${JSON.stringify(gcpBuildCache, null, 2)}`);
     }
