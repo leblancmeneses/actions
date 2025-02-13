@@ -48,9 +48,6 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT }}'
 
-      - name: set up gcloud cli with gsutil
-        uses: 'google-github-actions/setup-gcloud@v2'
-
       - name: install dependencies
         run: |
           npm install -g pnpm

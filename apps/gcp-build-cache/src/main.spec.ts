@@ -1,5 +1,5 @@
+jest.mock('@google-cloud/storage');
 jest.mock("@actions/core");
-jest.mock("@actions/exec");
 jest.mock("@actions/github", () => {
   return {
     context: {
@@ -17,72 +17,51 @@ jest.mock("@actions/github", () => {
   };
 });
 
+import {Storage} from '@google-cloud/storage';
 import * as core from "@actions/core";
-import * as exec from "@actions/exec";
 import { run } from "./main";
+import { GoogleCloudAuthException } from "./exceptions/google-cloud-auth.exception";
 
 describe("run", () => {
   const mockGetInput = core.getInput as jest.MockedFunction<
     typeof core.getInput
   >;
-  const mockExec = exec.exec as jest.MockedFunction<typeof exec.exec>;
   const mockSetFailed = core.setFailed as jest.MockedFunction<
     typeof core.setFailed
   >;
   const mockInfo = core.info as jest.MockedFunction<typeof core.info>;
 
+  const mockFile = {
+    exists: jest.fn(),
+  };
+
+  const mockBucket = {
+    file: jest.fn(() => mockFile),
+  };
+
+  const mockStorageInstance = {
+    bucket: jest.fn(() => mockBucket),
+  };
+
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
+
+    (Storage as unknown as jest.Mock).mockImplementation(() => mockStorageInstance);
+
     mockGetInput.mockImplementation((name: string) => {
       if (name === "cache_key_path") return "path/to/cache";
       return "";
     });
+
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = "path/to/credentials.json";
   });
 
-  it("should set CACHE_HIT to true if cache exists", async () => {
-    mockExec.mockImplementation(async (command: string, args?: string[]) => {
-      if (command === "gsutil" && args?.includes("stat")) {
-        return 0;
-      }
-      if (
-        (command === "gcloud" || command === "gsutil") &&
-        args?.includes("--version")
-      ) {
-        return 0;
-      }
-      throw new Error("Command failed");
-    });
-
-    await run();
-
-    expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "true");
-    expect(core.exportVariable).toHaveBeenCalledWith("CACHE_HIT", "true");
-    expect(mockSetFailed).not.toHaveBeenCalled();
-  });
-
-  it("should set CACHE_HIT to false if cache does not exist", async () => {
-    mockExec.mockImplementation(async (command: string, args?: string[]) => {
-      if (command === "gsutil" && args?.includes("stat")) {
-        throw new Error("Cache not found");
-      }
-      if (
-        (command === "gcloud" || command === "gsutil") &&
-        args?.includes("--version")
-      ) {
-        return 0;
-      }
-      throw new Error("Command failed");
-    });
-
-    await run();
-
-    expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "false");
-    expect(core.exportVariable).toHaveBeenCalledWith("CACHE_HIT", "false");
-    expect(mockInfo).toHaveBeenCalledWith(
-      "🚀 Cache not found: path/to/cache, proceeding with build.",
-    );
-    expect(mockSetFailed).not.toHaveBeenCalled();
+  it("should set failed status if auth is not available", async () => {
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    await expect(run()).rejects.toThrow(GoogleCloudAuthException);
+    expect(mockSetFailed).toHaveBeenCalledWith(new GoogleCloudAuthException().message);
   });
 
   it("should set failed status if an error occurs", async () => {
@@ -95,6 +74,29 @@ describe("run", () => {
     expect(mockSetFailed).toHaveBeenCalledWith(
       "Error checking cache: Input error",
     );
+  });
+
+  it("should set CACHE_HIT to true if cache exists", async () => {
+    mockFile.exists.mockResolvedValue([true]);
+
+    await run();
+
+    expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "true");
+    expect(core.exportVariable).toHaveBeenCalledWith("CACHE_HIT", "true");
+    expect(mockSetFailed).not.toHaveBeenCalled();
+  });
+
+  it("should set CACHE_HIT to false if cache does not exist", async () => {
+    mockFile.exists.mockResolvedValue([false]);
+
+    await run();
+
+    expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "false");
+    expect(core.exportVariable).toHaveBeenCalledWith("CACHE_HIT", "false");
+    expect(mockInfo).toHaveBeenCalledWith(
+      "🚀 Cache not found: path/to/cache.",
+    );
+    expect(mockSetFailed).not.toHaveBeenCalled();
   });
 
   it("should check cache existence for each key in gcpBuildCache when cacheKeyPath is not provided", async () => {
@@ -114,48 +116,15 @@ describe("run", () => {
       return "";
     });
 
-    mockExec.mockImplementation(async (command: string, args?: string[]) => {
-      if (
-        (command === "gcloud" || command === "gsutil") &&
-        args?.includes("--version")
-      ) {
-        return 0;
-      }
-      if (command === "gsutil" && args?.includes("stat")) {
-        return 0; // Simulate cache exists
-      }
-      throw new Error("Command failed");
-    });
+    mockFile.exists.mockResolvedValue([true]);
 
     await run();
 
-    expect(mockExec).toHaveBeenCalledWith("gcloud", [
-      "--version",
-    ]);
-    expect(mockExec).toHaveBeenCalledWith("gsutil", [
-      "--version",
-    ]);
-    expect(mockExec).toHaveBeenCalledWith("gsutil", [
-      "-q",
-      "stat",
-      "gs://abc-123/github-integration/pr-123-project-ui-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-    ], { silent: false });
-    expect(mockExec).toHaveBeenCalledWith("gsutil", [
-      "-q",
-      "stat",
-      "gs://abc-123/github-integration/pr-123-project-ui-lint-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-    ], { silent: false });
-    expect(mockExec).toHaveBeenCalledWith("gsutil", [
-      "-q",
-      "stat",
-      "gs://abc-123/github-integration/pr-123-project-ui-build-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-    ], { silent: false });
-    expect(mockExec).toHaveBeenCalledWith("gsutil", [
-      "-q",
-      "stat",
-      "gs://abc-123/github-integration/pr-123-project-ui-e2e-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-    ], { silent: false });
-
+    expect(mockStorageInstance.bucket).toHaveBeenCalledWith('gs://abc-123');
+    expect(mockBucket.file).toHaveBeenCalledWith('github-integration/pr-123-project-ui-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
+    expect(mockBucket.file).toHaveBeenCalledWith('github-integration/pr-123-project-ui-lint-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
+    expect(mockBucket.file).toHaveBeenCalledWith('github-integration/pr-123-project-ui-build-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
+    expect(mockBucket.file).toHaveBeenCalledWith('github-integration/pr-123-project-ui-e2e-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
     expect(core.setOutput).toHaveBeenCalledWith("cache", {
       "project-ui": {
         "cache-hit": true,
@@ -197,39 +166,15 @@ describe("run", () => {
       return "";
     });
 
-    mockExec.mockImplementation(async (command: string, args?: string[]) => {
-      if ((command === "gcloud" || command === "gsutil") && args?.includes("--version")) {
-        return 0;
-      }
-      if (command === "gsutil" && args?.includes("stat")) {
-        throw new Error("Cache not found"); // Simulate cache does not exist
-      }
-      throw new Error("Command failed");
-    });
+    mockFile.exists.mockResolvedValue([false]);
 
     await run();
 
-    expect(mockExec).toHaveBeenCalledWith("gsutil", [
-      "-q",
-      "stat",
-      "gs://abc-123/github-integration/pr-123-project-ui-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-    ], { silent: false });
-    expect(mockExec).toHaveBeenCalledWith("gsutil", [
-      "-q",
-      "stat",
-      "gs://abc-123/github-integration/pr-123-project-ui-lint-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-    ], { silent: false });
-    expect(mockExec).toHaveBeenCalledWith("gsutil", [
-      "-q",
-      "stat",
-      "gs://abc-123/github-integration/pr-123-project-ui-build-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-    ], { silent: false });
-    expect(mockExec).toHaveBeenCalledWith("gsutil", [
-      "-q",
-      "stat",
-      "gs://abc-123/github-integration/pr-123-project-ui-e2e-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
-    ], { silent: false });
-
+    expect(mockStorageInstance.bucket).toHaveBeenCalledWith('gs://abc-123');
+    expect(mockBucket.file).toHaveBeenCalledWith('github-integration/pr-123-project-ui-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
+    expect(mockBucket.file).toHaveBeenCalledWith('github-integration/pr-123-project-ui-lint-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
+    expect(mockBucket.file).toHaveBeenCalledWith('github-integration/pr-123-project-ui-build-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
+    expect(mockBucket.file).toHaveBeenCalledWith('github-integration/pr-123-project-ui-e2e-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
     expect(core.setOutput).toHaveBeenCalledWith("cache", {
       "project-ui": {
         "cache-hit": false,
@@ -272,18 +217,7 @@ describe("run", () => {
       return "";
     });
 
-    mockExec.mockImplementation(async (command: string, args?: string[]) => {
-      if (
-        (command === "gcloud" || command === "gsutil") &&
-        args?.includes("--version")
-      ) {
-        return 0;
-      }
-      if (command === "gsutil" && args?.includes("stat")) {
-        return 0; // Simulate cache exists
-      }
-      throw new Error("Command failed");
-    });
+    mockFile.exists.mockResolvedValue([true]);
 
     await run();
 
@@ -314,18 +248,7 @@ describe("run", () => {
       return "";
     });
 
-    mockExec.mockImplementation(async (command: string, args?: string[]) => {
-      if (
-        (command === "gcloud" || command === "gsutil") &&
-        args?.includes("--version")
-      ) {
-        return 0;
-      }
-      if (command === "gsutil" && args?.includes("stat")) {
-        return 0; // Simulate cache exists
-      }
-      throw new Error("Command failed");
-    });
+    mockFile.exists.mockResolvedValue([true]);
 
     await run();
 
@@ -355,18 +278,7 @@ describe("run", () => {
       return "";
     });
 
-    mockExec.mockImplementation(async (command: string, args?: string[]) => {
-      if (
-        (command === "gcloud" || command === "gsutil") &&
-        args?.includes("--version")
-      ) {
-        return 0;
-      }
-      if (command === "gsutil" && args?.includes("stat")) {
-        return 0; // Simulate cache exists
-      }
-      throw new Error("Command failed");
-    });
+    mockFile.exists.mockResolvedValue([true]);
 
     await run();
 

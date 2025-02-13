@@ -1,8 +1,16 @@
-import * as exec from "@actions/exec";
-import * as fs from 'fs';
-import * as path from 'path';
+import { Storage } from '@google-cloud/storage';
 
 export async function writeCacheFileToGcs(cacheKeyPath: string) {
-  fs.writeFileSync('file.txt', '');
-  await exec.exec("gsutil", ["cp", path.resolve('file.txt'), cacheKeyPath]);
+  const storage = new Storage();
+  const bucketName = cacheKeyPath.split('/')[0];
+  const destinationFilename = cacheKeyPath.substring(bucketName.length + 1);
+  const bucket = storage.bucket(bucketName);
+  const file = bucket.file(destinationFilename);
+
+  await file.save('', {
+    resumable: false,
+    metadata: {
+      contentType: 'text/plain',
+    },
+  });
 }
