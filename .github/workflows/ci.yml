@@ -218,7 +218,7 @@ jobs:
           npx nx run gcp-build-cache:test
           npx nx run gcp-build-cache:build:production
 
-      - name: write gcp-build-cache cache
+      - name: write affected gcp-build-cache
         uses: ./apps/gcp-build-cache
         with:
           write-on: immediate
