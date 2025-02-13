@@ -107,6 +107,10 @@ describe("run", () => {
           "project-ui": {
             changes: true ,
             sha: "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+          },
+          "project-api": {
+            changes: false ,
+            sha: "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
           }
         });
       }

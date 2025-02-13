@@ -24,18 +24,19 @@ export async function run() {
     const prefix = context.eventName == 'pull_request' ? `pr-${context.payload.pull_request.number}`: context.ref.replace(/^refs\/heads\//, '');
 
     const gcpBuildCache = Object.keys(affected || {}).reduce((accumulator, key) => {
-      if (!affected[key]?.sha && affected[key]?.changes !== true) {
+      const target = affected[key];
+      if (!target?.sha || target?.changes !== true) {
         return accumulator;
       }
       accumulator[key] = {
         'cache-hit': false,
-        'path': `${gcsRootPath}/${prefix}-${key}-${affected[key].sha}`,
+        'path': `${gcsRootPath}/${prefix}-${key}-${target.sha}`,
       };
 
-      for(const target of additionalKeys[key] || []) {
-        accumulator[`${key}-${target}`] = {
+      for(const targetSuffix of additionalKeys[key] || []) {
+        accumulator[`${key}-${targetSuffix}`] = {
           'cache-hit': false,
-          'path': `${gcsRootPath}/${prefix}-${key}-${target}-${affected[key].sha}`,
+          'path': `${gcsRootPath}/${prefix}-${key}-${targetSuffix}-${target.sha}`,
         };
       }
 
