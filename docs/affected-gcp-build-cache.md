@@ -25,6 +25,9 @@ Here is a basic scaffold of how DIY caching might look like in a GitHub Action.
         with:
           credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV }}'
 
+      - name: set up gcloud cli with gsutil
+        uses: 'google-github-actions/setup-gcloud@v2'
+
       - name: calculated variables
         shell: bash
         run: |
@@ -55,7 +58,7 @@ Using the Affected GCP Build Cache Action simplifies this process, efficiently h
 
 ## Dependencies
 
-This task depends on `gcloud` and `gsutil`. Ensure you have the Google Cloud SDK installed and authenticated in your runner.
+This task depends on `google-github-actions/auth@v2`. Ensure you have the Google Cloud SDK authenticated in your runner.
 
 Whenever you use `leblancmeneses/actions/apps/gcp-build-cache@main` in a job, you should include the following dependencies in your workflow:
 
@@ -65,9 +68,6 @@ Whenever you use `leblancmeneses/actions/apps/gcp-build-cache@main` in a job, yo
       with:
         # choose your style: workload identity, or json file. @see: https://github.com/google-github-actions/auth
         credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV_FILE }}'
-
-    - name: set up gcloud cli with gsutil
-      uses: 'google-github-actions/setup-gcloud@v2'
 ```
 
 
@@ -186,9 +186,6 @@ jobs:
         uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV }}'
-
-      - name: set up gcloud cli with gsutil
-        uses: 'google-github-actions/setup-gcloud@v2'
 
       # can be put anywhere in the job but after the gcp dependencies.
       # cache will be written on success of the entire job.
