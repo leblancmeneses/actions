@@ -74,7 +74,7 @@ Whenever you use `leblancmeneses/actions/apps/gcp-build-cache@main` in a job, yo
 
 ## Single Job Pipeline Usage
 
-See the [single job pipeline](./.github/workflows/ci.yml) in this repo that shows how we use the cache task internally.
+See the [single job pipeline](../.github/workflows/ci.yml) in this repo that shows how we use the cache task internally.
 By setting the optional `additional-keys`, we get additional keys projected to the cache object in the form of `<target>-<key>`.
 
 ```yaml
