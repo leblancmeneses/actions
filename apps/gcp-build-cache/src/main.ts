@@ -65,7 +65,7 @@ export async function run() {
 
       core.setOutput("cache-hit", cacheExists.toString());
       core.exportVariable("CACHE_HIT", cacheExists.toString());
-    } else if (Object.keys(gcpBuildCache).length !== 0) {
+    } else {
       await lastValueFrom(from(Object.keys(gcpBuildCache)).pipe(
         mergeMap(async (key) => {
           const cache = gcpBuildCache[key];
