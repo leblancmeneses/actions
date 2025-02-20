@@ -99,7 +99,7 @@ describe("run", () => {
     expect(mockSetFailed).not.toHaveBeenCalled();
   });
 
-  it("should build gcpBuildCache from affected that have changes only", async () => {
+  it("should set an empty object when no 'changed' keys from affected are present", async () => {
     mockGetInput.mockImplementation((name: string) => {
       if (name === "gcs-root-path") return "gs://abc-123/github-integration";
       if (name === "affected") {
