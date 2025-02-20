@@ -99,6 +99,32 @@ describe("run", () => {
     expect(mockSetFailed).not.toHaveBeenCalled();
   });
 
+  it("should set an empty object when project 'changes' from affected are ALL false", async () => {
+    mockGetInput.mockImplementation((name: string) => {
+      if (name === "gcs-root-path") return "gs://abc-123/github-integration";
+      if (name === "affected") {
+        return JSON.stringify({
+          "project-ui": {
+            changes: false ,
+            sha: "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+          },
+          "project-api": {
+            changes: false ,
+            sha: "38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+          }
+        });
+      }
+      return "";
+    });
+
+    mockFile.exists.mockResolvedValue([true]);
+
+    await run();
+
+    // should result in an empty cache object.
+    expect(core.setOutput).toHaveBeenCalledWith("cache", {    });
+  });
+
   it("should check cache existence for each key in gcpBuildCache when cacheKeyPath is not provided", async () => {
     mockGetInput.mockImplementation((name: string) => {
       if (name === "gcs-root-path") return "gs://abc-123/github-integration";

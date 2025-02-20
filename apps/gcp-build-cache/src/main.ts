@@ -65,31 +65,33 @@ export async function run() {
 
       core.setOutput("cache-hit", cacheExists.toString());
       core.exportVariable("CACHE_HIT", cacheExists.toString());
-    } else if (Object.keys(gcpBuildCache).length !== 0) {
-      await lastValueFrom(from(Object.keys(gcpBuildCache)).pipe(
-        mergeMap(async (key) => {
-          const cache = gcpBuildCache[key];
+    } else {
+      if (Object.keys(gcpBuildCache).length !== 0) {
+        await lastValueFrom(from(Object.keys(gcpBuildCache)).pipe(
+          mergeMap(async (key) => {
+            const cache = gcpBuildCache[key];
 
-          const bucketName = cache.path.substring(0, cache.path.indexOf('/', 5));
-          const fileName = cache.path.substring(bucketName.length + 1);
+            const bucketName = cache.path.substring(0, cache.path.indexOf('/', 5));
+            const fileName = cache.path.substring(bucketName.length + 1);
 
-          let cacheExists = false;
-          try {
-            const [exists] = await storage.bucket(bucketName).file(fileName).exists();
-            cacheExists = exists;
-          } catch (error) {
-            // noop.
-          }
+            let cacheExists = false;
+            try {
+              const [exists] = await storage.bucket(bucketName).file(fileName).exists();
+              cacheExists = exists;
+            } catch (error) {
+              // noop.
+            }
 
-          if (!cacheExists) {
-            core.info(`🚀 Cache not found: ${cache.path}.`);
-          }
-          cache['cache-hit'] = cacheExists && !(
-            pragma[`${key}-cache`.toLocaleUpperCase()]?.trim().toLocaleUpperCase() === 'SKIP' ||
-            pragma['SKIP-CACHE'] === true
-          );
-        }, 5) // Concurrency: Only 5 tasks run at a time
-      ));
+            if (!cacheExists) {
+              core.info(`🚀 Cache not found: ${cache.path}.`);
+            }
+            cache['cache-hit'] = cacheExists && !(
+              pragma[`${key}-cache`.toLocaleUpperCase()]?.trim().toLocaleUpperCase() === 'SKIP' ||
+              pragma['SKIP-CACHE'] === true
+            );
+          }, 5) // Concurrency: Only 5 tasks run at a time
+        ));
+      }
       core.setOutput("cache", gcpBuildCache);
       core.info(`Cache: ${JSON.stringify(gcpBuildCache, null, 2)}`);
     }
