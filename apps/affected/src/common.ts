@@ -120,7 +120,7 @@ export const processRules = async (
     }
 
     const changedFiles = await getChangedFiles();
-    log(`Changed Files: ${changedFiles.join("\n")}`);
+    log(`Changed Files: ${JSON.stringify(changedFiles, undefined, 2)}`);
     if (changedFilesOutputFile) {
       await writeChangedFiles(changedFilesOutputFile, changedFiles);
     }
@@ -152,7 +152,7 @@ export const processRules = async (
         affectedImageTags[key.name] = imageName;
 
         log(
-          `Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`,
+          `Key: ${key.name}, Path: ${key.path}, Commit SHA: ${JSON.stringify(commitSha||'', undefined, 2)}, Image: ${imageName}`,
         );
       }
     }
