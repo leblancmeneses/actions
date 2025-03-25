@@ -43,7 +43,7 @@ export const getImageName = (
   appTarget: string,
   hasChanges: boolean,
   sha: string,
-  imageTagRegistry = "",
+  imageTagRegistry = [],
   imageTagFormat = "",
   imageTagFormatWhenChanged = "",
   removeTarget = false,
@@ -72,13 +72,15 @@ export const getImageName = (
     .map((imageName) =>
       removeTarget ? imageName.substring(appTarget.length) : imageName
     )
-    .map((imageName) => `${imageTagRegistry || ""}${imageName}`);
+    .flatMap((imageName) =>
+      (imageTagRegistry?.length? imageTagRegistry: ['']).map((registry) => `${registry}${imageName}`)
+    );
 };
 
 export const processRules = async (
   log: (message: string) => void,
   rulesInput: string,
-  imageTagRegistry: string,
+  imageTagRegistry: string[],
   imageTagFormat: string,
   imageTagFormatWhenChanged: string,
   imageTagRemoveTarget: boolean,

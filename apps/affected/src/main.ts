@@ -9,13 +9,34 @@ export const log = (verbose: boolean, message: string) => {
   }
 };
 
+function parseRegistryInput(input: string): string[] {
+  try {
+    // Case 1: JSON array string
+    const parsed = JSON.parse(input);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch {
+    // not a JSON array, treat as single string
+  }
+
+  // Case 2: comma-separated string
+  if (input.includes(',')) {
+    return input.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  // Case 3: single registry string
+  return input ? [input] : [];
+}
+
+
 export async function run() {
   try {
     const rulesInput = getRules(core.getInput('rules', { required: false }), core.getInput('rules-file', { required: false }));
     const verbose = core.getInput('verbose', { required: false }) === 'true';
     const imageTagFormat = core.getInput('recommended-imagetags-tag-format', { required: false }) || '';
     const imageTagFormatWhenChanged = core.getInput('recommended-imagetags-tag-format-whenchanged', { required: false }) || '';
-    const imageTagRegistry = core.getInput('recommended-imagetags-registry', { required: false }) || '';
+    const imageTagRegistry = parseRegistryInput(core.getInput('recommended-imagetags-registry', { required: false }) || '');
     const removeTarget = core.getInput('recommended-imagetags-tag-remove-target', { required: false }) === 'true';
     const changedFilesOutputFile = core.getInput('changed-files-output-file', { required: false }) || '';
 
