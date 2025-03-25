@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { getRules, mapResultToOutput, processRules } from './common';
+import { getRules, mapResultToOutput, parseRegistryInput, processRules } from './common';
 
 
 export const log = (verbose: boolean, message: string) => {
@@ -8,26 +8,6 @@ export const log = (verbose: boolean, message: string) => {
     core.info(message);
   }
 };
-
-function parseRegistryInput(input: string): string[] {
-  try {
-    // Case 1: JSON array string
-    const parsed = JSON.parse(input);
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-  } catch {
-    // not a JSON array, treat as single string
-  }
-
-  // Case 2: comma-separated string
-  if (input.includes(',')) {
-    return input.split(',').map(s => s.trim()).filter(Boolean);
-  }
-
-  // Case 3: single registry string
-  return input ? [input] : [];
-}
 
 
 export async function run() {
@@ -47,12 +27,12 @@ export async function run() {
       rulesInput, imageTagRegistry, imageTagFormat, imageTagFormatWhenChanged, removeTarget, changedFilesOutputFile,
       {event: github.context.eventName, pull_request_number: github.context.payload?.pull_request?.number});
 
-
-    core.setOutput('affected', mapResultToOutput(affectedResults));
+    const output = mapResultToOutput(affectedResults);
+    core.setOutput('affected', output);
     core.setOutput('affected_shas', affectedResults.shas);
     core.setOutput('affected_changes', affectedResults.changes);
     core.setOutput('affected_recommended_imagetags', affectedResults.recommended_imagetags);
-    core.info(`affected: ${JSON.stringify(affectedResults, null, 2)}!`);
+    core.info(`affected: ${output}!`);
   } catch (error) {
     core.setFailed(error.message);
     throw error;

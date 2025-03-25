@@ -12,6 +12,27 @@ export interface ImageContext {
   pull_request_number: number;
 }
 
+export const parseRegistryInput = (input: string): string[] => {
+  try {
+    // Case 1: JSON array string
+    const parsed = JSON.parse(input);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch {
+    // not a JSON array, treat as single string
+  }
+
+  // Case 2: comma-separated string
+  if (input.includes(',')) {
+    return input.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  // Case 3: single registry string
+  return input ? [input] : [];
+}
+
+
 export const getRules = (rulesInput: string, rulesFile: string) => {
   if (rulesInput && rulesFile) {
     throw new Error(

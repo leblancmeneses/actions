@@ -3,7 +3,7 @@
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { processRules, getRules, mapResultToOutput } from './common';
+import { processRules, getRules, mapResultToOutput, parseRegistryInput } from './common';
 
 import * as packageJson from '../../../package.json';
 
@@ -37,7 +37,7 @@ yargs(hideBin(process.argv))
         const affectedOutput = await processRules(
           log.bind(null, argv.verbose as boolean),
           rules,
-          argv['image-tag-registry'] as string,
+          parseRegistryInput(argv['image-tag-registry'] as string),
           argv['image-tag-format'] as string,
           argv['image-tag-format-whenchanged'] as string,
           argv['image-tag-remove-target'] === 'true',
