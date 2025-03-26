@@ -291,7 +291,7 @@ describe("affected.spec", () => {
       });
     });
 
-    test("should generate tags with keep first seven chars of sha1", async () => {
+    test("should generate tags with keep first seven chars of sha1 with prefix and suffix", async () => {
       // Arrange
       jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
         if (inputName === "rules") return `
@@ -310,6 +310,56 @@ describe("affected.spec", () => {
         "project-api": [
           "registry.cool/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
           "registry.cool/project-api:latest",
+        ],
+      });
+    });
+
+    test("should generate tags to multiple registries when using comma separator", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+        if (inputName === "rules") return `
+            <project-api>: 'project-api/**/*.ts';
+          `;
+        if (inputName === "recommended-imagetags-tag-format") return `prefix-{sha|7}-suffix`;
+        if (inputName === "recommended-imagetags-registry") return `registry.cool/,registry.dev/`;
+        return "";
+      });
+
+      // Act
+      await run();
+
+      // Assert
+      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
+        "project-api": [
+          "registry.cool/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
+          "registry.dev/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
+          "registry.cool/project-api:latest",
+          "registry.dev/project-api:latest",
+        ],
+      });
+    });
+
+    test("should generate tags to multiple registries when using json string", async () => {
+      // Arrange
+      jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+        if (inputName === "rules") return `
+            <project-api>: 'project-api/**/*.ts';
+          `;
+        if (inputName === "recommended-imagetags-tag-format") return `prefix-{sha|7}-suffix`;
+        if (inputName === "recommended-imagetags-registry") return `["registry.cool/","registry.dev/"]`;
+        return "";
+      });
+
+      // Act
+      await run();
+
+      // Assert
+      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
+        "project-api": [
+          "registry.cool/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
+          "registry.dev/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
+          "registry.cool/project-api:latest",
+          "registry.dev/project-api:latest",
         ],
       });
     });

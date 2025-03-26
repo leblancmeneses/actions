@@ -12,6 +12,27 @@ export interface ImageContext {
   pull_request_number: number;
 }
 
+export const parseRegistryInput = (input: string): string[] => {
+  try {
+    // Case 1: JSON array string
+    const parsed = JSON.parse(input);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch {
+    // not a JSON array, treat as single string
+  }
+
+  // Case 2: comma-separated string
+  if (input.includes(',')) {
+    return input.split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  // Case 3: single registry string
+  return input ? [input] : [];
+}
+
+
 export const getRules = (rulesInput: string, rulesFile: string) => {
   if (rulesInput && rulesFile) {
     throw new Error(
@@ -43,7 +64,7 @@ export const getImageName = (
   appTarget: string,
   hasChanges: boolean,
   sha: string,
-  imageTagRegistry = "",
+  imageTagRegistry = [],
   imageTagFormat = "",
   imageTagFormatWhenChanged = "",
   removeTarget = false,
@@ -72,13 +93,15 @@ export const getImageName = (
     .map((imageName) =>
       removeTarget ? imageName.substring(appTarget.length) : imageName
     )
-    .map((imageName) => `${imageTagRegistry || ""}${imageName}`);
+    .flatMap((imageName) =>
+      (imageTagRegistry?.length? imageTagRegistry: ['']).map((registry) => `${registry}${imageName}`)
+    );
 };
 
 export const processRules = async (
   log: (message: string) => void,
   rulesInput: string,
-  imageTagRegistry: string,
+  imageTagRegistry: string[],
   imageTagFormat: string,
   imageTagFormatWhenChanged: string,
   imageTagRemoveTarget: boolean,
@@ -97,7 +120,7 @@ export const processRules = async (
     }
 
     const changedFiles = await getChangedFiles();
-    log(`Changed Files: ${changedFiles.join("\n")}`);
+    log(`Changed Files: ${JSON.stringify(changedFiles, undefined, 2)}`);
     if (changedFilesOutputFile) {
       await writeChangedFiles(changedFilesOutputFile, changedFiles);
     }
@@ -129,7 +152,7 @@ export const processRules = async (
         affectedImageTags[key.name] = imageName;
 
         log(
-          `Key: ${key.name}, Path: ${key.path}, Commit SHA: ${commitSha}, Image: ${imageName}`,
+          `Key: ${key.name}, Path: ${key.path}, Commit SHA: ${JSON.stringify(commitSha||'', undefined, 2)}, Image: ${imageName}`,
         );
       }
     }

@@ -26,7 +26,7 @@ inputs:
     required: false
     default: ''
   recommended-imagetags-registry:
-    description: 'The registry to add to all image tags.'
+    description: 'The registry to add to all image tags. string, comma separated, or JSON string[]'
     required: false
     default: ''
   changed-files-output-file:

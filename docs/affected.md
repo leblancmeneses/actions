@@ -271,8 +271,16 @@ Our rule-based approach standardizes the process to identify which targets have 
 
 [See Husky Example](./.husky/pre-commit).
 
+Explore the latest version tags of the built container on Docker Hub: [leblancmeneses/actions-affected](https://hub.docker.com/repository/docker/leblancmeneses/actions-affected/general)
+
+Run the cli version of this tool outside of the GitHub Actions environment:
+
 ```bash
-# runs cli version of the tool
-# https://hub.docker.com/repository/docker/leblancmeneses/actions-affected/general
 docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v3.0.4-60aac9c calculate --rules-file ./.github/affected.rules > affected.json
+```
+
+List all files that a specific rule would match:
+
+```bash
+docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:pr-23-068ae5bcca ls --rule-name=pragma --rule-name=affected --rules-file ./.github/affected.rules
 ```
