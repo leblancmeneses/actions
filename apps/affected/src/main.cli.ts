@@ -11,7 +11,7 @@ import { AST } from './parser.types';
 import { execSync } from 'child_process';
 import { ChangeStatus } from './changedFiles';
 import { evaluateStatementsForChanges } from './evaluateStatementsForChanges';
-import { reduceAST } from './ls';
+import { generateASTDependencyDOT, reduceAST } from './ls';
 
 export const log = (verbose: boolean, message: string) => {
   if (verbose) {
@@ -101,6 +101,7 @@ yargs(hideBin(process.argv))
           }
           console.info(`Rule: ${ruleName}`);
           console.info(`Net Files: ${JSON.stringify(netFiles[ruleName].map(x => x.file), null, 2)}`);
+          console.info(`Dependency: ${generateASTDependencyDOT(reducedRuleStatements)}`);
         }
       } catch (err) {
         console.error(err.message);
