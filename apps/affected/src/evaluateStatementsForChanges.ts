@@ -166,7 +166,7 @@ export function evaluateStatementsForChanges(statements: AST, originalChangedFil
     if (statement.type === 'STATEMENT') {
       const { isTrue, matchedFiles } = evaluateStatement(statement.key.name, originalChangedFiles);
       changesKeyValue[statement.key.name] = isTrue;
-      if (statement.key.path) {
+      if (statement.key.path || process.env['KEEP_ALL_RULE_MATCHES']) {
         netFilesKeyValue[statement.key.name] = [...matchedFiles].sort((a, b) => a.file.localeCompare(b.file));
       }
     }
