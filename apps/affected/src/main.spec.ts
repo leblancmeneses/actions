@@ -122,6 +122,8 @@ M\tapps/affected/src/main.ts
     github.context.payload = {
       pull_request: {
         number: 100,
+        base: { sha: 'base1' },
+        head: { sha: 'head1' }
       }
     };
   });

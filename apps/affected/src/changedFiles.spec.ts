@@ -123,6 +123,7 @@ describe('changed-files.spec', () => {
     });
 
     it('uses BASE_SHA and HEAD_SHA env vars if provided', async () => {
+      (github.context as any).eventName = 'workflow_dispatch';
       process.env.BASE_SHA = 'env-base-sha';
       process.env.HEAD_SHA = 'env-head-sha';
 
@@ -132,12 +133,16 @@ describe('changed-files.spec', () => {
       expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status env-base-sha env-head-sha', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER  });
     });
 
-    it('handles push event by comparing HEAD~1 and HEAD', async () => {
+    it('handles push event', async () => {
       (github.context as any).eventName = 'push';
+      (github.context as any).payload = {
+        before: 'base2',
+        after: 'head2'
+      };
       mockExecSync.mockReturnValueOnce('');
       
       await getChangedFiles();
-      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status HEAD~1 HEAD', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER  });
+      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status base2 head2', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER  });
     });
 
     it('handles unknown events by falling back to HEAD~1 and HEAD', async () => {
