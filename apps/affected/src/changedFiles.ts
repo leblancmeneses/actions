@@ -42,21 +42,17 @@ export function mapGitStatusCode(code: string): ChangeStatus {
 }
 
 export const getChangedFiles = async (): Promise<ChangedFile[]> => {
-  const eventName = github.context.eventName;
-  const baseSha = process.env.BASE_SHA || github.context.payload?.pull_request?.base?.sha || github.context.sha;
-  const headSha = process.env.HEAD_SHA || github.context.payload?.pull_request?.head?.sha || github.context.sha;
-
   let changedFiles: ChangedFile[] = [];
   let baseDiffCommand: string;
 
   if (process.env['ACT'] === 'true') {
     baseDiffCommand = 'git diff HEAD --name-status';
-  } else if (eventName === 'pull_request' || eventName === 'workflow_dispatch') {
-    // Pull request or workflow dispatch event
-    baseDiffCommand = `git diff --name-status ${baseSha} ${headSha}`;
-  } else if (eventName === 'push') {
-    // Push event (compare HEAD with HEAD~1)
-    baseDiffCommand = 'git diff --name-status HEAD~1 HEAD';
+  } else if (github.context.eventName === 'pull_request') {
+    baseDiffCommand = `git diff --name-status ${github.context.payload?.pull_request?.base?.sha} ${github.context.payload?.pull_request?.head?.sha}`;
+  } else if (github.context.eventName === 'push') {
+    baseDiffCommand = `git diff --name-status ${github.context.payload?.before} ${github.context.payload?.after}`;
+  } else if (process.env.BASE_SHA && process.env.HEAD_SHA) {
+    baseDiffCommand = `git diff --name-status ${process.env.BASE_SHA} ${process.env.HEAD_SHA}`;
   } else {
     // Fallback: compare HEAD with HEAD~1 if event is unknown
     baseDiffCommand = 'git diff --name-status HEAD~1 HEAD';
