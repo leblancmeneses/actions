@@ -279,6 +279,8 @@ Run the cli version of this tool outside of the GitHub Actions environment:
 docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v3.0.4-60aac9c calculate --rules-file ./.github/affected.rules > affected.json
 ```
 
+## How to debug
+
 List all files that a specific rule would match:
 
 ```bash
