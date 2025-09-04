@@ -445,6 +445,53 @@ describe("affected.spec", () => {
   });
 
 
+  describe('renamed files', () => {
+    test("should handle renamed files correctly", async () => {
+      // Arrange
+      const mockSetFailed = jest.spyOn(core, 'setFailed').mockImplementation(jest.fn());
+
+      jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+        if (inputName === "rules") return `
+          <project-api>: 'project-api/**/*.ts';
+          <project-ui>: 'project-ui/**/*.ts';
+        `;
+        return "";
+      });
+
+      const lines = [
+        "100644 a 0\tproject-api/newfile.ts",
+        "100644 b 0\tproject-ui/component.ts",
+      ];
+
+      jest.spyOn(fs, 'existsSync').mockImplementation(() => true);
+      jest.spyOn(core, "setOutput").mockImplementation(jest.fn());
+
+      jest.spyOn(cp, 'execSync')
+        .mockImplementation((command: string) => {
+          if (command.startsWith('git diff --name-status')) {
+            return [
+              "R100\tproject-api/oldfile.ts\tproject-api/newfile.ts",
+              "M\tproject-ui/component.ts"
+            ].join('\n');
+          }
+          if (command === 'git ls-files -s') {
+            return lines.join('\n');
+          }
+          throw new Error(`Unexpected input: ${command}`);
+        });
+
+      // Act
+      await run();
+
+      // Assert
+      expect(mockSetFailed).not.toHaveBeenCalled();
+      expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
+        "project-api": true,
+        "project-ui": true,
+      });
+    });
+  });
+
   describe('rules', () => {
     const lines = [
       "100644 a 0\tproject-api/file1.ts",

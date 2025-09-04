@@ -276,11 +276,11 @@ Explore the latest version tags of the built container on Docker Hub: [leblancme
 Run the cli version of this tool outside of the GitHub Actions environment:
 
 ```bash
-docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v3.0.4-60aac9c calculate --rules-file ./.github/affected.rules > affected.json
+docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v4.0.5-7a8ab79 calculate --rules-file ./.github/affected.rules > affected.json
 ```
 
 List all files that a specific rule would match:
 
 ```bash
-docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:pr-23-068ae5bcca ls --rule-name=pragma --rule-name=affected --rules-file ./.github/affected.rules
+docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v4.0.5-7a8ab79 ls --rule-name=pragma --rule-name=affected --rules-file ./.github/affected.rules
 ```
