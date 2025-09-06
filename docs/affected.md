@@ -235,7 +235,7 @@ The `affected` action will generate the following JSON objects:
 
 jobs:
   vars:
-    uses: ./.github/workflows/template.job.init.yml
+    uses: ./.github/workflows/template.job.init.yml # [README.md](../README.md#recommendations-for-multi-job-pipeline)
     secrets:
       GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
 
