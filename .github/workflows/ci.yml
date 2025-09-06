@@ -154,7 +154,7 @@ jobs:
             fromJson(steps.affected.outputs.affected).gcp-build-cache.changes
           )
         run: |
-          SHORT_SHA=$(echo "${{ fromJson(steps.affected.outputs.affected_shas).affected }}" | cut -c 1-7)
+          SHORT_SHA=$(echo "${{ fromJson(steps.affected.outputs.affected).affected.sha }}" | cut -c 1-7)
           VERSION=$(jq -r '.version' package.json)
           PACKAGE_VERSION="v${VERSION}-${SHORT_SHA}"
           echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
