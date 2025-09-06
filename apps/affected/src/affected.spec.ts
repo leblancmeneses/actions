@@ -121,37 +121,27 @@ describe("affected.spec", () => {
         .digest('hex');
     }
 
-    expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
-      "markdown": true,
-      "peggy-parser": false,
-      "peggy-parser-checkIf-incomplete": false,
-      "project-api": false,
-      "project-dbmigrations": false,
-      "project-e2e": true,
-      "project-ui": true,
-      "project-ui-run-lint": false,
-      "third-party-deprecated": false,
-      "ui-core": false,
-      "ui-libs": false
-    });
-    expect(core.setOutput).toHaveBeenCalledWith("affected_shas", {
-      'project-api': getHash('project-api/'),
-      'project-dbmigrations': getHash('databases/project/'),
-      'project-ui': getHash('project-ui/'),
-    });
-    expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
-      "project-ui": [
-        "project-ui:" + getHash('project-ui/'),
-        "project-ui:latest",
-      ],
-      "project-api": [
+    expect(core.setOutput).toHaveBeenCalledWith("affected", {
+      "markdown": {changes: true, sha: expect.any(String)},
+      "peggy-parser": {changes: false, sha: expect.any(String)},
+      "peggy-parser-checkIf-incomplete": {changes: false, sha: expect.any(String)},
+      "project-api": {changes: false, sha: getHash('project-api/'), recommended_imagetags: [
         "project-api:" + getHash('project-api/'),
         "project-api:latest",
-      ],
-      "project-dbmigrations": [
+      ]},
+      "project-dbmigrations": {changes: false, sha: getHash('databases/project/'), recommended_imagetags: [
         "project-dbmigrations:" + getHash('databases/project/'),
         "project-dbmigrations:latest",
-      ],
+      ]},
+      "project-e2e": {changes: true, sha: expect.any(String)},
+      "project-ui": {changes: true, sha: getHash('project-ui/'), recommended_imagetags: [
+        "project-ui:" + getHash('project-ui/'),
+        "project-ui:latest",
+      ]},
+      "project-ui-run-lint": {changes: false, sha: expect.any(String)},
+      "third-party-deprecated": {changes: false, sha: expect.any(String)},
+      "ui-core": {changes: false, sha: expect.any(String)},
+      "ui-libs": {changes: false, sha: expect.any(String)}
     });
     expect(core.info).toHaveBeenCalled();
   });
@@ -216,11 +206,15 @@ describe("affected.spec", () => {
       await run();
 
       // Assert
-      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
-        "project-api": [
-          "project-api:prefix-" + getHash('project-api/'),
-          "project-api:latest",
-        ],
+      expect(core.setOutput).toHaveBeenCalledWith("affected", {
+        "project-api": {
+          changes: false,
+          sha: getHash('project-api/'),
+          recommended_imagetags: [
+            "project-api:prefix-" + getHash('project-api/'),
+            "project-api:latest",
+          ]
+        }
       });
     });
 
@@ -238,15 +232,19 @@ describe("affected.spec", () => {
       await run();
 
       // Assert
-      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
-        "project-api": [
-          "project-api:" + getHash('project-api/') + '-suffix',
-          "project-api:latest",
-        ],
+      expect(core.setOutput).toHaveBeenCalledWith("affected", {
+        "project-api": {
+          changes: false,
+          sha: getHash('project-api/'),
+          recommended_imagetags: [
+            "project-api:" + getHash('project-api/') + '-suffix',
+            "project-api:latest",
+          ]
+        },
       });
     });
 
-    test("should generate tags with keep first seven chars of sha1", async () => {
+    test("should generate tags with keep first seven chars of sha1 only", async () => {
       // Arrange
       jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
         if (inputName === "rules") return `
@@ -261,11 +259,15 @@ describe("affected.spec", () => {
       await run();
 
       // Assert
-      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
-        "project-api": [
-          "registry.cool/project-api:" + getHash('project-api/').slice(0, 7),
-          "registry.cool/project-api:latest",
-        ],
+      expect(core.setOutput).toHaveBeenCalledWith("affected", {
+        "project-api": {
+          changes: false,
+          sha: getHash('project-api/'),
+          recommended_imagetags: [
+            "registry.cool/project-api:" + getHash('project-api/').slice(0, 7),
+            "registry.cool/project-api:latest",
+          ]
+        },
       });
     });
 
@@ -283,11 +285,15 @@ describe("affected.spec", () => {
       await run();
 
       // Assert
-      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
-        "project-api": [
-          "project-api:" + getHash('project-api/').slice(-7),
-          "project-api:latest",
-        ],
+      expect(core.setOutput).toHaveBeenCalledWith("affected", {
+        "project-api": {
+          changes: false,
+          sha: getHash('project-api/'),
+          recommended_imagetags:  [
+            "project-api:" + getHash('project-api/').slice(-7),
+            "project-api:latest",
+          ]
+        },
       });
     });
 
@@ -306,11 +312,15 @@ describe("affected.spec", () => {
       await run();
 
       // Assert
-      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
-        "project-api": [
-          "registry.cool/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
-          "registry.cool/project-api:latest",
-        ],
+      expect(core.setOutput).toHaveBeenCalledWith("affected", {
+        "project-api": {
+          changes: false,
+          sha: getHash('project-api/'),
+          recommended_imagetags: [
+            "registry.cool/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
+            "registry.cool/project-api:latest",
+          ]
+        },
       });
     });
 
@@ -329,13 +339,17 @@ describe("affected.spec", () => {
       await run();
 
       // Assert
-      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
-        "project-api": [
-          "registry.cool/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
-          "registry.dev/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
-          "registry.cool/project-api:latest",
-          "registry.dev/project-api:latest",
-        ],
+      expect(core.setOutput).toHaveBeenCalledWith("affected", {
+        "project-api": {
+          changes: false,
+          sha: getHash('project-api/'),
+          recommended_imagetags: [
+            "registry.cool/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
+            "registry.dev/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
+            "registry.cool/project-api:latest",
+            "registry.dev/project-api:latest",
+          ]
+        },
       });
     });
 
@@ -354,13 +368,17 @@ describe("affected.spec", () => {
       await run();
 
       // Assert
-      expect(core.setOutput).toHaveBeenCalledWith("affected_recommended_imagetags", {
-        "project-api": [
-          "registry.cool/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
-          "registry.dev/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
-          "registry.cool/project-api:latest",
-          "registry.dev/project-api:latest",
-        ],
+      expect(core.setOutput).toHaveBeenCalledWith("affected", {
+        "project-api": {
+          changes: false,
+          sha: getHash('project-api/'),
+          recommended_imagetags: [
+            "registry.cool/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
+            "registry.dev/project-api:prefix-" + getHash('project-api/').slice(0, 7) + '-suffix',
+            "registry.cool/project-api:latest",
+            "registry.dev/project-api:latest",
+          ]
+        },
       });
     });
   });
@@ -485,9 +503,9 @@ describe("affected.spec", () => {
 
       // Assert
       expect(mockSetFailed).not.toHaveBeenCalled();
-      expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
-        "project-api": true,
-        "project-ui": true,
+      expect(core.setOutput).toHaveBeenCalledWith("affected", {
+        "project-api": {changes: true, sha: expect.any(String), recommended_imagetags: expect.any(Array)},
+        "project-ui": {changes: true, sha: expect.any(String), recommended_imagetags: expect.any(Array)},
       });
     });
   });

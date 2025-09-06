@@ -153,8 +153,8 @@ M\tapps/affected/src/main.ts
     await run();
 
     // Assert
-    expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
-      "affected": true
+    expect(core.setOutput).toHaveBeenCalledWith("affected", {
+      "affected": {changes: true, sha: expect.any(String), recommended_imagetags: expect.any(Array)}
     });
   });
 
@@ -184,8 +184,8 @@ M\tapps/affected/src/main.ts
     await run();
 
     // Assert
-    expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
-      "affected": true
+    expect(core.setOutput).toHaveBeenCalledWith("affected", {
+      "affected": {changes: true, sha: expect.any(String), recommended_imagetags: expect.any(Array)}
     });
   });
 
@@ -214,8 +214,8 @@ M\tapps/affected/src/main.ts
     await run();
 
     // Assert
-    expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
-      "affected": true
+    expect(core.setOutput).toHaveBeenCalledWith("affected", {
+      "affected": {changes: true, sha: expect.any(String), recommended_imagetags: expect.any(Array)}
     });
   });
 
@@ -247,11 +247,11 @@ M\tapps/affected/src/main.ts
     await run();
 
     // Assert
-    expect(core.setOutput).toHaveBeenCalledWith("affected_changes", {
-      "typescript": true,
-      "yaml": true,
-      "notYaml": false,
-      "affected": false
+    expect(core.setOutput).toHaveBeenCalledWith("affected", {
+      "typescript": {changes: true, sha: expect.any(String)},
+      "yaml": {changes: true, sha: expect.any(String)},
+      "notYaml": {changes: false, sha: expect.any(String)},
+      "affected": {changes: false, sha: expect.any(String), recommended_imagetags: expect.any(Array)}
     });
   });
 });

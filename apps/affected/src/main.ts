@@ -29,9 +29,6 @@ export async function run() {
 
     const output = mapResultToOutput(affectedResults);
     core.setOutput('affected', output);
-    core.setOutput('affected_shas', affectedResults.shas);
-    core.setOutput('affected_changes', affectedResults.changes);
-    core.setOutput('affected_recommended_imagetags', affectedResults.recommended_imagetags);
     core.info(`affected:\n${JSON.stringify(output, undefined, 2)}`);
   } catch (error) {
     core.setFailed(error.message);

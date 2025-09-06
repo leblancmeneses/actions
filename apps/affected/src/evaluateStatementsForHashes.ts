@@ -163,7 +163,7 @@ export async function evaluateStatementsForHashes(statements: AST): Promise<Reco
   for (const statement of statements) {
     if (statement.type === 'STATEMENT') {
       const { matchedFiles, excludedFiles } = evaluateStatement(statement.key.name, allFiles);
-      if (statement.key.path) {
+      if (statement.key.name) {
         // netFiles = matchedFiles - excludedFiles
         const excludedSet = new Set(excludedFiles);
         const netFiles = matchedFiles.filter((f) => !excludedSet.has(f));
@@ -175,7 +175,7 @@ export async function evaluateStatementsForHashes(statements: AST): Promise<Reco
           hash.update(fileHash + '\n');
         }
 
-        resultHashes[statement.key.path] = hash.digest('hex');
+        resultHashes[statement.key.name] = hash.digest('hex');
       }
     }
   }

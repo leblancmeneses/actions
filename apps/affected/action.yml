@@ -40,12 +40,6 @@ inputs:
 outputs:
   affected:
     description: 'A JSON array representing the projects that have changes, recommended_imagetags, and commit SHA.'
-  affected_shas:
-    description: 'A JSON object where the propery is the target and value is the sha1'
-  affected_changes:
-    description: 'A JSON object where the propery is the target and value is a boolean signifying if the target had changes'
-  affected_recommended_imagetags:
-    description: 'A JSON object where the propery is the target and value is a boolean signifying if the target had changes'
 runs:
   using: 'node20'
   main: '../../dist/apps/affected/main/main.js'

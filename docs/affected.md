@@ -80,8 +80,8 @@ jobs:
 These rules map a *project name* and the *expression* to check for changes and to generate an sha1 hash of the dependency graph.
 
 * The left side of the colon `:` is the **rule key**, while the right side specifies the **expression** to match files.
-* **Rule keys with brackets** `<>` will appear in the JSON object under `recommended_imagetags` or `shas`, and `changes`.
-* **Rule keys without brackets** will only appear in `changes` but **not** in `recommended_imagetags` or `shas`.
+* **Rule keys with brackets** `<>` will output a JSON object containing `recommended_imagetags`, `shas`, and `changes`.
+* **Rule keys without brackets** will output a JSON object containing `shas`, and `changes` but **not** `recommended_imagetags`.
 * Glob expressions use [picomatch](https://github.com/micromatch/picomatch) for matching.
 
 
@@ -163,13 +163,16 @@ The `affected` action will generate the following JSON objects:
 ```json
 {
   "peggy-parser": {
-    "changes": false
+    "changes": false,
+    "sha": "d165064e5d3e4b0a21b867fa02561e37b2cf7f01"
   },
   "peggy-parser-checkIf-incomplete": {
-    "changes": false
+    "changes": false,
+    "sha": "d265064e5d3e4b0a21b867fa02561e37b2cf7f01"
   },
   "markdown": {
-    "changes": true
+    "changes": true,
+    "sha": "d365064e5d3e4b0a21b867fa02561e37b2cf7f01"
   },
   "project-api": {
     "changes": false,
@@ -195,13 +198,16 @@ The `affected` action will generate the following JSON objects:
     ]
   },
   "third-party-deprecated": {
-    "changes": false
+    "changes": false,
+    "sha": "d465064e5d3e4b0a21b867fa02561e37b2cf7f01"
   },
   "ui-core": {
-    "changes": false
+    "changes": false,
+    "sha": "d565064e5d3e4b0a21b867fa02561e37b2cf7f01"
   },
   "ui-libs": {
-    "changes": false
+    "changes": false,
+    "sha": "d665064e5d3e4b0a21b867fa02561e37b2cf7f01"
   }
 }
 ```
