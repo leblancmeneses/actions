@@ -79,6 +79,7 @@ jobs:
           NPM_PACKAGE_VERSION=$(jq -r '.version' package.json)
           echo "NPM_PACKAGE_VERSION=${NPM_PACKAGE_VERSION}" >> $GITHUB_ENV
           echo "${NPM_PACKAGE_VERSION}"
+          echo "SHORT_SHA=${GITHUB_SHA::10}" >> $GITHUB_ENV
 
       - name: calculate pragma
         id: pragma
@@ -95,8 +96,8 @@ jobs:
         with:
           changed-files-output-file: ./.artifacts/changed.json
           rules-file: .github/affected.rules
-          recommended-imagetags-tag-format: 'v${{env.NPM_PACKAGE_VERSION}}-${{substring(github.sha, 0, 10)}}'
-          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}-{2}', github.event.number, env.NPM_PACKAGE_VERSION, substring(github.sha, 0, 10)) || format('v{0}-{1}', env.NPM_PACKAGE_VERSION, substring(github.sha, 0, 10)) }}
+          recommended-imagetags-tag-format: 'v${{env.NPM_PACKAGE_VERSION}}-${{env.SHORT_SHA}}'
+          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}-{2}', github.event.number, env.NPM_PACKAGE_VERSION, env.SHORT_SHA) || format('v{0}-{1}', env.NPM_PACKAGE_VERSION, env.SHORT_SHA) }}
           recommended-imagetags-registry: docker.io/leblancmeneses/,ghcr.io/leblancmeneses/
 
       - name: calculate gcp cache
