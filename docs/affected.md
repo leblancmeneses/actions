@@ -80,8 +80,8 @@ jobs:
 These rules map a *project name* and the *expression* to check for changes and to generate an sha1 hash of the dependency graph.
 
 * The left side of the colon `:` is the **rule key**, while the right side specifies the **expression** to match files.
-* **Rule keys with brackets** `<>` will appear in the JSON object under `recommended_imagetags` or `shas`, and `changes`.
-* **Rule keys without brackets** will only appear in `changes` but **not** in `recommended_imagetags` or `shas`.
+* **Rule keys with brackets** `<>` will output a JSON object containing `recommended_imagetags`, `shas`, and `changes`.
+* **Rule keys without brackets** will output a JSON object containing `shas`, and `changes` but **not** `recommended_imagetags`.
 * Glob expressions use [picomatch](https://github.com/micromatch/picomatch) for matching.
 
 
@@ -163,13 +163,16 @@ The `affected` action will generate the following JSON objects:
 ```json
 {
   "peggy-parser": {
-    "changes": false
+    "changes": false,
+    "sha": "d165064e5d3e4b0a21b867fa02561e37b2cf7f01"
   },
   "peggy-parser-checkIf-incomplete": {
-    "changes": false
+    "changes": false,
+    "sha": "d265064e5d3e4b0a21b867fa02561e37b2cf7f01"
   },
   "markdown": {
-    "changes": true
+    "changes": true,
+    "sha": "d365064e5d3e4b0a21b867fa02561e37b2cf7f01"
   },
   "project-api": {
     "changes": false,
@@ -195,13 +198,16 @@ The `affected` action will generate the following JSON objects:
     ]
   },
   "third-party-deprecated": {
-    "changes": false
+    "changes": false,
+    "sha": "d465064e5d3e4b0a21b867fa02561e37b2cf7f01"
   },
   "ui-core": {
-    "changes": false
+    "changes": false,
+    "sha": "d565064e5d3e4b0a21b867fa02561e37b2cf7f01"
   },
   "ui-libs": {
-    "changes": false
+    "changes": false,
+    "sha": "d665064e5d3e4b0a21b867fa02561e37b2cf7f01"
   }
 }
 ```
@@ -229,7 +235,7 @@ The `affected` action will generate the following JSON objects:
 
 jobs:
   vars:
-    uses: ./.github/workflows/template.job.init.yml
+    uses: ./.github/workflows/template.job.init.yml # [README.md](../README.md#recommendations-for-multi-job-pipeline)
     secrets:
       GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
 
@@ -276,7 +282,7 @@ Explore the latest version tags of the built container on Docker Hub: [leblancme
 Run the cli version of this tool outside of the GitHub Actions environment:
 
 ```bash
-docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v3.0.4-60aac9c calculate --rules-file ./.github/affected.rules > affected.json
+docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v4.0.5-7a8ab79 calculate --rules-file ./.github/affected.rules > affected.json
 ```
 
 ## How to debug
@@ -284,5 +290,5 @@ docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v3.0.4-60aac9
 List all files that a specific rule would match:
 
 ```bash
-docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:pr-23-068ae5bcca ls --rule-name=pragma --rule-name=affected --rules-file ./.github/affected.rules
+docker run --rm -v ./:/app -w /app leblancmeneses/actions-affected:v4.0.5-7a8ab79 ls --rule-name=pragma --rule-name=affected --rules-file ./.github/affected.rules
 ```

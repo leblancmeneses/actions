@@ -127,7 +127,7 @@ The init phase is used to precomute the cache keys and cache hit status for all 
 # .github/workflows/build.yml
 jobs:
   vars:
-    uses: ./.github/workflows/template.job.init.yml
+    uses: ./.github/workflows/template.job.init.yml # [README.md](../README.md#recommendations-for-multi-job-pipeline)
     secrets:
       GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV}}
 

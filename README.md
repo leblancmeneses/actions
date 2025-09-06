@@ -118,11 +118,11 @@ jobs:
         id: cache
         uses: leblancmeneses/actions/apps/gcp-build-cache@main
         with:
-          affected: steps.affected.outputs.affected
-          pragma: steps.pragma.outputs.pragma
+          affected: ${{steps.affected.outputs.affected}}
+          pragma: ${{steps.pragma.outputs.pragma}}
           gcs-root-path: gs://xxx-my-github-integration/build-cache
           additional-keys: |
-            { "project-ui": ["lint", "build", "docker, "e2e"] }
+            { "project-ui": ["lint", "build", "docker", "e2e"] }
 
       - name: upload affected output
         uses: actions/upload-artifact@v4

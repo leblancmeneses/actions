@@ -18,6 +18,7 @@ permissions:
   contents: read
   id-token: write
   attestations: write
+  packages: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
@@ -28,7 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ARTIFACT_REGISTRY: docker.io
-      IMAGE_AFFECTED: docker.io/leblancmeneses/actions-affected
       NX_CLOUD: false
     steps:
       - uses: actions/checkout@v4
@@ -74,6 +74,13 @@ jobs:
           echo "version_autopilot_string: ${{ steps.version-autopilot.outputs.version_autopilot_string }}"
           echo "version_autopilot_code: ${{ steps.version-autopilot.outputs.version_autopilot_code }}"
 
+      - name: package.json version
+        run: |
+          NPM_PACKAGE_VERSION=$(jq -r '.version' package.json)
+          echo "NPM_PACKAGE_VERSION=${NPM_PACKAGE_VERSION}" >> $GITHUB_ENV
+          echo "${NPM_PACKAGE_VERSION}"
+          echo "SHORT_SHA=${GITHUB_SHA::10}" >> $GITHUB_ENV
+
       - name: calculate pragma
         id: pragma
         uses: ./apps/pragma
@@ -89,10 +96,9 @@ jobs:
         with:
           changed-files-output-file: ./.artifacts/changed.json
           rules-file: .github/affected.rules
-          recommended-imagetags-tag-remove-target: true
-          recommended-imagetags-tag-format: '{sha|10}'
-          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha|10}') || '{sha}' }}
-          recommended-imagetags-registry: ${{ env.IMAGE_AFFECTED }}
+          recommended-imagetags-tag-format: 'v${{env.NPM_PACKAGE_VERSION}}-${{env.SHORT_SHA}}'
+          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}-{2}', github.event.number, env.NPM_PACKAGE_VERSION, env.SHORT_SHA) || format('v{0}-{1}', env.NPM_PACKAGE_VERSION, env.SHORT_SHA) }}
+          recommended-imagetags-registry: docker.io/leblancmeneses/,ghcr.io/leblancmeneses/actions/
 
       - name: calculate gcp cache
         id: cache
@@ -143,22 +149,6 @@ jobs:
         run: |
           # package.json bump required by affected.
           git diff ${{ github.event.pull_request.base.sha }} ${{ github.sha }} package.json | grep version
-
-      - name: version bump to env
-        if: |
-          !failure() && !cancelled() && (
-            inputs.MANUAL_FORCE_DEPLOY_AFFECTED ||
-            fromJson(steps.affected.outputs.affected).affected.changes ||
-            fromJson(steps.affected.outputs.affected).version-autopilot.changes ||
-            fromJson(steps.affected.outputs.affected).pragma.changes ||
-            fromJson(steps.affected.outputs.affected).gcp-build-cache.changes
-          )
-        run: |
-          SHORT_SHA=$(echo "${{ fromJson(steps.affected.outputs.affected_shas).affected }}" | cut -c 1-7)
-          VERSION=$(jq -r '.version' package.json)
-          PACKAGE_VERSION="v${VERSION}-${SHORT_SHA}"
-          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
-          echo "${PACKAGE_VERSION}"
 
       - name: build affected
         if: |
@@ -227,7 +217,14 @@ jobs:
       - name: assert dist is deterministic
         run: git diff --exit-code -- ./dist
 
-      - name: Log in to Docker Hub
+      - name: login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: login to Docker Hub
         if: |
           !failure() && !cancelled() && (
             inputs.MANUAL_FORCE_DEPLOY_AFFECTED || (
@@ -255,10 +252,10 @@ jobs:
           context: .
           file: ./apps/affected/Dockerfile
           push: true
-          tags: ${{github.event_name == 'pull_request' && fromJson(steps.affected.outputs.affected).affected.recommended_imagetags[0] || format('{0}:{1}', env.IMAGE_AFFECTED, env.PACKAGE_VERSION)}}
+          tags: ${{ join(fromJson(steps.affected.outputs.affected).affected.recommended_imagetags, ',') }}
           labels: |
             org.opencontainers.image.created=${{ github.event.created_at }}
-            org.opencontainers.image.version=${{ env.PACKAGE_VERSION }}
+            org.opencontainers.image.version=${{ env.NPM_PACKAGE_VERSION }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.source=${{ github.repository }}
             org.opencontainers.image.authors=Leblanc Meneses

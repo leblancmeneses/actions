@@ -136,9 +136,8 @@ export const processRules = async (
       if (statement.type !== "STATEMENT") continue;
 
       const { key } = statement;
+      affectedShas[key.name] = commitSha[key.name];
       if (key.path) {
-        affectedShas[key.name] = commitSha[key.name];
-
         const imageName = getImageName(
           key.name,
           affectedChanges[key.name],
@@ -150,7 +149,6 @@ export const processRules = async (
           imageContext,
         );
         affectedImageTags[key.name] = imageName;
-
         log(
           `Key: ${key.name}, Path: ${key.path}, Commit SHA: ${JSON.stringify(commitSha||'', undefined, 2)}, Image: ${imageName}`,
         );
