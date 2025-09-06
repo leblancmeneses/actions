@@ -95,9 +95,9 @@ jobs:
         with:
           changed-files-output-file: ./.artifacts/changed.json
           rules-file: .github/affected.rules
-          recommended-imagetags-tag-format: 'v${{env.NPM_PACKAGE_VERSION}}-{sha|10}'
-          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}-{2}', github.event.number, env.NPM_PACKAGE_VERSION, '{sha|10}') || '{sha}' }}
-          recommended-imagetags-registry: docker.io/leblancmeneses,ghcr.io/leblancmeneses/
+          recommended-imagetags-tag-format: 'v${{env.NPM_PACKAGE_VERSION}}-${{substring(github.sha, 0, 10)}}'
+          recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}-{2}', github.event.number, env.NPM_PACKAGE_VERSION, substring(github.sha, 0, 10)) || format('v{0}-{1}', env.NPM_PACKAGE_VERSION, substring(github.sha, 0, 10)) }}
+          recommended-imagetags-registry: docker.io/leblancmeneses/,ghcr.io/leblancmeneses/
 
       - name: calculate gcp cache
         id: cache
