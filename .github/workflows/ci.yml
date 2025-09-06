@@ -92,7 +92,7 @@ jobs:
           recommended-imagetags-tag-remove-target: true
           recommended-imagetags-tag-format: '{sha|10}'
           recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha|10}') || '{sha}' }}
-          recommended-imagetags-registry: ${{ env.IMAGE_AFFECTED }}
+          recommended-imagetags-registry: ${{ env.IMAGE_AFFECTED }},ghcr.io/leblancmeneses/
 
       - name: calculate gcp cache
         id: cache
