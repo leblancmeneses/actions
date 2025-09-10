@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { getRules, mapResultToOutput, parseRegistryInput, processRules } from './common';
+import { getRules, mapResultToOutput, parseRegistryInput, parseRegistryIfInput, processRules } from './common';
 
 
 export const log = (verbose: boolean, message: string) => {
@@ -16,7 +16,8 @@ export async function run() {
     const verbose = core.getInput('verbose', { required: false }) === 'true';
     const imageTagFormat = core.getInput('recommended-imagetags-tag-format', { required: false }) || '';
     const imageTagFormatWhenChanged = core.getInput('recommended-imagetags-tag-format-whenchanged', { required: false }) || '';
-    const imageTagRegistry = parseRegistryInput(core.getInput('recommended-imagetags-registry', { required: false }) || '');
+    const imageTagRegistries = parseRegistryInput(core.getInput('recommended-imagetags-registry', { required: false }) || '');
+    const imageTagRegistriesIf = parseRegistryIfInput(core.getInput('recommended-imagetags-registry-if', { required: false }) || '');
     const removeTarget = core.getInput('recommended-imagetags-tag-remove-target', { required: false }) === 'true';
     const changedFilesOutputFile = core.getInput('changed-files-output-file', { required: false }) || '';
 
@@ -24,7 +25,7 @@ export async function run() {
 
     const affectedResults = await processRules(
       log.bind(null, verbose),
-      rulesInput, imageTagRegistry, imageTagFormat, imageTagFormatWhenChanged, removeTarget, changedFilesOutputFile,
+      rulesInput, imageTagRegistries, imageTagRegistriesIf, imageTagFormat, imageTagFormatWhenChanged, removeTarget, changedFilesOutputFile,
       {event: github.context.eventName, pull_request_number: github.context.payload?.pull_request?.number});
 
     const output = mapResultToOutput(affectedResults);

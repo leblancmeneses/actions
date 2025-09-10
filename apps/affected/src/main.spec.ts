@@ -254,4 +254,65 @@ M\tapps/affected/src/main.ts
       "affected": {changes: false, sha: expect.any(String), recommended_imagetags: expect.any(Array)}
     });
   });
+
+  test("should use recommended-imagetags-registry-if for conditional registry selection", async () => {
+    // Arrange
+    jest.spyOn(core, "getInput").mockImplementation((inputName: string) => {
+      if (inputName === "rules") return `
+          <affected>: './apps/affected/**' './dist/apps/affected/**';
+          <affected-alt>: './apps/affected/**' './dist/apps/affected/**';
+          <affected-alt-multiple>: './apps/affected/**' './dist/apps/affected/**';
+        `;
+      if (inputName === "recommended-imagetags-registry-if") return `
+          affected-alt-multiple: registry1.com/, registry2.com/;
+          affected-alt: registry3.com/;
+        `;
+      return "";
+    });
+
+    const execSyncResponses = {
+      ...gitMockResponses,
+    };
+
+    jest.spyOn(cp, 'execSync')
+      .mockImplementation((command) => {
+        if (execSyncResponses[command]) {
+          return execSyncResponses[command]();
+        }
+        throw new Error(`Unexpected input: ${command}`);
+      });
+
+    // Act
+    await run();
+
+    // Assert
+    expect(core.setOutput).toHaveBeenCalledWith("affected", {
+      "affected": {
+        changes: true,
+        sha: 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+        recommended_imagetags: [
+          'affected:da39a3ee5e6b4b0d3255bfef95601890afd80709',
+          'affected:pr-100',
+        ]
+      },
+      "affected-alt": {
+        changes: true,
+        sha: 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+        recommended_imagetags: [
+          'registry3.com/affected-alt:da39a3ee5e6b4b0d3255bfef95601890afd80709',
+          'registry3.com/affected-alt:pr-100',
+        ]
+      },
+      "affected-alt-multiple": {
+        changes: true,
+        sha: 'da39a3ee5e6b4b0d3255bfef95601890afd80709',
+        recommended_imagetags: [
+          'registry1.com/affected-alt-multiple:da39a3ee5e6b4b0d3255bfef95601890afd80709',
+          'registry2.com/affected-alt-multiple:da39a3ee5e6b4b0d3255bfef95601890afd80709',
+          'registry1.com/affected-alt-multiple:pr-100',
+          'registry2.com/affected-alt-multiple:pr-100',
+        ]
+      }
+    });
+  });
 });
