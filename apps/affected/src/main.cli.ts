@@ -3,7 +3,7 @@
 
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { processRules, getRules, mapResultToOutput, parseRegistryInput } from './common';
+import { processRules, getRules, mapResultToOutput, parseRegistryInput, parseRegistryIfInput } from './common';
 import { parse } from './parser';
 
 import * as packageJson from '../../../package.json';
@@ -35,6 +35,7 @@ yargs(hideBin(process.argv))
         .option('image-tag-format-whenchanged', { type: 'string', default: '', describe: 'Image tag format when changed' })
         .option('image-tag-remove-target', { type: 'string', default: '', describe: 'Image tag format' })
         .option('image-tag-registry', { type: 'string', default: '', describe: 'Image tag registry' })
+        .option('image-tag-registry-if', { type: 'string', default: '', describe: 'Image tag conditional registry' })
         .option('changed-files-output-file', { type: 'string', describe: 'Path to write changed files', demandOption: false });
     },
     async (argv) => {
@@ -44,6 +45,7 @@ yargs(hideBin(process.argv))
           log.bind(null, argv.verbose as boolean),
           rules,
           parseRegistryInput(argv['image-tag-registry'] as string),
+          parseRegistryIfInput(argv['image-tag-registry-if'] as string),
           argv['image-tag-format'] as string,
           argv['image-tag-format-whenchanged'] as string,
           argv['image-tag-remove-target'] === 'true',

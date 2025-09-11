@@ -29,6 +29,10 @@ inputs:
     description: 'The registry to add to all image tags. string, comma separated, or JSON string[]'
     required: false
     default: ''
+  recommended-imagetags-registry-if:
+    description: 'Conditional registry to add to specific rules DSL: imageName: registry;\n'
+    required: false
+    default: ''
   changed-files-output-file:
     description: 'Writes a file containing a JSON array of ChangedFile objects, where each object has a file name and its change status.'
     required: false

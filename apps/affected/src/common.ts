@@ -32,6 +32,19 @@ export const parseRegistryInput = (input: string): string[] => {
   return input ? [input] : [];
 }
 
+export const parseRegistryIfInput = (input: string): Record<string, string[]> => {
+  const result: Record<string, string[]> = {};
+  const matches = input.matchAll(/^\s*([^:]+?):\s*([^;]+?)\s*;\s*$/gm);
+
+  for (const match of matches) {
+    const [, key, values] = match;
+    const valueArray = values.split(',').map(v => v.trim()).filter(Boolean);
+    result[key.trim()] = valueArray;
+  }
+
+  return result;
+}
+
 
 export const getRules = (rulesInput: string, rulesFile: string) => {
   if (rulesInput && rulesFile) {
@@ -64,7 +77,8 @@ export const getImageName = (
   appTarget: string,
   hasChanges: boolean,
   sha: string,
-  imageTagRegistry = [],
+  imageTagRegistries = [],
+  imageTagRegistriesIf: Record<string, string[]>,
   imageTagFormat = "",
   imageTagFormatWhenChanged = "",
   removeTarget = false,
@@ -93,15 +107,17 @@ export const getImageName = (
     .map((imageName) =>
       removeTarget ? imageName.substring(appTarget.length) : imageName
     )
-    .flatMap((imageName) =>
-      (imageTagRegistry?.length? imageTagRegistry: ['']).map((registry) => `${registry}${imageName}`)
-    );
+    .flatMap((imageName) => {
+      const registeries = imageTagRegistriesIf[appTarget] || (imageTagRegistries?.length ? imageTagRegistries : ['']);
+      return registeries.map((registry) => `${registry}${imageName}`);
+    });
 };
 
 export const processRules = async (
   log: (message: string) => void,
   rulesInput: string,
-  imageTagRegistry: string[],
+  imageTagRegistries: string[],
+  imageTagRegistriesIf: Record<string, string[]>,
   imageTagFormat: string,
   imageTagFormatWhenChanged: string,
   imageTagRemoveTarget: boolean,
@@ -142,7 +158,8 @@ export const processRules = async (
           key.name,
           affectedChanges[key.name],
           commitSha[key.name],
-          imageTagRegistry,
+          imageTagRegistries,
+          imageTagRegistriesIf,
           imageTagFormat,
           imageTagFormatWhenChanged,
           imageTagRemoveTarget,
