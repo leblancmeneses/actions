@@ -8,6 +8,7 @@ export async function run() {
     const shell = core.getInput("shell", { required: false }) || 'bash';
     const workingDirectory = core.getInput("working-directory", { required: false }) || '.';
     const cachePath = core.getInput("cache-path", { required: true });
+    const includeStdout = core.getInput("include-stdout", { required: false }).toLowerCase() === 'true';
 
     // Check if GOOGLE_APPLICATION_CREDENTIALS is set
     const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
@@ -15,7 +16,13 @@ export async function run() {
       core.warning("GOOGLE_APPLICATION_CREDENTIALS not set, running without cache");
       const result = await executeCommand(runCommand, shell, workingDirectory);
       core.setOutput("cache-hit", "false");
-      core.setOutput("exit-code", result.exitCode.toString());
+      if (includeStdout) {
+        core.setOutput("stdout", result.stdout);
+      }
+      // Let the action succeed/fail based on command exit code
+      if (result.exitCode !== 0) {
+        process.exit(result.exitCode);
+      }
       return;
     }
 
@@ -25,6 +32,7 @@ export async function run() {
 
     // Check if cache exists in GCS
     let cacheHit = false;
+    let cachedData: any = null;
 
     try {
       const bucket = storage.bucket(bucketName);
@@ -35,6 +43,17 @@ export async function run() {
         cacheHit = true;
         core.info(`✅ Cache hit for path: ${cachePath}`);
         core.info("Skipping command execution due to cache hit");
+
+        // Download cached data if include-stdout is requested
+        if (includeStdout) {
+          try {
+            const [content] = await file.download();
+            cachedData = JSON.parse(content.toString());
+          } catch (error) {
+            core.debug(`Failed to parse cached data: ${error.message}`);
+            cachedData = null;
+          }
+        }
       }
     } catch (error) {
       core.debug(`Cache check failed: ${error.message}`);
@@ -44,8 +63,11 @@ export async function run() {
     core.setOutput("cache-hit", cacheHit.toString());
 
     if (cacheHit) {
-      // Skip execution entirely - cache hit means the work was already done
-      core.setOutput("exit-code", "0");
+      // Return cached stdout if available and requested
+      if (includeStdout && cachedData && cachedData.stdout) {
+        core.setOutput("stdout", cachedData.stdout);
+      }
+      // Cache hit means work was previously successful, so action succeeds
       return;
     }
 
@@ -53,37 +75,48 @@ export async function run() {
     core.info(`🚀 Executing command: ${runCommand}`);
     const result = await executeCommand(runCommand, shell, workingDirectory);
 
-    // Set outputs
-    core.setOutput("exit-code", result.exitCode.toString());
+    // Set stdout output if requested
+    if (includeStdout) {
+      core.setOutput("stdout", result.stdout);
+    }
 
     // Only create cache marker on successful execution
     if (result.exitCode === 0) {
-      // Create simple cache marker with timestamp
-      const cacheMarker = {
+      // Create cache entry
+      const cacheEntry: any = {
         created: new Date().toISOString(),
         command: runCommand,
         success: true
       };
 
-      // Save cache marker to GCS
+      // Include stdout in cache if requested
+      if (includeStdout) {
+        cacheEntry.stdout = result.stdout;
+      }
+
+      // Save cache to GCS
       try {
         const bucket = storage.bucket(bucketName);
         const file = bucket.file(fileName);
-        await file.save(JSON.stringify(cacheMarker, null, 2), {
+        await file.save(JSON.stringify(cacheEntry, null, 2), {
           metadata: {
             contentType: 'application/json',
             metadata: {
               cachePath: cachePath,
-              created: cacheMarker.created
+              created: cacheEntry.created,
+              includeStdout: includeStdout.toString()
             }
           }
         });
-        core.info(`✅ Cache marker created at: ${cachePath}`);
+        core.info(`✅ Cache ${includeStdout ? 'with stdout' : 'marker'} created at: ${cachePath}`);
       } catch (error) {
-        core.warning(`Failed to save cache marker: ${error.message}`);
+        core.warning(`Failed to save cache: ${error.message}`);
       }
+      // Command succeeded, action succeeds
     } else {
-      core.info(`⚠️ Command failed with exit code ${result.exitCode}, not creating cache marker`);
+      core.info(`⚠️ Command failed with exit code ${result.exitCode}, not creating cache`);
+      // Command failed, action should fail with same exit code
+      process.exit(result.exitCode);
     }
 
   } catch (error) {

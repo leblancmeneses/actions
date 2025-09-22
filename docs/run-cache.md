@@ -123,6 +123,7 @@ cache-path: 'gs://bucket/pr/${{ github.event.number || github.ref_name }}/tests-
 | `shell` | Shell to use for execution | No | `bash` |
 | `working-directory` | Working directory for command | No | `.` |
 | `cache-path` | GCS path for cache marker | Yes | - |
+| `include-stdout` | Include stdout in cache and return as output | No | `false` |
 
 ### Shell Options
 
@@ -137,7 +138,48 @@ cache-path: 'gs://bucket/pr/${{ github.event.number || github.ref_name }}/tests-
 | Output | Description |
 |--------|-------------|
 | `cache-hit` | `"true"` if cache found and command skipped, `"false"` if command executed |
-| `exit-code` | `"0"` if cache hit, actual exit code if command executed |
+| `stdout` | Command stdout (only when `include-stdout=true`) |
+
+## Include Stdout Feature
+
+When `include-stdout` is set to `true`, the action will:
+- Cache the command's stdout along with the success marker
+- Return the cached stdout on cache hits via the `stdout` output
+- Allow you to use the action for state management and data persistence
+
+This is particularly useful for:
+- Commands that generate build information or metadata
+- State that needs to be passed between workflow steps
+- JSON output that other steps need to consume
+
+### Example with State Management
+
+```yaml
+- name: Generate build metadata
+  id: metadata
+  uses: ./apps/run-cache
+  with:
+    run: |
+      echo '{
+        "version": "'$(npm version --json | jq -r .version)'",
+        "buildTime": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+        "commit": "'${GITHUB_SHA}'",
+        "artifacts": ["dist/app.js", "dist/app.css"]
+      }'
+    include-stdout: 'true'
+    cache-path: 'gs://build-cache/metadata/${{ hashFiles('package*.json', 'src/**') }}'
+
+- name: Use build metadata
+  run: |
+    metadata='${{ steps.metadata.outputs.stdout }}'
+    version=$(echo "$metadata" | jq -r .version)
+    echo "Building version: $version"
+
+    # Parse artifacts list
+    echo "$metadata" | jq -r '.artifacts[]' | while read artifact; do
+      echo "Artifact: $artifact"
+    done
+```
 
 ## Examples
 
@@ -273,6 +315,60 @@ steps:
   with:
     run: 'npm run test:e2e'
     cache-path: 'gs://test-cache/e2e-${{ hashFiles("src/**", "test/e2e/**") }}'
+```
+
+### Test Results with stdout Caching
+
+```yaml
+- name: Run tests with result caching
+  id: tests
+  uses: ./apps/run-cache
+  with:
+    run: |
+      npm test -- --reporter=json > test-results.json
+      cat test-results.json
+    include-stdout: 'true'
+    cache-path: 'gs://test-cache/results-${{ hashFiles("src/**", "test/**") }}'
+
+- name: Process test results
+  run: |
+    results='${{ steps.tests.outputs.stdout }}'
+    passed=$(echo "$results" | jq '.stats.passes')
+    failed=$(echo "$results" | jq '.stats.failures')
+
+    echo "Tests passed: $passed"
+    echo "Tests failed: $failed"
+
+    if [ "$failed" -gt 0 ]; then
+      echo "Some tests failed, checking details..."
+      echo "$results" | jq '.failures[]'
+    fi
+```
+
+### Dependency Information Caching
+
+```yaml
+- name: Get dependency info
+  id: deps
+  uses: ./apps/run-cache
+  with:
+    run: |
+      echo '{
+        "nodeVersion": "'$(node --version)'",
+        "npmVersion": "'$(npm --version)'",
+        "packageCount": '$(npm list --depth=0 --json | jq '.dependencies | length')',
+        "devPackageCount": '$(npm list --depth=0 --json | jq '.devDependencies | length')'
+      }'
+    include-stdout: 'true'
+    cache-path: 'gs://build-cache/deps-${{ hashFiles("package*.json") }}'
+
+- name: Report dependency info
+  run: |
+    deps='${{ steps.deps.outputs.stdout }}'
+    echo "Node: $(echo "$deps" | jq -r .nodeVersion)"
+    echo "NPM: $(echo "$deps" | jq -r .npmVersion)"
+    echo "Dependencies: $(echo "$deps" | jq -r .packageCount)"
+    echo "Dev Dependencies: $(echo "$deps" | jq -r .devPackageCount)"
 ```
 
 ## Best Practices
