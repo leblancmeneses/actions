@@ -1,7 +1,6 @@
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import { Storage } from '@google-cloud/storage';
-import { CacheMetadata } from "./types";
 
 export async function run() {
   try {
@@ -9,14 +8,14 @@ export async function run() {
     const shell = core.getInput("shell", { required: false }) || 'bash';
     const workingDirectory = core.getInput("working-directory", { required: false }) || '.';
     const cachePath = core.getInput("cache-path", { required: true });
-    const ttl = parseInt(core.getInput("ttl", { required: false }) || '86400');
-
 
     // Check if GOOGLE_APPLICATION_CREDENTIALS is set
     const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
     if (!credentialsPath) {
       core.warning("GOOGLE_APPLICATION_CREDENTIALS not set, running without cache");
-      await executeCommand(runCommand, shell, workingDirectory);
+      const result = await executeCommand(runCommand, shell, workingDirectory);
+      core.setOutput("cache-hit", "false");
+      core.setOutput("exit-code", result.exitCode.toString());
       return;
     }
 
@@ -26,7 +25,6 @@ export async function run() {
 
     // Check if cache exists in GCS
     let cacheHit = false;
-    let metadata: CacheMetadata | null = null;
 
     try {
       const bucket = storage.bucket(bucketName);
@@ -34,18 +32,9 @@ export async function run() {
       const [exists] = await file.exists();
 
       if (exists) {
-        // Download and parse cache metadata
-        const [content] = await file.download();
-        metadata = JSON.parse(content.toString());
-
-        // Check if cache is still valid (within TTL)
-        const now = Date.now();
-        if (metadata && (now - metadata.timestamp) < (metadata.ttl * 1000)) {
-          cacheHit = true;
-          core.info(`✅ Cache hit for path: ${cachePath}`);
-        } else {
-          core.info(`⏰ Cache expired for path: ${cachePath}`);
-        }
+        cacheHit = true;
+        core.info(`✅ Cache hit for path: ${cachePath}`);
+        core.info("Skipping command execution due to cache hit");
       }
     } catch (error) {
       core.debug(`Cache check failed: ${error.message}`);
@@ -54,68 +43,47 @@ export async function run() {
     // Set cache-hit output
     core.setOutput("cache-hit", cacheHit.toString());
 
-    if (cacheHit && metadata) {
-      // Use cached results
-      core.info("Using cached results");
-      core.setOutput("stdout", metadata.stdout);
-      core.setOutput("stderr", metadata.stderr);
-      core.setOutput("exit-code", metadata.exitCode.toString());
-
-      // Display cached output
-      if (metadata.stdout) {
-        core.info("=== Cached stdout ===");
-        core.info(metadata.stdout);
-      }
-      if (metadata.stderr) {
-        core.info("=== Cached stderr ===");
-        core.info(metadata.stderr);
-      }
-
-      return; // Exit early with cached results
+    if (cacheHit) {
+      // Skip execution entirely - cache hit means the work was already done
+      core.setOutput("exit-code", "0");
+      return;
     }
 
-    // Execute the command since no valid cache exists
+    // Execute the command since no cache exists
     core.info(`🚀 Executing command: ${runCommand}`);
     const result = await executeCommand(runCommand, shell, workingDirectory);
 
     // Set outputs
-    core.setOutput("stdout", result.stdout);
-    core.setOutput("stderr", result.stderr);
     core.setOutput("exit-code", result.exitCode.toString());
 
-    // Only cache successful executions
+    // Only create cache marker on successful execution
     if (result.exitCode === 0) {
-      // Create cache metadata
-      const cacheData: CacheMetadata = {
-        key: cachePath,
-        timestamp: Date.now(),
-        ttl: ttl,
-        stdout: result.stdout,
-        stderr: result.stderr,
-        exitCode: result.exitCode
+      // Create simple cache marker with timestamp
+      const cacheMarker = {
+        created: new Date().toISOString(),
+        command: runCommand,
+        success: true
       };
 
-      // Save to GCS
+      // Save cache marker to GCS
       try {
         const bucket = storage.bucket(bucketName);
         const file = bucket.file(fileName);
-        await file.save(JSON.stringify(cacheData, null, 2), {
+        await file.save(JSON.stringify(cacheMarker, null, 2), {
           metadata: {
             contentType: 'application/json',
-            cacheControl: 'no-cache',
             metadata: {
               cachePath: cachePath,
-              timestamp: cacheData.timestamp.toString(),
-              ttl: ttl.toString()
+              created: cacheMarker.created
             }
           }
         });
-        core.info(`✅ Results cached successfully at: ${cachePath}`);
+        core.info(`✅ Cache marker created at: ${cachePath}`);
       } catch (error) {
-        core.warning(`Failed to save cache: ${error.message}`);
+        core.warning(`Failed to save cache marker: ${error.message}`);
       }
     } else {
-      core.info(`⚠️ Command failed with exit code ${result.exitCode}, not caching results`);
+      core.info(`⚠️ Command failed with exit code ${result.exitCode}, not creating cache marker`);
     }
 
   } catch (error) {

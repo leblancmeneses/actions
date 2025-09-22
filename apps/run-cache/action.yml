@@ -1,5 +1,5 @@
 name: "Run with Cache"
-description: "Execute shell commands with caching support"
+description: "Execute shell commands with simple caching - skip execution if cache exists"
 inputs:
   run:
     description: "Command(s) to run"
@@ -13,21 +13,13 @@ inputs:
     required: false
     default: '.'
   cache-path:
-    description: "Cache path for storing/retrieving results in GCS"
+    description: "GCS path for cache marker (gs://bucket/path/to/cache)"
     required: true
-  ttl:
-    description: "Time to live for cache in seconds"
-    required: false
-    default: '86400' # 24 hours default
 outputs:
   cache-hit:
-    description: "Indicates if the cache was hit"
-  stdout:
-    description: "Standard output from the command"
-  stderr:
-    description: "Standard error from the command"
+    description: "true if cache was found and command was skipped, false otherwise"
   exit-code:
-    description: "Exit code from the command"
+    description: "Exit code from the command (0 if cache hit, actual exit code if executed)"
 runs:
   using: 'node20'
   main: '../../dist/apps/run-cache/main.js'
