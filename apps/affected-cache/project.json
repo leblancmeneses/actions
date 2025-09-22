@@ -1,7 +1,7 @@
 {
-  "name": "gcp-build-cache",
+  "name": "affected-cache",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/gcp-build-cache/src",
+  "sourceRoot": "apps/affected-cache/src",
   "projectType": "application",
   "tags": [],
   "targets": {
@@ -11,14 +11,14 @@
       "defaultConfiguration": "production",
       "options": {
         "platform": "node",
-        "outputPath": "dist/apps/gcp-build-cache",
+        "outputPath": "dist/apps/affected-cache",
         "format": ["cjs"],
         "bundle": true,
         "minify": true,
         "thirdParty": true,
-        "main": "apps/gcp-build-cache/src/main.ts",
-        "additionalEntryPoints": ["apps/gcp-build-cache/src/post.ts"],
-        "tsConfig": "apps/gcp-build-cache/tsconfig.app.json",
+        "main": "apps/affected-cache/src/main.ts",
+        "additionalEntryPoints": ["apps/affected-cache/src/post.ts"],
+        "tsConfig": "apps/affected-cache/tsconfig.app.json",
         "assets": [],
         "generatePackageJson": false,
         "esbuildOptions": {
@@ -45,14 +45,14 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "gcp-build-cache:build"
+        "buildTarget": "affected-cache:build"
       },
       "configurations": {
         "development": {
-          "buildTarget": "gcp-build-cache:build:development"
+          "buildTarget": "affected-cache:build:development"
         },
         "production": {
-          "buildTarget": "gcp-build-cache:build:production"
+          "buildTarget": "affected-cache:build:production"
         }
       }
     }

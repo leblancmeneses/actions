@@ -4,7 +4,7 @@
   - [1. Version Autopilot Action](#1-version-autopilot-action)
   - [2. Pragma Action](#2-pragma-action)
   - [3. Affected Action](#3-affected-action)
-  - [4. Affected GCP Build Cache Action](#4-affected-gcp-build-cache-action)
+  - [4. Affected Cache Action](#4-affected-affected-cache-action)
 - [Referencing Actions](#referencing-actions)
 - [Recommendations for multi-job pipeline](#recommendations-for-multi-job-pipeline)
 - [Run locally](#run-locally)
@@ -35,13 +35,13 @@ Have a polyglot build system? This task is for you. This task is designed for pr
 
 [Documentation](docs/affected.md)
 
-## 4. Affected GCP Build Cache Action
+## 4. Affected Cache Action
 
 This task is designed to help you cache jobs or tasks completed to speed up your pipeline. It consumes outputs from the Affected Action to identify the project targets and their corresponding SHA revision. Additionally, it leverages the Pragma Action to handle scenarios where caching should be bypassed, such as when a pull request requires skipping the cache. `x__skip-cache=true` or `x__target-cache='skip'`
 
 By using this Cache Action in conjunction with the Affected Action, you can significantly reduce build times and enhance the efficiency of your pipelines.
 
-[Documentation](docs/affected-gcp-build-cache.md)
+[Documentation](docs/affected-affected-cache.md)
 
 
 # Referencing Actions
@@ -116,7 +116,7 @@ jobs:
 
       - name: gcp cache
         id: cache
-        uses: leblancmeneses/actions/apps/gcp-build-cache@main
+        uses: leblancmeneses/actions/apps/affected-cache@main
         with:
           affected: ${{steps.affected.outputs.affected}}
           pragma: ${{steps.pragma.outputs.pragma}}

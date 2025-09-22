@@ -1,0 +1,66 @@
+{
+  "name": "run-cache",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/run-cache/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/apps/run-cache",
+        "format": ["cjs"],
+        "bundle": true,
+        "minify": true,
+        "thirdParty": true,
+        "main": "apps/run-cache/src/main.ts",
+        "tsConfig": "apps/run-cache/tsconfig.app.json",
+        "assets": [],
+        "generatePackageJson": false,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "legalComments": "none",
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "run-cache:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "run-cache:build:development"
+        },
+        "production": {
+          "buildTarget": "run-cache:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/run-cache/jest.config.ts"
+      }
+    }
+  }
+}
