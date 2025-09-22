@@ -32,7 +32,7 @@ export async function run() {
 
     // Check if cache exists in GCS
     let cacheHit = false;
-    let cachedData: any = null;
+    let cachedData: { stdout?: string } | null = null;
 
     try {
       const bucket = storage.bucket(bucketName);
@@ -83,7 +83,7 @@ export async function run() {
     // Only create cache marker on successful execution
     if (result.exitCode === 0) {
       // Create cache entry
-      const cacheEntry: any = {
+      const cacheEntry: { created: string; command: string; success: boolean; stdout?: string } = {
         created: new Date().toISOString(),
         command: runCommand,
         success: true

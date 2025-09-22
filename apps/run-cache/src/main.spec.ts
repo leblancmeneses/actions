@@ -3,6 +3,11 @@ jest.mock('@actions/core');
 jest.mock('@actions/exec');
 jest.mock('@google-cloud/storage');
 
+import * as core from '@actions/core';
+import * as exec from '@actions/exec';
+import { Storage } from '@google-cloud/storage';
+import { run } from './main';
+
 // Mock process.exit
 const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
   throw new Error('process.exit() was called');
@@ -11,14 +16,21 @@ const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
 describe('run-cache', () => {
   let mockGetInput: jest.Mock;
   let mockSetOutput: jest.Mock;
-  let mockSetFailed: jest.Mock;
   let mockInfo: jest.Mock;
   let mockWarning: jest.Mock;
   let mockDebug: jest.Mock;
   let mockExec: jest.Mock;
-  let mockFile: any;
-  let mockBucket: any;
-  let mockStorageInstance: any;
+  let mockFile: {
+    exists: jest.Mock;
+    download: jest.Mock;
+    save: jest.Mock;
+  };
+  let mockBucket: {
+    file: jest.Mock;
+  };
+  let mockStorageInstance: {
+    bucket: jest.Mock;
+  };
 
   beforeEach(() => {
     // Reset all mocks before each test
@@ -39,23 +51,20 @@ describe('run-cache', () => {
     };
 
     // Mock the Storage constructor
-    const { Storage } = require('@google-cloud/storage');
-    (Storage as jest.Mock).mockImplementation(() => mockStorageInstance);
+    (Storage as unknown as jest.Mock).mockImplementation(() => mockStorageInstance);
 
     // Setup core mocks
-    const core = require('@actions/core');
-    mockGetInput = core.getInput;
-    mockSetOutput = core.setOutput;
-    mockSetFailed = core.setFailed.mockImplementation((message: string) => {
+    mockGetInput = core.getInput as jest.Mock;
+    mockSetOutput = core.setOutput as jest.Mock;
+    (core.setFailed as jest.Mock).mockImplementation((message: string) => {
       throw new Error(`Action failed: ${message}`);
     });
-    mockInfo = core.info;
-    mockWarning = core.warning;
-    mockDebug = core.debug;
+    mockInfo = core.info as jest.Mock;
+    mockWarning = core.warning as jest.Mock;
+    mockDebug = core.debug as jest.Mock;
 
     // Setup exec mock
-    const exec = require('@actions/exec');
-    mockExec = exec.exec;
+    mockExec = exec.exec as jest.Mock;
 
     // Default environment
     process.env.GOOGLE_APPLICATION_CREDENTIALS = '/path/to/credentials.json';
@@ -64,18 +73,11 @@ describe('run-cache', () => {
 
   afterEach(() => {
     delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
-    jest.resetModules();
   });
 
   describe('Basic Functionality', () => {
     it('should skip execution when cache hit occurs (simple mode)', async () => {
       // Arrange
-      const cachedData = {
-        created: new Date().toISOString(),
-        command: 'echo "test"',
-        success: true
-      };
-
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
           case 'run': return 'echo "test"';
@@ -90,7 +92,6 @@ describe('run-cache', () => {
       mockFile.exists.mockResolvedValue([true]);
 
       // Act
-      const { run } = require('./main');
       await run();
 
       // Assert
@@ -115,14 +116,13 @@ describe('run-cache', () => {
       });
 
       mockFile.exists.mockResolvedValue([false]);
-      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: any) => {
-        options.listeners.stdout(Buffer.from('hello world\n'));
+      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
+        options.listeners?.stdout?.(Buffer.from('hello world\n'));
         return 0;
       });
       mockFile.save.mockResolvedValue([]);
 
       // Act
-      const { run } = require('./main');
       await run();
 
       // Assert
@@ -147,13 +147,12 @@ describe('run-cache', () => {
       });
 
       mockFile.exists.mockResolvedValue([false]);
-      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: any) => {
-        options.listeners.stderr(Buffer.from('Command failed\n'));
+      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
+        options.listeners?.stderr?.(Buffer.from('Command failed\n'));
         return 1; // Non-zero exit code
       });
 
       // Act & Assert
-      const { run } = require('./main');
       await expect(run()).rejects.toThrow('Action failed: process.exit() was called');
 
       expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
@@ -188,7 +187,6 @@ describe('run-cache', () => {
       mockFile.download.mockResolvedValue([Buffer.from(JSON.stringify(cachedData))]);
 
       // Act
-      const { run } = require('./main');
       await run();
 
       // Assert
@@ -213,14 +211,13 @@ describe('run-cache', () => {
       });
 
       mockFile.exists.mockResolvedValue([false]);
-      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: any) => {
-        options.listeners.stdout(Buffer.from('fresh output\n'));
+      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
+        options.listeners?.stdout?.(Buffer.from('fresh output\n'));
         return 0;
       });
       mockFile.save.mockResolvedValue([]);
 
       // Act
-      const { run } = require('./main');
       await run();
 
       // Assert
@@ -251,14 +248,13 @@ describe('run-cache', () => {
       });
 
       mockFile.exists.mockResolvedValue([false]);
-      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: any) => {
-        options.listeners.stdout(Buffer.from(jsonOutput + '\n'));
+      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
+        options.listeners?.stdout?.(Buffer.from(jsonOutput + '\n'));
         return 0;
       });
       mockFile.save.mockResolvedValue([]);
 
       // Act
-      const { run } = require('./main');
       await run();
 
       // Assert
@@ -271,12 +267,6 @@ describe('run-cache', () => {
 
     it('should not return stdout when include-stdout=false even if cached', async () => {
       // Arrange
-      const cachedData = {
-        created: new Date().toISOString(),
-        command: 'echo "test"',
-        success: true,
-        stdout: 'should not be returned'
-      };
 
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
@@ -292,7 +282,6 @@ describe('run-cache', () => {
       mockFile.exists.mockResolvedValue([true]);
 
       // Act
-      const { run } = require('./main');
       await run();
 
       // Assert
@@ -320,7 +309,6 @@ describe('run-cache', () => {
       mockFile.download.mockResolvedValue([Buffer.from('invalid json{')]); // Corrupt JSON
 
       // Act
-      const { run } = require('./main');
       await run();
 
       // Assert
@@ -344,13 +332,12 @@ describe('run-cache', () => {
         }
       });
 
-      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: any) => {
-        options.listeners.stdout(Buffer.from('no cache\n'));
+      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
+        options.listeners?.stdout?.(Buffer.from('no cache\n'));
         return 0;
       });
 
       // Act
-      const { run } = require('./main');
       await run();
 
       // Assert
@@ -376,12 +363,11 @@ describe('run-cache', () => {
         }
       });
 
-      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: any) => {
+      mockExec.mockImplementation(async () => {
         return 42; // Custom exit code
       });
 
       // Act & Assert
-      const { run } = require('./main');
       await expect(run()).rejects.toThrow('Action failed: process.exit() was called');
 
       expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
@@ -412,12 +398,11 @@ describe('run-cache', () => {
         });
 
         mockFile.exists.mockResolvedValue([false]);
-        mockExec.mockImplementation(async (_cmd: string, _args: string[], options: any) => {
-          options.listeners.stdout(Buffer.from(`${shell} output\n`));
+        mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
+          options.listeners?.stdout?.(Buffer.from(`${shell} output\n`));
           return 0;
         });
 
-        const { run } = require('./main');
         await run();
 
         expect(mockExec).toHaveBeenCalledWith(expectedCmd, [...expectedArgs, 'test command'], expect.any(Object));
