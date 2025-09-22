@@ -1,14 +1,29 @@
 - [Run Cache Action](#run-cache-action)
+  - [Overview](#overview)
   - [Problems with manual caching?](#problems-with-manual-caching)
   - [Dependencies](#dependencies)
   - [Basic Usage](#basic-usage)
   - [Cache Key Strategy](#cache-key-strategy)
   - [Branch Access Patterns](#branch-access-patterns)
   - [Inputs](#inputs)
+    - [Shell Options](#shell-options)
   - [Outputs](#outputs)
+  - [Include Stdout Feature](#include-stdout-feature)
+    - [Example with State Management](#example-with-state-management)
   - [Examples](#examples)
+    - [Basic Test Caching](#basic-test-caching)
+    - [Build Process with Branch-Specific Caching](#build-process-with-branch-specific-caching)
+    - [Multi-step Setup with Shared Cache](#multi-step-setup-with-shared-cache)
+    - [Conditional Execution Based on Cache](#conditional-execution-based-on-cache)
+    - [Cross-Platform Build Caching](#cross-platform-build-caching)
+    - [Python Environment Setup](#python-environment-setup)
+    - [Long-running Tests with Different Cache Granularity](#long-running-tests-with-different-cache-granularity)
+    - [Test Results with stdout Caching](#test-results-with-stdout-caching)
+    - [Dependency Information Caching](#dependency-information-caching)
 
 # Run Cache Action
+
+## Overview
 
 The Run Cache Action provides simple command execution caching using Google Cloud Storage. When a cache marker exists for a given cache path, the command is **skipped entirely**. When no cache exists, the command executes normally and creates a cache marker on successful completion (exit code 0).
 
@@ -17,11 +32,13 @@ This action is designed to solve the complexity of manual caching in GitHub Acti
 - Build processes that produce the same artifacts
 - Setup steps that are expensive to repeat
 - Any deterministic command that can be safely skipped
+- State management and data persistence across workflow steps
 
 **Key Behavior:**
 - ✅ Cache hit → Skip command execution entirely, return immediately
 - ❌ No cache → Execute command, create cache marker if successful (exit code 0)
 - ❌ Command fails → No cache marker created, normal failure behavior
+- 📤 Optional stdout caching → Store and retrieve command output for state management
 
 ## Problems with manual caching?
 
@@ -61,6 +78,7 @@ This manual approach requires:
 - **GOOGLE_APPLICATION_CREDENTIALS**: Environment variable with service account credentials
 - **@actions/core**: GitHub Actions integration
 - **@actions/exec**: Command execution
+
 
 ## Basic Usage
 
@@ -198,11 +216,7 @@ This is particularly useful for:
     if [ "${{ steps.tests.outputs.cache-hit }}" = "true" ]; then
       echo "Tests were skipped due to cache hit"
     else
-      echo "Tests executed with exit code: ${{ steps.tests.outputs.exit-code }}"
-      if [ "${{ steps.tests.outputs.exit-code }}" != "0" ]; then
-        echo "Tests failed!"
-        exit 1
-      fi
+      echo "Tests were executed"
     fi
 ```
 
@@ -370,31 +384,3 @@ steps:
     echo "Dependencies: $(echo "$deps" | jq -r .packageCount)"
     echo "Dev Dependencies: $(echo "$deps" | jq -r .devPackageCount)"
 ```
-
-## Best Practices
-
-1. **Cache Key Design**: Include all factors that affect command outcome
-2. **Granularity**: Cache at appropriate levels - not too broad, not too narrow
-3. **Branch Strategy**: Use branch-specific caches for branch-specific work
-4. **Shared Caches**: Use content-based keys for caches that can be shared across branches
-5. **GCS Organization**: Structure your GCS paths logically (`gs://bucket/project/type/key`)
-6. **Permissions**: Ensure your GCS service account has read/write access to cache buckets
-7. **Monitoring**: Track cache hit rates to optimize your caching strategy
-
-## Troubleshooting
-
-- **Commands always execute**: Check `cache-path` format and GCS permissions
-- **Permission denied**: Verify `GOOGLE_APPLICATION_CREDENTIALS` and GCS bucket access
-- **Cache not created**: Ensure commands exit with code 0 on success
-- **Unexpected cache misses**: Verify cache keys are deterministic and consistent
-
-## Differences from GitHub Actions Cache
-
-| Feature | GitHub Actions Cache | GCS Run Cache |
-|---------|---------------------|---------------|
-| **Branch Access** | Restricted (PR→main only) | Flexible (any→any) |
-| **Cache Content** | Files/directories | Simple existence marker |
-| **Cache Size** | Limited per cache entry | Minimal (just marker files) |
-| **Cross-repo** | Not supported | Possible with shared GCS |
-| **TTL** | Automatic (7 days) | Manual via cache key design |
-| **Setup** | Built-in | Requires GCS setup |
