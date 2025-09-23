@@ -1,6 +1,6 @@
 {
   "name": "@improvingstartups/actions",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "license": "MIT",
   "scripts": {
     "apps:affected:generate-parser": "peggy -o apps/affected/src/parser.ts --format es apps/affected/src/parser.peggy",
