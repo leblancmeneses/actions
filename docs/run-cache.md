@@ -3,8 +3,7 @@
   - [Problems with manual caching?](#problems-with-manual-caching)
   - [Dependencies](#dependencies)
   - [Basic Usage](#basic-usage)
-  - [Cache Key Strategy](#cache-key-strategy)
-  - [Branch Access Patterns](#branch-access-patterns)
+  - [Cache Key Access Patterns](#cache-key-access-patterns)
   - [Inputs](#inputs)
     - [Shell Options](#shell-options)
   - [Outputs](#outputs)
@@ -98,7 +97,7 @@ Whenever you use `leblancmeneses/actions/apps/run-cache@main` in a job, you shou
     cache-path: 'gs://my-bucket/test-cache/${{ hashFiles("**/*.test.js", "src/**/*.js") }}'
 ```
 
-## Cache Key Strategy
+## Cache Key Access Patterns
 
 The `cache-path` should include factors that affect the command outcome:
 
@@ -111,26 +110,7 @@ cache-path: 'gs://bucket/build/${{ runner.os }}-${{ hashFiles("package*.json") }
 
 # Branch-specific cache
 cache-path: 'gs://bucket/lint/${{ github.ref_name }}-${{ hashFiles("**/*.js") }}'
-```
 
-## Branch Access Patterns
-
-Unlike GitHub Actions cache which has complex branch access rules, GCS-based caching allows flexible cross-branch access:
-
-**GitHub Actions Cache Limitations:**
-- PR branches can only access caches from the base branch (usually `main`)
-- PR branches cannot access caches from other PRs
-- Caches created in PRs are not accessible to `main` branch
-
-**GCS Cache Benefits:**
-- Any branch can access any cache (based on your GCS permissions)
-- PR branches can access caches from other PRs
-- Caches created in PRs can be accessed by `main` branch
-- Full control over cache sharing via GCS bucket policies
-
-**Recommended Patterns:**
-
-```yaml
 # Shared cache across all branches
 cache-path: 'gs://bucket/shared/tests-${{ hashFiles("**/*.test.js") }}'
 
@@ -140,6 +120,10 @@ cache-path: 'gs://bucket/branch/${{ github.ref_name }}/build-${{ hashFiles("src/
 # PR-specific but accessible to main
 cache-path: 'gs://bucket/pr/${{ github.event.number || github.ref_name }}/tests-${{ hashFiles("**") }}'
 ```
+
+
+Use it with [./affected.md](./affected.md), sha, or [./affected-cache.md](./affected-cache.md), path, that can be used as the cache-path.
+
 
 ## Inputs
 
