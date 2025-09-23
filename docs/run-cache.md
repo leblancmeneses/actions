@@ -74,10 +74,17 @@ This manual approach requires:
 
 ## Dependencies
 
-- **Google Cloud Storage**: Cache markers stored in GCS
-- **GOOGLE_APPLICATION_CREDENTIALS**: Environment variable with service account credentials
-- **@actions/core**: GitHub Actions integration
-- **@actions/exec**: Command execution
+This task depends on `google-github-actions/auth@v2`. Ensure you have the Google Cloud SDK authenticated in your runner.
+
+Whenever you use `leblancmeneses/actions/apps/run-cache@main` in a job, you should include the following dependencies in your workflow:
+
+```yaml
+    - name: set up gcloud auth
+      uses: 'google-github-actions/auth@v2'
+      with:
+        # choose your style: workload identity, or json file. @see: https://github.com/google-github-actions/auth
+        credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV_FILE }}'
+```
 
 
 ## Basic Usage
@@ -86,7 +93,8 @@ This manual approach requires:
 - name: Run tests with caching
   uses: ./apps/run-cache
   with:
-    run: 'npm test'
+    run: |
+      npm test
     cache-path: 'gs://my-bucket/test-cache/${{ hashFiles("**/*.test.js", "src/**/*.js") }}'
 ```
 

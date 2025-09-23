@@ -4,7 +4,8 @@
   - [1. Version Autopilot Action](#1-version-autopilot-action)
   - [2. Pragma Action](#2-pragma-action)
   - [3. Affected Action](#3-affected-action)
-  - [4. Affected Cache Action](#4-affected-affected-cache-action)
+  - [4. Affected Cache Action](#4-affected-cache-action)
+  - [5. Run Cache Action](#5-run-cache-action)
 - [Referencing Actions](#referencing-actions)
 - [Recommendations for multi-job pipeline](#recommendations-for-multi-job-pipeline)
 - [Run locally](#run-locally)
@@ -41,7 +42,19 @@ This task is designed to help you cache jobs or tasks completed to speed up your
 
 By using this Cache Action in conjunction with the Affected Action, you can significantly reduce build times and enhance the efficiency of your pipelines.
 
-[Documentation](docs/affected-affected-cache.md)
+[Documentation](docs/affected-cache.md)
+
+## 5. Run Cache Action
+
+It executes shell commands and caches successful results to avoid redundant execution of expensive operations. The action supports multiple shell types (bash, sh, python, node, powershell) and can optionally capture and cache command stdout for state management.
+
+Key features:
+- **Smart caching**: Only re-runs commands when cache misses occur
+- **Multi-shell support**: Works with bash, sh, python, node, and powershell
+- **Stdout capture**: Optionally captures and returns command output (e.g. json) for downstream jobs
+- **Failure handling**: Only caches successful command executions
+
+[Documentation](docs/run-cache.md)
 
 
 # Referencing Actions
