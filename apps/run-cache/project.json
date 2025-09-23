@@ -24,7 +24,8 @@
           "sourcemap": true,
           "outExtension": {
             ".js": ".js"
-          }
+          },
+          "keepNames": true
         }
       },
       "configurations": {
@@ -35,7 +36,8 @@
             "sourcemap": false,
             "outExtension": {
               ".js": ".js"
-            }
+            },
+            "keepNames": true
           }
         }
       }
