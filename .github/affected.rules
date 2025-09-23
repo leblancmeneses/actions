@@ -5,3 +5,4 @@ peggy-parser-checkIf-incomplete: peggy-parser AND (!'apps/affected/src/parser.ts
 <version-autopilot>: './apps/version-autopilot/**' './dist/apps/version-autopilot/**';
 <pragma>: './apps/pragma/**' './dist/apps/pragma/**';
 <affected-cache>: './apps/affected-cache/**' './dist/apps/affected-cache/**';
+<run-cache>: './apps/run-cache/**' './dist/apps/run-cache/**';

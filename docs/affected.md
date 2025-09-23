@@ -56,7 +56,9 @@ jobs:
           verbose: false # optional
           recommended-imagetags-tag-format: '{sha}' # optional
           recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha|10}') || '{sha}' }} # optional to add prefix, suffix to the image tag.
-          recommended-imagetags-registry: '' # optional; used in recommended_imagetags.
+          recommended-imagetags-registry: '${{ env.ARTIFACT_REGISTRY_PUBLIC }}/' # optional; used in recommended_imagetags.
+          recommended-imagetags-registry-if: | # optional; allows specifying different registry for specific targets.
+            project-dbmigrations: ${{ env.ARTIFACT_REGISTRY_PRIVATE }}/;
           changed-files-output-file: '' # optional; The path to write the file containing the list of changed files.
           rules-file: '' # optional; The path to the file containing the rules if you perfer externalizing the rules for husky integration.
           rules: |
@@ -75,6 +77,12 @@ jobs:
             <project-dbmigrations>: './databases/project/**';
 
 ```
+## Registry Configuration
+
+The `recommended-imagetags-registry` parameter sets the default registry for all recommended image tags. However, you can override this for specific targets using `recommended-imagetags-registry-if`. This is useful when different projects need to be pushed to different registries (e.g., public vs private registries).
+
+The format is `target-name: registry-url;` where each target override is on its own line.
+
 ## Rule DSL
 
 These rules map a *project name* and the *expression* to check for changes and to generate an sha1 hash of the dependency graph.
