@@ -1,7 +1,7 @@
 {
-  "name": "gcp-build-cache",
+  "name": "run-cache",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/gcp-build-cache/src",
+  "sourceRoot": "apps/run-cache/src",
   "projectType": "application",
   "tags": [],
   "targets": {
@@ -11,21 +11,21 @@
       "defaultConfiguration": "production",
       "options": {
         "platform": "node",
-        "outputPath": "dist/apps/gcp-build-cache",
+        "outputPath": "dist/apps/run-cache",
         "format": ["cjs"],
         "bundle": true,
         "minify": true,
         "thirdParty": true,
-        "main": "apps/gcp-build-cache/src/main.ts",
-        "additionalEntryPoints": ["apps/gcp-build-cache/src/post.ts"],
-        "tsConfig": "apps/gcp-build-cache/tsconfig.app.json",
+        "main": "apps/run-cache/src/main.ts",
+        "tsConfig": "apps/run-cache/tsconfig.app.json",
         "assets": [],
         "generatePackageJson": false,
         "esbuildOptions": {
           "sourcemap": true,
           "outExtension": {
             ".js": ".js"
-          }
+          },
+          "keepNames": true
         }
       },
       "configurations": {
@@ -36,7 +36,8 @@
             "sourcemap": false,
             "outExtension": {
               ".js": ".js"
-            }
+            },
+            "keepNames": true
           }
         }
       }
@@ -45,15 +46,22 @@
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "gcp-build-cache:build"
+        "buildTarget": "run-cache:build"
       },
       "configurations": {
         "development": {
-          "buildTarget": "gcp-build-cache:build:development"
+          "buildTarget": "run-cache:build:development"
         },
         "production": {
-          "buildTarget": "gcp-build-cache:build:production"
+          "buildTarget": "run-cache:build:production"
         }
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/run-cache/jest.config.ts"
       }
     }
   }

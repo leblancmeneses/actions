@@ -102,7 +102,7 @@ jobs:
 
       - name: calculate gcp cache
         id: cache
-        uses: ./apps/gcp-build-cache
+        uses: ./apps/affected-cache
         with:
           affected: ${{steps.affected.outputs.affected}}
           pragma: ${{steps.pragma.outputs.pragma}}
@@ -122,7 +122,7 @@ jobs:
           cat ./.artifacts/changed.json
 
           echo "==========="
-          echo "gcp-build-cache: "
+          echo "affected-cache: "
           echo '${{ steps.cache.outputs.cache }}' | jq .
 
       - name: incomplete parser changes
@@ -144,75 +144,76 @@ jobs:
             fromJson(steps.affected.outputs.affected).affected.changes ||
             fromJson(steps.affected.outputs.affected).version-autopilot.changes ||
             fromJson(steps.affected.outputs.affected).pragma.changes ||
-            fromJson(steps.affected.outputs.affected).gcp-build-cache.changes
+            fromJson(steps.affected.outputs.affected).affected-cache.changes
           )
         run: |
           # package.json bump required by affected.
           git diff ${{ github.event.pull_request.base.sha }} ${{ github.sha }} package.json | grep version
 
       - name: build affected
+        uses: ./apps/run-cache
         if: |
-         !failure() && !cancelled()
-           && fromJson(steps.affected.outputs.affected).affected.changes
-           && fromJson(steps.cache.outputs.cache).affected-build.cache-hit == false
-        run: |
-          npx nx run affected:lint
-          npx nx run affected:test
-          npx nx run affected:build:production
-
-      - name: write affected-build cache
-        uses: ./apps/gcp-build-cache
+          !failure() && !cancelled()
+            && fromJson(steps.affected.outputs.affected).affected.changes
+            && fromJson(steps.cache.outputs.cache).affected-build.cache-hit == false
         with:
-          write-on: immediate
-          cache_key_path: ${{fromJson(steps.cache.outputs.cache).affected-build.path}}
+          run: |
+            npx nx run affected:lint
+            npx nx run affected:test
+            npx nx run affected:build:production
+          cache-path: ${{fromJson(steps.cache.outputs.cache).affected-build.path}}
 
       - name: build version-autopilot
+        uses: ./apps/run-cache
         if: |
           !failure() && !cancelled()
             && fromJson(steps.affected.outputs.affected).version-autopilot.changes
             && fromJson(steps.cache.outputs.cache).version-autopilot.cache-hit == false
-        run: |
-          npx nx run version-autopilot:lint
-          npx nx run version-autopilot:test
-          npx nx run version-autopilot:build:production
-
-      - name: write version-autopilot cache
-        uses: ./apps/gcp-build-cache
         with:
-          write-on: immediate
-          cache_key_path: ${{fromJson(steps.cache.outputs.cache).version-autopilot.path}}
+          run: |
+            npx nx run version-autopilot:lint
+            npx nx run version-autopilot:test
+            npx nx run version-autopilot:build:production
+          cache-path: ${{fromJson(steps.cache.outputs.cache).version-autopilot.path}}
 
       - name: build pragma
+        uses: ./apps/run-cache
         if: |
           !failure() && !cancelled()
             && fromJson(steps.affected.outputs.affected).pragma.changes
             && fromJson(steps.cache.outputs.cache).pragma.cache-hit == false
-        run:  |
-          npx nx run pragma:lint
-          npx nx run pragma:test
-          npx nx run pragma:build:production
-
-      - name: write pragma cache
-        uses: ./apps/gcp-build-cache
         with:
-          write-on: immediate
-          cache_key_path: ${{fromJson(steps.cache.outputs.cache).pragma.path}}
+          run: |
+            npx nx run pragma:lint
+            npx nx run pragma:test
+            npx nx run pragma:build:production
+          cache-path: ${{fromJson(steps.cache.outputs.cache).pragma.path}}
 
-      - name: build gcp-build-cache
+      - name: build affected-cache
+        uses: ./apps/run-cache
         if: |
           !failure() && !cancelled()
-            && fromJson(steps.affected.outputs.affected).gcp-build-cache.changes
-            && fromJson(steps.cache.outputs.cache).gcp-build-cache.cache-hit == false
-        run:  |
-          npx nx run gcp-build-cache:lint
-          npx nx run gcp-build-cache:test
-          npx nx run gcp-build-cache:build:production
-
-      - name: write affected gcp-build-cache
-        uses: ./apps/gcp-build-cache
+            && fromJson(steps.affected.outputs.affected).affected-cache.changes
+            && fromJson(steps.cache.outputs.cache).affected-cache.cache-hit == false
         with:
-          write-on: immediate
-          cache_key_path: ${{fromJson(steps.cache.outputs.cache).gcp-build-cache.path}}
+          run: |
+            npx nx run affected-cache:lint
+            npx nx run affected-cache:test
+            npx nx run affected-cache:build:production
+          cache-path: ${{fromJson(steps.cache.outputs.cache).affected-cache.path}}
+
+      - name: build run-cache
+        uses: ./apps/run-cache
+        if: |
+          !failure() && !cancelled()
+            && fromJson(steps.affected.outputs.affected).run-cache.changes
+            && fromJson(steps.cache.outputs.cache).run-cache.cache-hit == false
+        with:
+          run: |
+            npx nx run run-cache:lint
+            npx nx run run-cache:test
+            npx nx run run-cache:build:production --no-cache
+          cache-path: ${{fromJson(steps.cache.outputs.cache).run-cache.path}}
 
       - name: assert dist is deterministic
         run: git diff --exit-code -- ./dist
@@ -267,7 +268,7 @@ jobs:
             org.opencontainers.image.vendor=Improving Startups LLC
 
       - name: write affected-docker cache
-        uses: ./apps/gcp-build-cache
+        uses: ./apps/affected-cache
         with:
           write-on: immediate
           cache_key_path: ${{fromJson(steps.cache.outputs.cache).affected-docker.path}}

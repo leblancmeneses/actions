@@ -1,0 +1,29 @@
+name: "Run with Cache"
+description: "Execute shell commands with simple caching - skip execution if cache exists"
+inputs:
+  run:
+    description: "Command(s) to run"
+    required: true
+  shell:
+    description: "Shell to use for running commands (bash, sh, pwsh, python, etc.)"
+    required: false
+    default: 'bash'
+  working-directory:
+    description: "Working directory for the command"
+    required: false
+    default: '.'
+  cache-path:
+    description: "GCS path for cache marker (gs://bucket/path/to/cache)"
+    required: true
+  include-stdout:
+    description: "Include stdout in cache and return it as output"
+    required: false
+    default: 'false'
+outputs:
+  cache-hit:
+    description: "true if cache was found and command was skipped, false otherwise"
+  stdout:
+    description: "Standard output from command (cached or actual, only if include-stdout=true)"
+runs:
+  using: 'node20'
+  main: '../../dist/apps/run-cache/main.js'

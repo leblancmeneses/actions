@@ -1,4 +1,4 @@
-name: "GCP Build Cache"
+name: "Affected Cache"
 description: "Check and store build cache in GCS"
 inputs:
   write-on:
@@ -30,6 +30,6 @@ outputs:
     description: "Set when not using cache_key_path"
 runs:
   using: 'node20'
-  main: '../../dist/apps/gcp-build-cache/main.js'
-  post: '../../dist/apps/gcp-build-cache/post.js'
+  main: '../../dist/apps/affected-cache/main.js'
+  post: '../../dist/apps/affected-cache/post.js'
   post-if: "success()"
