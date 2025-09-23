@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import { writeCacheFileToGcs } from "./util";
 import { WriteOn } from "./types";
+import { Storage } from '@google-cloud/storage';
 
 async function run() {
   try {
@@ -12,7 +13,19 @@ async function run() {
       return;
     }
 
-    if (process.env.CACHE_HIT === "true") {
+    // Check if cache actually exists instead of relying on environment state
+    const storage = new Storage();
+    let cacheExists = false;
+    try {
+      const bucketName = cacheKeyPath.substring(0, cacheKeyPath.indexOf('/', 5));
+      const fileName = cacheKeyPath.substring(bucketName.length + 1);
+      const [exists] = await storage.bucket(bucketName).file(fileName).exists();
+      cacheExists = exists;
+    } catch (error) {
+      // noop.
+    }
+
+    if (cacheExists) {
       core.info("🔄 Skipping cache upload: cache already exists.");
       return;
     }
