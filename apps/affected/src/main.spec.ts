@@ -95,6 +95,10 @@ describe("main.spec", () => {
 M\t.github/workflows/ci.yml
 M\tapps/affected/src/main.ts
 `.trim(),
+    'git diff --name-status $(git merge-base origin/main head1) head1': () => `
+M\t.github/workflows/ci.yml
+M\tapps/affected/src/main.ts
+`.trim(),
     'git ls-files -s': () => lines.map(x => x.file).join('\n'),
   };
 
@@ -122,7 +126,7 @@ M\tapps/affected/src/main.ts
     github.context.payload = {
       pull_request: {
         number: 100,
-        base: { sha: 'base1' },
+        base: { sha: 'base1', ref: 'main' },
         head: { sha: 'head1' }
       }
     };

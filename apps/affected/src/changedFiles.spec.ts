@@ -6,7 +6,7 @@ jest.mock('@actions/github', () => {
       eventName: 'pull_request',
       payload: {
         pull_request: {
-          base: { sha: 'base-sha' },
+          base: { sha: 'base-sha', ref: 'main' },
           head: { sha: 'head-sha' }
         }
       },
@@ -73,7 +73,7 @@ describe('changed-files.spec', () => {
       (github.context as any).eventName = 'pull_request';
       (github.context as any).payload = {
         pull_request: {
-          base: { sha: 'base-sha' },
+          base: { sha: 'base-sha', ref: 'main' },
           head: { sha: 'head-sha' }
         }
       };
@@ -87,7 +87,7 @@ describe('changed-files.spec', () => {
       mockExecSync.mockReturnValueOnce('');
       const files = await getChangedFiles();
       expect(files).toEqual([]);
-      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status base-sha head-sha', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER });
+      expect(mockExecSync).toHaveBeenCalledWith('git diff --name-status $(git merge-base origin/main head-sha) head-sha', { encoding: 'utf-8', maxBuffer: EXEC_SYNC_MAX_BUFFER });
     });
 
     it('parses rename status ignoring score', async () => {

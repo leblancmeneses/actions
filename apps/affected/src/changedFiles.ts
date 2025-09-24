@@ -48,7 +48,10 @@ export const getChangedFiles = async (): Promise<ChangedFile[]> => {
   if (process.env['ACT'] === 'true') {
     baseDiffCommand = 'git diff HEAD --name-status';
   } else if (github.context.eventName === 'pull_request') {
-    baseDiffCommand = `git diff --name-status ${github.context.payload?.pull_request?.base?.sha} ${github.context.payload?.pull_request?.head?.sha}`;
+    // Use merge-base to find the actual branching point, not GitHub's base SHA
+    const baseBranch = github.context.payload?.pull_request?.base?.ref || 'main';
+    const headSha = github.context.payload?.pull_request?.head?.sha;
+    baseDiffCommand = `git diff --name-status $(git merge-base origin/${baseBranch} ${headSha}) ${headSha}`;
   } else if (github.context.eventName === 'push') {
     baseDiffCommand = `git diff --name-status ${github.context.payload?.before} ${github.context.payload?.after}`;
   } else if (process.env.BASE_SHA && process.env.HEAD_SHA) {
