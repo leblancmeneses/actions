@@ -100,7 +100,7 @@ describe("run", () => {
     expect(mockSetFailed).not.toHaveBeenCalled();
   });
 
-  it("should set an empty object when project 'changes' from affected are ALL false", async () => {
+  it("should include all projects with sha regardless of changes value", async () => {
     mockGetInput.mockImplementation((name: string) => {
       if (name === "access-key") return "test-access-key";
       if (name === "secret-key") return "test-secret-key";
@@ -124,8 +124,17 @@ describe("run", () => {
 
     await run();
 
-    // should result in an empty cache object.
-    expect(core.setOutput).toHaveBeenCalledWith("cache", {    });
+    // should include all projects with sha, regardless of changes value
+    expect(core.setOutput).toHaveBeenCalledWith("cache", {
+      "project-api": {
+        "cache-hit": true,
+        "path": "gs://abc-123/github-integration/pr-123-project-api-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+      },
+      "project-ui": {
+        "cache-hit": true,
+        "path": "gs://abc-123/github-integration/pr-123-project-ui-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+      },
+    });
   });
 
   it("should check cache existence for each key in buildCache when cacheKeyPath is not provided", async () => {
@@ -159,7 +168,13 @@ describe("run", () => {
     expect(mockCheckObjectExists).toHaveBeenCalledWith('gs://abc-123/github-integration/pr-123-project-ui-lint-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
     expect(mockCheckObjectExists).toHaveBeenCalledWith('gs://abc-123/github-integration/pr-123-project-ui-build-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
     expect(mockCheckObjectExists).toHaveBeenCalledWith('gs://abc-123/github-integration/pr-123-project-ui-e2e-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
+    expect(mockCheckObjectExists).toHaveBeenCalledWith('gs://abc-123/github-integration/pr-123-project-api-38aabc2d6ae9866f3c1d601cba956bb935c02cf5');
     expect(core.setOutput).toHaveBeenCalledWith("cache", {
+      "project-api": {
+        "cache-hit": true,
+        "path":
+          "gs://abc-123/github-integration/pr-123-project-api-38aabc2d6ae9866f3c1d601cba956bb935c02cf5",
+      },
       "project-ui": {
         "cache-hit": true,
         "path":
