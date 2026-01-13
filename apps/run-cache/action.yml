@@ -1,6 +1,19 @@
 name: "Run with Cache"
-description: "Execute shell commands with simple caching - skip execution if cache exists"
+description: "Execute shell commands with S3-compatible caching - skip execution if cache exists"
 inputs:
+  access-key:
+    description: "S3-compatible access key (AWS Access Key ID, GCS HMAC Access ID, etc.)"
+    required: true
+  secret-key:
+    description: "S3-compatible secret key (AWS Secret Access Key, GCS HMAC Secret, etc.)"
+    required: true
+  endpoint:
+    description: "S3-compatible endpoint URL (e.g., https://storage.googleapis.com for GCS)"
+    required: false
+  region:
+    description: "S3 region (e.g., us-east-1, auto)"
+    required: false
+    default: 'auto'
   run:
     description: "Command(s) to run"
     required: true
@@ -13,7 +26,7 @@ inputs:
     required: false
     default: '.'
   cache-path:
-    description: "GCS path for cache marker (gs://bucket/path/to/cache)"
+    description: "S3-compatible path for cache marker (s3://bucket/path or gs://bucket/path)"
     required: true
   include-stdout:
     description: "Include stdout in cache and return it as output"

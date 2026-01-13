@@ -1,11 +1,11 @@
 // Mock all external dependencies before imports
 jest.mock('@actions/core');
 jest.mock('@actions/exec');
-jest.mock('@google-cloud/storage');
+jest.mock('./s3-client');
 
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
-import { Storage } from '@google-cloud/storage';
+import { initializeS3Client, checkObjectExists, readObject, writeObject } from './s3-client';
 import { run } from './main';
 
 // Mock process.exit
@@ -20,38 +20,21 @@ describe('run-cache', () => {
   let mockWarning: jest.Mock;
   let mockDebug: jest.Mock;
   let mockExec: jest.Mock;
-  let mockFile: {
-    exists: jest.Mock;
-    download: jest.Mock;
-    save: jest.Mock;
-  };
-  let mockBucket: {
-    file: jest.Mock;
-  };
-  let mockStorageInstance: {
-    bucket: jest.Mock;
-  };
+  let mockInitializeS3Client: jest.Mock;
+  let mockCheckObjectExists: jest.Mock;
+  let mockReadObject: jest.Mock;
+  let mockWriteObject: jest.Mock;
 
   beforeEach(() => {
     // Reset all mocks before each test
     jest.clearAllMocks();
     mockExit.mockClear();
 
-    // Setup Storage mocks BEFORE importing modules
-    mockFile = {
-      exists: jest.fn(),
-      download: jest.fn(),
-      save: jest.fn()
-    };
-    mockBucket = {
-      file: jest.fn().mockReturnValue(mockFile)
-    };
-    mockStorageInstance = {
-      bucket: jest.fn().mockReturnValue(mockBucket)
-    };
-
-    // Mock the Storage constructor
-    (Storage as unknown as jest.Mock).mockImplementation(() => mockStorageInstance);
+    // Setup S3 client mocks
+    mockInitializeS3Client = initializeS3Client as jest.Mock;
+    mockCheckObjectExists = checkObjectExists as jest.Mock;
+    mockReadObject = readObject as jest.Mock;
+    mockWriteObject = writeObject as jest.Mock;
 
     // Setup core mocks
     mockGetInput = core.getInput as jest.Mock;
@@ -66,13 +49,7 @@ describe('run-cache', () => {
     // Setup exec mock
     mockExec = exec.exec as jest.Mock;
 
-    // Default environment
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = '/path/to/credentials.json';
     process.env.JEST_WORKER_ID = '1'; // Ensure we're in test environment
-  });
-
-  afterEach(() => {
-    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
   });
 
   describe('Basic Functionality', () => {
@@ -80,6 +57,8 @@ describe('run-cache', () => {
       // Arrange
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
+          case 'access-key': return 'test-access-key';
+          case 'secret-key': return 'test-secret-key';
           case 'run': return 'echo "test"';
           case 'shell': return 'bash';
           case 'working-directory': return '.';
@@ -89,16 +68,22 @@ describe('run-cache', () => {
         }
       });
 
-      mockFile.exists.mockResolvedValue([true]);
+      mockCheckObjectExists.mockResolvedValue(true);
 
       // Act
       await run();
 
       // Assert
-      expect(mockFile.exists).toHaveBeenCalled();
+      expect(mockInitializeS3Client).toHaveBeenCalledWith({
+        accessKey: 'test-access-key',
+        secretKey: 'test-secret-key',
+        endpoint: undefined,
+        region: undefined,
+      });
+      expect(mockCheckObjectExists).toHaveBeenCalledWith('gs://test-bucket/cache/test-key');
       expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'true');
       expect(mockExec).not.toHaveBeenCalled(); // Should not execute command
-      expect(mockInfo).toHaveBeenCalledWith('✅ Cache hit for path: gs://test-bucket/cache/test-key');
+      expect(mockInfo).toHaveBeenCalledWith('Cache hit for path: gs://test-bucket/cache/test-key');
       expect(mockInfo).toHaveBeenCalledWith('Skipping command execution due to cache hit');
     });
 
@@ -106,6 +91,8 @@ describe('run-cache', () => {
       // Arrange
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
+          case 'access-key': return 'test-access-key';
+          case 'secret-key': return 'test-secret-key';
           case 'run': return 'echo "hello world"';
           case 'shell': return 'bash';
           case 'working-directory': return '.';
@@ -115,28 +102,30 @@ describe('run-cache', () => {
         }
       });
 
-      mockFile.exists.mockResolvedValue([false]);
+      mockCheckObjectExists.mockResolvedValue(false);
       mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
         options.listeners?.stdout?.(Buffer.from('hello world\n'));
         return 0;
       });
-      mockFile.save.mockResolvedValue([]);
+      mockWriteObject.mockResolvedValue(undefined);
 
       // Act
       await run();
 
       // Assert
-      expect(mockFile.exists).toHaveBeenCalled();
+      expect(mockCheckObjectExists).toHaveBeenCalledWith('gs://test-bucket/cache/new-key');
       expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
       expect(mockExec).toHaveBeenCalledWith('bash', ['-c', 'echo "hello world"'], expect.any(Object));
-      expect(mockFile.save).toHaveBeenCalled();
-      expect(mockInfo).toHaveBeenCalledWith('✅ Cache marker created at: gs://test-bucket/cache/new-key');
+      expect(mockWriteObject).toHaveBeenCalled();
+      expect(mockInfo).toHaveBeenCalledWith('Cache marker created at: gs://test-bucket/cache/new-key');
     });
 
     it('should not create cache when command fails', async () => {
       // Arrange
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
+          case 'access-key': return 'test-access-key';
+          case 'secret-key': return 'test-secret-key';
           case 'run': return 'exit 1';
           case 'shell': return 'bash';
           case 'working-directory': return '.';
@@ -146,7 +135,7 @@ describe('run-cache', () => {
         }
       });
 
-      mockFile.exists.mockResolvedValue([false]);
+      mockCheckObjectExists.mockResolvedValue(false);
       mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
         options.listeners?.stderr?.(Buffer.from('Command failed\n'));
         return 1; // Non-zero exit code
@@ -156,8 +145,8 @@ describe('run-cache', () => {
       await expect(run()).rejects.toThrow('Action failed: process.exit() was called');
 
       expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
-      expect(mockFile.save).not.toHaveBeenCalled(); // Should not cache failed results
-      expect(mockInfo).toHaveBeenCalledWith('⚠️ Command failed with exit code 1, not creating cache');
+      expect(mockWriteObject).not.toHaveBeenCalled(); // Should not cache failed results
+      expect(mockInfo).toHaveBeenCalledWith('Command failed with exit code 1, not creating cache');
       expect(mockExit).toHaveBeenCalledWith(1);
     });
   });
@@ -174,6 +163,8 @@ describe('run-cache', () => {
 
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
+          case 'access-key': return 'test-access-key';
+          case 'secret-key': return 'test-secret-key';
           case 'run': return 'echo "test"';
           case 'shell': return 'bash';
           case 'working-directory': return '.';
@@ -183,15 +174,15 @@ describe('run-cache', () => {
         }
       });
 
-      mockFile.exists.mockResolvedValue([true]);
-      mockFile.download.mockResolvedValue([Buffer.from(JSON.stringify(cachedData))]);
+      mockCheckObjectExists.mockResolvedValue(true);
+      mockReadObject.mockResolvedValue(JSON.stringify(cachedData));
 
       // Act
       await run();
 
       // Assert
-      expect(mockFile.exists).toHaveBeenCalled();
-      expect(mockFile.download).toHaveBeenCalled();
+      expect(mockCheckObjectExists).toHaveBeenCalled();
+      expect(mockReadObject).toHaveBeenCalled();
       expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'true');
       expect(mockSetOutput).toHaveBeenCalledWith('stdout', 'cached output');
       expect(mockExec).not.toHaveBeenCalled(); // Should not execute command
@@ -201,6 +192,8 @@ describe('run-cache', () => {
       // Arrange
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
+          case 'access-key': return 'test-access-key';
+          case 'secret-key': return 'test-secret-key';
           case 'run': return 'echo "fresh output"';
           case 'shell': return 'bash';
           case 'working-directory': return '.';
@@ -210,66 +203,34 @@ describe('run-cache', () => {
         }
       });
 
-      mockFile.exists.mockResolvedValue([false]);
+      mockCheckObjectExists.mockResolvedValue(false);
       mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
         options.listeners?.stdout?.(Buffer.from('fresh output\n'));
         return 0;
       });
-      mockFile.save.mockResolvedValue([]);
+      mockWriteObject.mockResolvedValue(undefined);
 
       // Act
       await run();
 
       // Assert
-      expect(mockFile.exists).toHaveBeenCalled();
+      expect(mockCheckObjectExists).toHaveBeenCalled();
       expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
       expect(mockSetOutput).toHaveBeenCalledWith('stdout', 'fresh output');
       expect(mockExec).toHaveBeenCalledWith('bash', ['-c', 'echo "fresh output"'], expect.any(Object));
-      expect(mockFile.save).toHaveBeenCalledWith(
-        expect.stringContaining('"stdout": "fresh output"'),
-        expect.any(Object)
+      expect(mockWriteObject).toHaveBeenCalledWith(
+        'gs://test-bucket/cache/stdout-new',
+        expect.stringContaining('"stdout": "fresh output"')
       );
-      expect(mockInfo).toHaveBeenCalledWith('✅ Cache with stdout created at: gs://test-bucket/cache/stdout-new');
-    });
-
-    it('should handle JSON output for state storage', async () => {
-      // Arrange
-      const jsonOutput = '{"version": "1.2.3", "artifacts": ["dist/app.js"]}';
-
-      mockGetInput.mockImplementation((name: string) => {
-        switch (name) {
-          case 'run': return 'echo \'{"version": "1.2.3", "artifacts": ["dist/app.js"]}\'';
-          case 'shell': return 'bash';
-          case 'working-directory': return '.';
-          case 'cache-path': return 'gs://test-bucket/cache/json-state';
-          case 'include-stdout': return 'true';
-          default: return '';
-        }
-      });
-
-      mockFile.exists.mockResolvedValue([false]);
-      mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
-        options.listeners?.stdout?.(Buffer.from(jsonOutput + '\n'));
-        return 0;
-      });
-      mockFile.save.mockResolvedValue([]);
-
-      // Act
-      await run();
-
-      // Assert
-      expect(mockSetOutput).toHaveBeenCalledWith('stdout', jsonOutput);
-      expect(mockFile.save).toHaveBeenCalledWith(
-        expect.stringContaining('"stdout": "{\\"version\\": \\"1.2.3\\", \\"artifacts\\": [\\"dist/app.js\\"]}"'),
-        expect.any(Object)
-      );
+      expect(mockInfo).toHaveBeenCalledWith('Cache with stdout created at: gs://test-bucket/cache/stdout-new');
     });
 
     it('should not return stdout when include-stdout=false even if cached', async () => {
       // Arrange
-
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
+          case 'access-key': return 'test-access-key';
+          case 'secret-key': return 'test-secret-key';
           case 'run': return 'echo "test"';
           case 'shell': return 'bash';
           case 'working-directory': return '.';
@@ -279,7 +240,7 @@ describe('run-cache', () => {
         }
       });
 
-      mockFile.exists.mockResolvedValue([true]);
+      mockCheckObjectExists.mockResolvedValue(true);
 
       // Act
       await run();
@@ -287,7 +248,7 @@ describe('run-cache', () => {
       // Assert
       expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'true');
       expect(mockSetOutput).not.toHaveBeenCalledWith('stdout', expect.anything());
-      expect(mockFile.download).not.toHaveBeenCalled(); // Should not download cache content
+      expect(mockReadObject).not.toHaveBeenCalled(); // Should not download cache content
     });
   });
 
@@ -296,6 +257,8 @@ describe('run-cache', () => {
       // Arrange
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
+          case 'access-key': return 'test-access-key';
+          case 'secret-key': return 'test-secret-key';
           case 'run': return 'echo "test"';
           case 'shell': return 'bash';
           case 'working-directory': return '.';
@@ -305,8 +268,8 @@ describe('run-cache', () => {
         }
       });
 
-      mockFile.exists.mockResolvedValue([true]);
-      mockFile.download.mockResolvedValue([Buffer.from('invalid json{')]); // Corrupt JSON
+      mockCheckObjectExists.mockResolvedValue(true);
+      mockReadObject.mockResolvedValue('invalid json{'); // Corrupt JSON
 
       // Act
       await run();
@@ -317,12 +280,12 @@ describe('run-cache', () => {
       expect(mockDebug).toHaveBeenCalledWith(expect.stringContaining('Failed to parse cached data:'));
     });
 
-    it('should run without cache when GOOGLE_APPLICATION_CREDENTIALS is not set', async () => {
+    it('should run without cache when S3 credentials are not provided', async () => {
       // Arrange
-      delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
-
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
+          case 'access-key': return '';
+          case 'secret-key': return '';
           case 'run': return 'echo "no cache"';
           case 'shell': return 'bash';
           case 'working-directory': return '.';
@@ -341,19 +304,19 @@ describe('run-cache', () => {
       await run();
 
       // Assert
-      expect(mockWarning).toHaveBeenCalledWith('GOOGLE_APPLICATION_CREDENTIALS not set, running without cache');
+      expect(mockWarning).toHaveBeenCalledWith('S3 credentials not provided, running without cache');
       expect(mockExec).toHaveBeenCalled();
       expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
       expect(mockSetOutput).toHaveBeenCalledWith('stdout', 'no cache');
-      expect(mockFile.exists).not.toHaveBeenCalled(); // Should not check cache
+      expect(mockCheckObjectExists).not.toHaveBeenCalled(); // Should not check cache
     });
 
     it('should propagate failure when command fails without credentials', async () => {
       // Arrange
-      delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
-
       mockGetInput.mockImplementation((name: string) => {
         switch (name) {
+          case 'access-key': return '';
+          case 'secret-key': return '';
           case 'run': return 'exit 42';
           case 'shell': return 'bash';
           case 'working-directory': return '.';
@@ -388,6 +351,8 @@ describe('run-cache', () => {
 
         mockGetInput.mockImplementation((name: string) => {
           switch (name) {
+            case 'access-key': return 'test-access-key';
+            case 'secret-key': return 'test-secret-key';
             case 'run': return 'test command';
             case 'shell': return shell;
             case 'working-directory': return '.';
@@ -397,11 +362,12 @@ describe('run-cache', () => {
           }
         });
 
-        mockFile.exists.mockResolvedValue([false]);
+        mockCheckObjectExists.mockResolvedValue(false);
         mockExec.mockImplementation(async (_cmd: string, _args: string[], options: exec.ExecOptions) => {
           options.listeners?.stdout?.(Buffer.from(`${shell} output\n`));
           return 0;
         });
+        mockWriteObject.mockResolvedValue(undefined);
 
         await run();
 

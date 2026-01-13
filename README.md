@@ -127,13 +127,16 @@ jobs:
           recommended-imagetags-tag-format: '{target}{sha}'
           recommended-imagetags-tag-format-whenchanged: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.number, '{sha|10}') || '{sha}' }}
 
-      - name: gcp cache
+      - name: cache
         id: cache
         uses: leblancmeneses/actions/apps/affected-cache@main
         with:
+          access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+          secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+          endpoint: ${{ vars.CACHE_ENDPOINT }}
           affected: ${{steps.affected.outputs.affected}}
           pragma: ${{steps.pragma.outputs.pragma}}
-          gcs-root-path: gs://xxx-my-github-integration/build-cache
+          storage-path: s3://xxx-my-github-integration/build-cache
           additional-keys: |
             { "project-ui": ["lint", "build", "docker", "e2e"] }
 

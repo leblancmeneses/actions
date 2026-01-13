@@ -1,18 +1,31 @@
 name: "Affected Cache"
-description: "Check and store build cache in GCS"
+description: "Check and store build cache in S3-compatible storage (AWS S3, GCS, MinIO, SeaweedFS)"
 inputs:
+  access-key:
+    description: "S3-compatible access key (AWS Access Key ID, GCS HMAC Access ID, etc.)"
+    required: true
+  secret-key:
+    description: "S3-compatible secret key (AWS Secret Access Key, GCS HMAC Secret, etc.)"
+    required: true
+  endpoint:
+    description: "S3-compatible endpoint URL (e.g., https://storage.googleapis.com for GCS)"
+    required: false
+  region:
+    description: "S3 region (e.g., us-east-1, auto)"
+    required: false
+    default: 'auto'
   write-on:
-    description: "When to write file to GCS"
+    description: "When to write file to storage"
     required: false
     default: 'post'
     options:
       - 'immediate' # useful for inline writes in single job
       - 'post'
   cache_key_path:
-    description: "Required path to cache file in GCS"
+    description: "Path to cache file in S3-compatible storage (s3://bucket/key or gs://bucket/key)"
     required: false
-  gcs-root-path:
-    description: "Required gcs root path"
+  storage-path:
+    description: "Root path for cache storage (s3://bucket/prefix or gs://bucket/prefix)"
     required: false
   affected:
     description: "affected output"
@@ -21,7 +34,7 @@ inputs:
     description: "pragma output"
     required: false
   additional-keys:
-    description: "check keys against gcs"
+    description: "check keys against storage"
     required: false
 outputs:
   cache-hit:

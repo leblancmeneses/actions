@@ -1,19 +1,24 @@
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
-import { Storage } from '@google-cloud/storage';
+import { initializeS3Client, checkObjectExists, readObject, writeObject } from './s3-client';
 
 export async function run() {
   try {
+    // S3-compatible storage credentials
+    const accessKey = core.getInput("access-key", { required: false });
+    const secretKey = core.getInput("secret-key", { required: false });
+    const endpoint = core.getInput("endpoint", { required: false });
+    const region = core.getInput("region", { required: false });
+
     const runCommand = core.getInput("run", { required: true });
     const shell = core.getInput("shell", { required: false }) || 'bash';
     const workingDirectory = core.getInput("working-directory", { required: false }) || '.';
     const cachePath = core.getInput("cache-path", { required: true });
     const includeStdout = core.getInput("include-stdout", { required: false }).toLowerCase() === 'true';
 
-    // Check if GOOGLE_APPLICATION_CREDENTIALS is set
-    const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-    if (!credentialsPath) {
-      core.warning("GOOGLE_APPLICATION_CREDENTIALS not set, running without cache");
+    // Check if S3 credentials are available
+    if (!accessKey || !secretKey) {
+      core.warning("S3 credentials not provided, running without cache");
       const result = await executeCommand(runCommand, shell, workingDirectory);
       core.setOutput("cache-hit", "false");
       if (includeStdout) {
@@ -26,37 +31,40 @@ export async function run() {
       return;
     }
 
-    const storage = new Storage();
-    const bucketName = cachePath.substring(5, cachePath.indexOf('/', 5));
-    const fileName = cachePath.substring(bucketName.length + 6);
+    initializeS3Client({
+      accessKey,
+      secretKey,
+      endpoint: endpoint || undefined,
+      region: region || undefined,
+    });
 
-    // Check if cache exists in GCS
+    // Check if cache exists
     let cacheHit = false;
     let cachedData: { stdout?: string } | null = null;
 
     try {
-      const bucket = storage.bucket(bucketName);
-      const file = bucket.file(fileName);
-      const [exists] = await file.exists();
+      const exists = await checkObjectExists(cachePath);
 
       if (exists) {
         cacheHit = true;
-        core.info(`✅ Cache hit for path: ${cachePath}`);
+        core.info(`Cache hit for path: ${cachePath}`);
         core.info("Skipping command execution due to cache hit");
 
         // Download cached data if include-stdout is requested
         if (includeStdout) {
           try {
-            const [content] = await file.download();
-            cachedData = JSON.parse(content.toString());
+            const content = await readObject(cachePath);
+            if (content) {
+              cachedData = JSON.parse(content);
+            }
           } catch (error) {
-            core.debug(`Failed to parse cached data: ${error.message}`);
+            core.debug(`Failed to parse cached data: ${(error as Error).message}`);
             cachedData = null;
           }
         }
       }
     } catch (error) {
-      core.debug(`Cache check failed: ${error.message}`);
+      core.debug(`Cache check failed: ${(error as Error).message}`);
     }
 
     // Set cache-hit output
@@ -72,7 +80,7 @@ export async function run() {
     }
 
     // Execute the command since no cache exists
-    core.info(`🚀 Executing command: ${runCommand}`);
+    core.info(`Executing command: ${runCommand}`);
     const result = await executeCommand(runCommand, shell, workingDirectory);
 
     // Set stdout output if requested
@@ -94,33 +102,22 @@ export async function run() {
         cacheEntry.stdout = result.stdout;
       }
 
-      // Save cache to GCS
+      // Save cache
       try {
-        const bucket = storage.bucket(bucketName);
-        const file = bucket.file(fileName);
-        await file.save(JSON.stringify(cacheEntry, null, 2), {
-          metadata: {
-            contentType: 'application/json',
-            metadata: {
-              cachePath: cachePath,
-              created: cacheEntry.created,
-              includeStdout: includeStdout.toString()
-            }
-          }
-        });
-        core.info(`✅ Cache ${includeStdout ? 'with stdout' : 'marker'} created at: ${cachePath}`);
+        await writeObject(cachePath, JSON.stringify(cacheEntry, null, 2));
+        core.info(`Cache ${includeStdout ? 'with stdout' : 'marker'} created at: ${cachePath}`);
       } catch (error) {
-        core.warning(`Failed to save cache: ${error.message}`);
+        core.warning(`Failed to save cache: ${(error as Error).message}`);
       }
       // Command succeeded, action succeeds
     } else {
-      core.info(`⚠️ Command failed with exit code ${result.exitCode}, not creating cache`);
+      core.info(`Command failed with exit code ${result.exitCode}, not creating cache`);
       // Command failed, action should fail with same exit code
       process.exit(result.exitCode);
     }
 
   } catch (error) {
-    core.setFailed(`Action failed: ${error.message}`);
+    core.setFailed(`Action failed: ${(error as Error).message}`);
   }
 }
 

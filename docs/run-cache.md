@@ -1,7 +1,8 @@
 - [Run Cache Action](#run-cache-action)
   - [Overview](#overview)
+  - [S3-Compatible Storage](#s3-compatible-storage)
+  - [Provider Configuration](#provider-configuration)
   - [Problems with manual caching?](#problems-with-manual-caching)
-  - [Dependencies](#dependencies)
   - [Basic Usage](#basic-usage)
   - [Cache Key Access Patterns](#cache-key-access-patterns)
   - [Inputs](#inputs)
@@ -24,7 +25,7 @@
 
 ## Overview
 
-The Run Cache Action provides simple command execution caching using Google Cloud Storage. When a cache marker exists for a given cache path, the command is **skipped entirely**. When no cache exists, the command executes normally and creates a cache marker on successful completion (exit code 0).
+The Run Cache Action provides simple command execution caching using S3-compatible storage. When a cache marker exists for a given cache path, the command is **skipped entirely**. When no cache exists, the command executes normally and creates a cache marker on successful completion (exit code 0).
 
 This action is designed to solve the complexity of manual caching in GitHub Actions workflows, particularly for:
 - Long-running test suites that don't need to re-run if nothing changed
@@ -34,10 +35,47 @@ This action is designed to solve the complexity of manual caching in GitHub Acti
 - State management and data persistence across workflow steps
 
 **Key Behavior:**
-- ✅ Cache hit → Skip command execution entirely, return immediately
-- ❌ No cache → Execute command, create cache marker if successful (exit code 0)
-- ❌ Command fails → No cache marker created, normal failure behavior
-- 📤 Optional stdout caching → Store and retrieve command output for state management
+- Cache hit → Skip command execution entirely, return immediately
+- No cache → Execute command, create cache marker if successful (exit code 0)
+- Command fails → No cache marker created, normal failure behavior
+- Optional stdout caching → Store and retrieve command output for state management
+
+
+## S3-Compatible Storage
+
+This action uses S3-compatible storage APIs, which means it works with multiple cloud storage providers without code changes. The action requires the following inputs:
+
+| Input | Required | Description |
+|-------|----------|-------------|
+| `access-key` | Yes | S3-compatible access key |
+| `secret-key` | Yes | S3-compatible secret key |
+| `endpoint` | No | S3-compatible endpoint URL |
+| `region` | No | S3 region (default: `auto`) |
+
+
+## Provider Configuration
+
+The following table shows how to configure the action for different S3-compatible storage providers:
+
+| Input | AWS S3 | GCS (HMAC) | MinIO | SeaweedFS |
+|-------|--------|------------|-------|-----------|
+| `access-key` | AWS Access Key ID | [HMAC Access ID](https://cloud.google.com/storage/docs/authentication/managing-hmackeys) | MinIO Access Key | SeaweedFS Access Key |
+| `secret-key` | AWS Secret Access Key | [HMAC Secret](https://cloud.google.com/storage/docs/authentication/managing-hmackeys) | MinIO Secret Key | SeaweedFS Secret Key |
+| `endpoint` | *(not required)* | `https://storage.googleapis.com` | `https://minio.example.com` | `https://seaweedfs.example.com:8333` |
+| `region` | `us-east-1` (or your region) | `auto` | `us-east-1` | `us-east-1` |
+| `cache-path` | `s3://bucket/prefix` | `gs://bucket/prefix` | `s3://bucket/prefix` | `s3://bucket/prefix` |
+
+### GCS HMAC Keys
+
+To use Google Cloud Storage with this action, you need to create HMAC keys:
+
+1. Go to [Cloud Storage Settings](https://console.cloud.google.com/storage/settings) in the Google Cloud Console
+2. Select the **Interoperability** tab
+3. Create a new HMAC key for a service account
+4. Use the **Access Key** as `access-key` and **Secret** as `secret-key`
+
+For more details, see [Managing HMAC keys](https://cloud.google.com/storage/docs/authentication/managing-hmackeys).
+
 
 ## Problems with manual caching?
 
@@ -48,7 +86,7 @@ steps:
   - name: Check if work already done
     id: cache-check
     run: |
-      if gsutil -q stat "gs://my-bucket/cache/tests-${{ hashFiles('**/*.test.js') }}"; then
+      if aws s3 ls "s3://my-bucket/cache/tests-${{ hashFiles('**/*.test.js') }}"; then
         echo "cache_hit=true" >> $GITHUB_OUTPUT
       else
         echo "cache_hit=false" >> $GITHUB_OUTPUT
@@ -61,7 +99,7 @@ steps:
   - name: Mark work as done
     if: steps.cache-check.outputs.cache_hit != 'true' && success()
     run: |
-      echo "completed at $(date)" | gsutil cp - "gs://my-bucket/cache/tests-${{ hashFiles('**/*.test.js') }}"
+      echo "completed at $(date)" | aws s3 cp - "s3://my-bucket/cache/tests-${{ hashFiles('**/*.test.js') }}"
 ```
 
 This manual approach requires:
@@ -71,20 +109,6 @@ This manual approach requires:
 - Repetitive boilerplate for every cached operation
 - Easy to forget the caching logic
 
-## Dependencies
-
-This task depends on `google-github-actions/auth@v2`. Ensure you have the Google Cloud SDK authenticated in your runner.
-
-Whenever you use `leblancmeneses/actions/apps/run-cache@main` in a job, you should include the following dependencies in your workflow:
-
-```yaml
-    - name: set up gcloud auth
-      uses: 'google-github-actions/auth@v2'
-      with:
-        # choose your style: workload identity, or json file. @see: https://github.com/google-github-actions/auth
-        credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV_FILE }}'
-```
-
 
 ## Basic Usage
 
@@ -92,6 +116,10 @@ Whenever you use `leblancmeneses/actions/apps/run-cache@main` in a job, you shou
 - name: Run tests with caching
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: |
       npm test
     cache-path: 'gs://my-bucket/test-cache/${{ hashFiles("**/*.test.js", "src/**/*.js") }}'
@@ -129,10 +157,14 @@ Use it with [./affected.md](./affected.md), sha, or [./affected-cache.md](./affe
 
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
+| `access-key` | S3-compatible access key | Yes | - |
+| `secret-key` | S3-compatible secret key | Yes | - |
+| `endpoint` | S3-compatible endpoint URL | No | - |
+| `region` | S3 region | No | `auto` |
 | `run` | Command(s) to execute | Yes | - |
 | `shell` | Shell to use for execution | No | `bash` |
 | `working-directory` | Working directory for command | No | `.` |
-| `cache-path` | GCS path for cache marker | Yes | - |
+| `cache-path` | S3-compatible path for cache marker | Yes | - |
 | `include-stdout` | Include stdout in cache and return as output | No | `false` |
 
 ### Shell Options
@@ -169,6 +201,10 @@ This is particularly useful for:
   id: metadata
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: |
       echo '{
         "version": "'$(npm version --json | jq -r .version)'",
@@ -200,6 +236,10 @@ This is particularly useful for:
   id: tests
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: 'npm test'
     cache-path: 'gs://ci-cache/unit-tests/${{ hashFiles("src/**/*.js", "test/**/*.js") }}'
 
@@ -218,6 +258,10 @@ This is particularly useful for:
 - name: Build application
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: |
       echo "Installing dependencies..."
       npm ci
@@ -232,6 +276,10 @@ This is particularly useful for:
 - name: Setup development environment
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: |
       # Install system dependencies
       sudo apt-get update
@@ -254,6 +302,10 @@ This is particularly useful for:
   id: operation
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: './scripts/expensive-task.sh'
     cache-path: 'gs://task-cache/expensive-${{ github.sha }}'
 
@@ -279,6 +331,10 @@ steps:
   - name: Build for platform
     uses: ./apps/run-cache
     with:
+      access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+      secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+      endpoint: https://storage.googleapis.com
+      region: auto
       run: |
         npm ci
         npm run build:${{ runner.os }}
@@ -292,11 +348,15 @@ steps:
 - name: Setup Python environment
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: |
       python -m pip install --upgrade pip
       pip install -r requirements.txt
       pip install -r requirements-dev.txt
-    shell: 'python'
+    shell: 'bash'
     cache-path: 'gs://python-cache/env-${{ hashFiles("requirements*.txt") }}'
 ```
 
@@ -307,18 +367,30 @@ steps:
 - name: Unit tests
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: 'npm run test:unit'
     cache-path: 'gs://test-cache/unit-${{ hashFiles("src/**", "test/unit/**") }}'
 
 - name: Integration tests
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: 'npm run test:integration'
     cache-path: 'gs://test-cache/integration-${{ hashFiles("src/**", "test/integration/**") }}'
 
 - name: E2E tests
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: 'npm run test:e2e'
     cache-path: 'gs://test-cache/e2e-${{ hashFiles("src/**", "test/e2e/**") }}'
 ```
@@ -330,6 +402,10 @@ steps:
   id: tests
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: |
       npm test -- --reporter=json > test-results.json
       cat test-results.json
@@ -358,6 +434,10 @@ steps:
   id: deps
   uses: ./apps/run-cache
   with:
+    access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+    secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+    endpoint: https://storage.googleapis.com
+    region: auto
     run: |
       echo '{
         "nodeVersion": "'$(node --version)'",

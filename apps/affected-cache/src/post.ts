@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
-import { writeCacheFileToGcs } from "./util";
+import { writeCacheFile } from "./util";
 import { WriteOn } from "./types";
-import { Storage } from '@google-cloud/storage';
+import { checkObjectExists, initializeS3Client } from './s3-client';
 
 async function run() {
   try {
@@ -13,31 +13,45 @@ async function run() {
       return;
     }
 
+    // S3-compatible storage credentials
+    const accessKey = core.getInput("access-key", { required: false });
+    const secretKey = core.getInput("secret-key", { required: false });
+    const s3Endpoint = core.getInput("endpoint", { required: false });
+    const s3Region = core.getInput("region", { required: false });
+
+    if (!accessKey || !secretKey) {
+      core.info("S3 credentials not provided, skipping cache upload.");
+      return;
+    }
+
+    initializeS3Client({
+      accessKey,
+      secretKey,
+      endpoint: s3Endpoint || undefined,
+      region: s3Region || undefined,
+    });
+
     // Check if cache actually exists instead of relying on environment state
-    const storage = new Storage();
     let cacheExists = false;
     try {
-      const bucketName = cacheKeyPath.substring(0, cacheKeyPath.indexOf('/', 5));
-      const fileName = cacheKeyPath.substring(bucketName.length + 1);
-      const [exists] = await storage.bucket(bucketName).file(fileName).exists();
-      cacheExists = exists;
+      cacheExists = await checkObjectExists(cacheKeyPath);
     } catch (error) {
       // noop.
     }
 
     if (cacheExists) {
-      core.info("🔄 Skipping cache upload: cache already exists.");
+      core.info("Skipping cache upload: cache already exists.");
       return;
     }
 
     if (writeOn !== WriteOn.POST) {
-      core.info("🔄 Skipping cache upload on post.");
+      core.info("Skipping cache upload on post.");
       return;
     }
 
-    await writeCacheFileToGcs(cacheKeyPath);
+    await writeCacheFile(cacheKeyPath);
 
-    core.info("✅ Cache stored successfully.");
+    core.info("Cache stored successfully.");
   } catch (error) {
     core.setFailed(`Error storing cache: ${(error as Error).message}`);
     throw error;
