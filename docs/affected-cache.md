@@ -1,6 +1,7 @@
 - [Affected Cache Action](#affected-cache-action)
+  - [S3-Compatible Storage](#s3-compatible-storage)
+  - [Provider Configuration](#provider-configuration)
   - [Problems with doing this manually?](#problems-with-doing-this-manually)
-  - [Dependencies](#dependencies)
   - [Single Job Pipeline Usage](#single-job-pipeline-usage)
   - [Multi Job Pipeline Usage](#multi-job-pipeline-usage)
 
@@ -12,26 +13,55 @@ This task is designed to help you cache jobs or tasks completed to speed up your
 By using this Cache Action in conjunction with the Affected Action, you can significantly reduce build times and enhance the efficiency of your pipelines.
 
 
+## S3-Compatible Storage
+
+This action uses S3-compatible storage APIs, which means it works with multiple cloud storage providers without code changes. The action requires the following inputs:
+
+| Input | Required | Description |
+|-------|----------|-------------|
+| `access-key` | Yes | S3-compatible access key |
+| `secret-key` | Yes | S3-compatible secret key |
+| `endpoint` | No | S3-compatible endpoint URL |
+| `region` | No | S3 region (default: `auto`) |
+| `storage-path` | No | Root path for cache storage (e.g., `s3://bucket/prefix`) |
+
+
+## Provider Configuration
+
+The following table shows how to configure the action for different S3-compatible storage providers:
+
+| Input | AWS S3 | GCS (HMAC) | MinIO | SeaweedFS |
+|-------|--------|------------|-------|-----------|
+| `access-key` | AWS Access Key ID | [HMAC Access ID](https://cloud.google.com/storage/docs/authentication/managing-hmackeys) | MinIO Access Key | SeaweedFS Access Key |
+| `secret-key` | AWS Secret Access Key | [HMAC Secret](https://cloud.google.com/storage/docs/authentication/managing-hmackeys) | MinIO Secret Key | SeaweedFS Secret Key |
+| `endpoint` | *(not required)* | `https://storage.googleapis.com` | `https://minio.example.com` | `https://seaweedfs.example.com:8333` |
+| `region` | `us-east-1` (or your region) | `auto` | `us-east-1` | `us-east-1` |
+| `storage-path` | `s3://bucket/prefix` | `gs://bucket/prefix` | `s3://bucket/prefix` | `s3://bucket/prefix` |
+
+### GCS HMAC Keys
+
+To use Google Cloud Storage with this action, you need to create HMAC keys:
+
+1. Go to [Cloud Storage Settings](https://console.cloud.google.com/storage/settings) in the Google Cloud Console
+2. Select the **Interoperability** tab
+3. Create a new HMAC key for a service account
+4. Use the **Access Key** as `access-key` and **Secret** as `secret-key`
+
+For more details, see [Managing HMAC keys](https://cloud.google.com/storage/docs/authentication/managing-hmackeys).
+
+
 ## Problems with doing this manually?
 
 Here is a basic scaffold of how DIY caching might look like in a GitHub Action.
 
 ```yaml
     env:
-      EXPECTED_GS_FILE: "gs://github-integration/mobile-android/${{inputs.CACHE_KEY}}"
+      EXPECTED_S3_FILE: "s3://github-integration/mobile-android/${{inputs.CACHE_KEY}}"
     steps:
-      - name: set up gcloud auth
-        uses: 'google-github-actions/auth@v2'
-        with:
-          credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV }}'
-
-      - name: set up gcloud cli with gsutil
-        uses: 'google-github-actions/setup-gcloud@v2'
-
       - name: calculated variables
         shell: bash
         run: |
-          if gsutil -D stat "$EXPECTED_GS_FILE"; then
+          if aws s3 ls "$EXPECTED_S3_FILE"; then
             echo "RUN_BUILD=false" >> $GITHUB_ENV
           else
             echo "RUN_BUILD=true" >> $GITHUB_ENV
@@ -46,7 +76,7 @@ Here is a basic scaffold of how DIY caching might look like in a GitHub Action.
         if: |
           !failure() && !cancelled() && env.RUN_BUILD == 'true'
         run: |
-          touch "file.txt" && gsutil -D cp "file.txt" $EXPECTED_GS_FILE
+          touch "file.txt" && aws s3 cp "file.txt" $EXPECTED_S3_FILE
 ```
 
 This sample shows that consideration is required in constructing your cache keys. You need to set environment variables for your cache-hit outputs and ensure the cache write step is placed at the end of the job. The more tasks and targets you want to cache within the same job, the more complex and code-intensive it becomes.
@@ -56,22 +86,6 @@ In a multi-job pipeline, this job would still need to be executed to determine i
 Using the Affected Cache Action simplifies this process, efficiently handling caching in both single and multi-job pipelines, and reducing the amount of manual work required.
 
 
-## Dependencies
-
-This task depends on `google-github-actions/auth@v2`. Ensure you have the Google Cloud SDK authenticated in your runner.
-
-Whenever you use `leblancmeneses/actions/apps/affected-cache@main` in a job, you should include the following dependencies in your workflow:
-
-```yaml
-    - name: set up gcloud auth
-      uses: 'google-github-actions/auth@v2'
-      with:
-        # choose your style: workload identity, or json file. @see: https://github.com/google-github-actions/auth
-        credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV_FILE }}'
-```
-
-
-
 ## Single Job Pipeline Usage
 
 See the [single job pipeline](../.github/workflows/ci.yml) in this repo that shows how we use the cache task internally.
@@ -79,13 +93,17 @@ By setting the optional `additional-keys`, we get additional keys projected to t
 
 ```yaml
       # The following calculates the cache key, path, and hit status. It will not write to the cache.
-      - name: calculate gcp cache
+      - name: calculate cache
         id: cache
         uses: ./apps/affected-cache
         with:
+          access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+          secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+          endpoint: ${{ vars.CACHE_ENDPOINT }}  # optional, for GCS/MinIO/SeaweedFS
+          region: ${{ vars.CACHE_REGION }}      # optional
           affected: ${{steps.affected.outputs.affected}}
           pragma: ${{steps.pragma.outputs.pragma}}
-          gcs-root-path: gs://opensource-github-integration/build-cache
+          storage-path: s3://opensource-github-integration/build-cache
           additional-keys: |
             { "affected": ["build", "docker"] }
 ```
@@ -101,10 +119,13 @@ Globally using `x__skip-cache=true` or on a per target basis, `x__affected-docke
 
 ```yaml
       # The following writes to the cache immediately when the pipeline reaches this step. (useful in single job pipelines)
-      # The default is multi-job pipelines with write-on: 'post' which only writes on success of the entire job and can be placed anywhere in the job but after the gcp dependencies.
+      # The default is multi-job pipelines with write-on: 'post' which only writes on success of the entire job and can be placed anywhere in the job but after the S3 credentials are available.
       - name: write pragma cache
         uses: ./apps/affected-cache
         with:
+          access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+          secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+          endpoint: ${{ vars.CACHE_ENDPOINT }}
           write-on: immediate
           cache_key_path: ${{fromJson(steps.cache.outputs.cache).pragma.path}}
 ```
@@ -127,9 +148,10 @@ The init phase is used to precomute the cache keys and cache hit status for all 
 # .github/workflows/build.yml
 jobs:
   vars:
-    uses: ./.github/workflows/template.job.init.yml # [README.md](../README.md#recommendations-for-multi-job-pipeline)
+    uses: ./.github/workflows/template.job.init.yml
     secrets:
-      GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV}}
+      CACHE_ACCESS_KEY: ${{secrets.CACHE_ACCESS_KEY}}
+      CACHE_SECRET_KEY: ${{secrets.CACHE_SECRET_KEY}}
 
   # task uses affected and cache-hit to determine whether the job should be pruned from execution.
   build-api:
@@ -152,7 +174,8 @@ jobs:
            toJson(fromJson(needs.vars.outputs.affected).build-api.recommended_imagetags) || '[]' }}
       version_offsets: '{"MAJOR":5, "MINOR": 1, "SHIFT": 0}'
     secrets:
-      GCP_GITHUB_SERVICE_ACCOUNT: ${{secrets.GCP_GITHUB_SERVICE_ACCOUNT}}
+      CACHE_ACCESS_KEY: ${{secrets.CACHE_ACCESS_KEY}}
+      CACHE_SECRET_KEY: ${{secrets.CACHE_SECRET_KEY}}
 
 ```
 
@@ -163,8 +186,11 @@ name: template.job.docker
 on:
   workflow_call:
     secrets:
-      GCP_GITHUB_SERVICE_ACCOUNT:
-        description: "Required gcp iam service account to artifact registery and k8s"
+      CACHE_ACCESS_KEY:
+        description: "S3-compatible access key"
+        required: true
+      CACHE_SECRET_KEY:
+        description: "S3-compatible secret key"
         required: true
     inputs:
       CACHE:
@@ -182,16 +208,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: set up gcloud auth
-        uses: 'google-github-actions/auth@v2'
-        with:
-          credentials_json: '${{ secrets.GCP_GITHUB_SERVICE_ACCOUNT_DEV }}'
-
-      # can be put anywhere in the job but after the gcp dependencies.
+      # can be put anywhere in the job but after credentials are available.
       # cache will be written on success of the entire job.
       - name: write cache
         uses: leblancmeneses/actions/apps/affected-cache@main
         with:
+          access-key: ${{ secrets.CACHE_ACCESS_KEY }}
+          secret-key: ${{ secrets.CACHE_SECRET_KEY }}
+          endpoint: ${{ vars.CACHE_ENDPOINT }}
           cache_key_path: ${{fromJson(inputs.CACHE).path}}
 
       - name: apk generation for prod

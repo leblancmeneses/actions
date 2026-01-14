@@ -1,6 +1,6 @@
 {
   "name": "@improvingstartups/actions",
-  "version": "6.0.1",
+  "version": "7.0.0",
   "license": "MIT",
   "scripts": {
     "apps:affected:generate-parser": "peggy -o apps/affected/src/parser.ts --format es apps/affected/src/parser.peggy",
@@ -41,7 +41,7 @@
     "@actions/core": "^1.10.1",
     "@actions/exec": "^1.1.1",
     "@actions/github": "^6.0.0",
-    "@google-cloud/storage": "^7.15.1",
+    "@aws-sdk/client-s3": "^3.705.0",
     "axios": "^1.6.0",
     "ini": "^5.0.0",
     "picomatch": "^4.0.2",
