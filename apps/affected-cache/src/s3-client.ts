@@ -62,5 +62,6 @@ export async function writeEmptyObject(s3Path: string): Promise<void> {
     Key: key,
     Body: '',
     ContentType: 'text/plain',
+    ContentLength: 0,
   }));
 }
