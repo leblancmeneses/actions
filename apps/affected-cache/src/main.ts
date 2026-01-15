@@ -71,8 +71,8 @@ export async function run() {
         await writeCacheFile(cacheKeyPath);
       }
 
-      core.setOutput("cache-hit", cacheExists.toString());
-      core.exportVariable("CACHE_HIT", cacheExists.toString());
+      core.setOutput("cache-hit", cacheExists);
+      core.exportVariable("CACHE_HIT", cacheExists);
     } else {
       if (Object.keys(buildCache).length !== 0) {
         await lastValueFrom(from(Object.keys(buildCache)).pipe(
