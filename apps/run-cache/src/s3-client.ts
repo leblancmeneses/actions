@@ -81,5 +81,6 @@ export async function writeObject(s3Path: string, content: string, contentType =
     Key: key,
     Body: content,
     ContentType: contentType,
+    ContentLength: Buffer.byteLength(content),
   }));
 }
