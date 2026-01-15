@@ -82,8 +82,8 @@ describe("run", () => {
       endpoint: undefined,
       region: undefined,
     });
-    expect(core.setOutput).toHaveBeenCalledWith("cache-hit", true);
-    expect(core.exportVariable).toHaveBeenCalledWith("CACHE_HIT", true);
+    expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "true");
+    expect(core.exportVariable).toHaveBeenCalledWith("CACHE_HIT", "true");
     expect(mockSetFailed).not.toHaveBeenCalled();
   });
 
@@ -92,8 +92,8 @@ describe("run", () => {
 
     await run();
 
-    expect(core.setOutput).toHaveBeenCalledWith("cache-hit", false);
-    expect(core.exportVariable).toHaveBeenCalledWith("CACHE_HIT", false);
+    expect(core.setOutput).toHaveBeenCalledWith("cache-hit", "false");
+    expect(core.exportVariable).toHaveBeenCalledWith("CACHE_HIT", "false");
     expect(mockInfo).toHaveBeenCalledWith(
       "🚀 Cache not found: s3://bucket/path/to/cache.",
     );

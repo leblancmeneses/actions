@@ -20,7 +20,7 @@ export async function run() {
     if (!accessKey || !secretKey) {
       core.warning("S3 credentials not provided, running without cache");
       const result = await executeCommand(runCommand, shell, workingDirectory);
-      core.setOutput("cache-hit", false);
+      core.setOutput("cache-hit", "false");
       if (includeStdout) {
         core.setOutput("stdout", result.stdout);
       }
@@ -68,7 +68,7 @@ export async function run() {
     }
 
     // Set cache-hit output
-    core.setOutput("cache-hit", cacheHit);
+    core.setOutput("cache-hit", cacheHit.toString());
 
     if (cacheHit) {
       // Return cached stdout if available and requested

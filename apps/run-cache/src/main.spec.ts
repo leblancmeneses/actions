@@ -81,7 +81,7 @@ describe('run-cache', () => {
         region: undefined,
       });
       expect(mockCheckObjectExists).toHaveBeenCalledWith('gs://test-bucket/cache/test-key');
-      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', true);
+      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'true');
       expect(mockExec).not.toHaveBeenCalled(); // Should not execute command
       expect(mockInfo).toHaveBeenCalledWith('Cache hit for path: gs://test-bucket/cache/test-key');
       expect(mockInfo).toHaveBeenCalledWith('Skipping command execution due to cache hit');
@@ -114,7 +114,7 @@ describe('run-cache', () => {
 
       // Assert
       expect(mockCheckObjectExists).toHaveBeenCalledWith('gs://test-bucket/cache/new-key');
-      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', false);
+      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
       expect(mockExec).toHaveBeenCalledWith('bash', ['-c', 'echo "hello world"'], expect.any(Object));
       expect(mockWriteObject).toHaveBeenCalled();
       expect(mockInfo).toHaveBeenCalledWith('Cache marker created at: gs://test-bucket/cache/new-key');
@@ -144,7 +144,7 @@ describe('run-cache', () => {
       // Act & Assert
       await expect(run()).rejects.toThrow('Action failed: process.exit() was called');
 
-      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', false);
+      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
       expect(mockWriteObject).not.toHaveBeenCalled(); // Should not cache failed results
       expect(mockInfo).toHaveBeenCalledWith('Command failed with exit code 1, not creating cache');
       expect(mockExit).toHaveBeenCalledWith(1);
@@ -183,7 +183,7 @@ describe('run-cache', () => {
       // Assert
       expect(mockCheckObjectExists).toHaveBeenCalled();
       expect(mockReadObject).toHaveBeenCalled();
-      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', true);
+      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'true');
       expect(mockSetOutput).toHaveBeenCalledWith('stdout', 'cached output');
       expect(mockExec).not.toHaveBeenCalled(); // Should not execute command
     });
@@ -215,7 +215,7 @@ describe('run-cache', () => {
 
       // Assert
       expect(mockCheckObjectExists).toHaveBeenCalled();
-      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', false);
+      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
       expect(mockSetOutput).toHaveBeenCalledWith('stdout', 'fresh output');
       expect(mockExec).toHaveBeenCalledWith('bash', ['-c', 'echo "fresh output"'], expect.any(Object));
       expect(mockWriteObject).toHaveBeenCalledWith(
@@ -246,7 +246,7 @@ describe('run-cache', () => {
       await run();
 
       // Assert
-      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', true);
+      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'true');
       expect(mockSetOutput).not.toHaveBeenCalledWith('stdout', expect.anything());
       expect(mockReadObject).not.toHaveBeenCalled(); // Should not download cache content
     });
@@ -275,7 +275,7 @@ describe('run-cache', () => {
       await run();
 
       // Assert
-      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', true);
+      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'true');
       expect(mockSetOutput).not.toHaveBeenCalledWith('stdout', expect.anything()); // No stdout due to corrupt data
       expect(mockDebug).toHaveBeenCalledWith(expect.stringContaining('Failed to parse cached data:'));
     });
@@ -306,7 +306,7 @@ describe('run-cache', () => {
       // Assert
       expect(mockWarning).toHaveBeenCalledWith('S3 credentials not provided, running without cache');
       expect(mockExec).toHaveBeenCalled();
-      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', false);
+      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
       expect(mockSetOutput).toHaveBeenCalledWith('stdout', 'no cache');
       expect(mockCheckObjectExists).not.toHaveBeenCalled(); // Should not check cache
     });
@@ -333,7 +333,7 @@ describe('run-cache', () => {
       // Act & Assert
       await expect(run()).rejects.toThrow('Action failed: process.exit() was called');
 
-      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', false);
+      expect(mockSetOutput).toHaveBeenCalledWith('cache-hit', 'false');
       expect(mockExit).toHaveBeenCalledWith(42);
     });
   });
