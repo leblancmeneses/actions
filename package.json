@@ -1,6 +1,6 @@
 {
   "name": "@improvingstartups/actions",
-  "version": "7.0.1",
+  "version": "8.0.0",
   "license": "MIT",
   "packageManager": "pnpm@10.13.1",
   "scripts": {
