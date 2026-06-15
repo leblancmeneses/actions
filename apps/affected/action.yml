@@ -45,5 +45,5 @@ outputs:
   affected:
     description: 'A JSON array representing the projects that have changes, recommended_imagetags, and commit SHA.'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: '../../dist/apps/affected/main/main.js'
