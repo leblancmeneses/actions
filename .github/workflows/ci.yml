@@ -41,6 +41,10 @@ jobs:
       # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "build" targets have been requested
       # - run: npx nx-cloud start-ci-run --distribute-on="5 linux-medium-js" --stop-agents-after="build"
 
+      - uses: pnpm/action-setup@v5
+        with:
+          run_install: false
+
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
@@ -48,10 +52,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: install dependencies
-        run: |
-          corepack enable
-          corepack prepare pnpm@10.13.1 --activate
-          pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - uses: nrwl/nx-set-shas@v5
 
