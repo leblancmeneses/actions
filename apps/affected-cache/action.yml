@@ -42,7 +42,7 @@ outputs:
   cache:
     description: "Set when not using cache_key_path"
 runs:
-  using: 'node20'
+  using: 'node24'
   main: '../../dist/apps/affected-cache/main.js'
   post: '../../dist/apps/affected-cache/post.js'
   post-if: "success()"

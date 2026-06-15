@@ -2,6 +2,7 @@
   "name": "@improvingstartups/actions",
   "version": "7.0.1",
   "license": "MIT",
+  "packageManager": "pnpm@10.13.1",
   "scripts": {
     "apps:affected:generate-parser": "peggy -o apps/affected/src/parser.ts --format es apps/affected/src/parser.peggy",
     "build": "npx nx run-many -t build",

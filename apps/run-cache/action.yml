@@ -38,5 +38,5 @@ outputs:
   stdout:
     description: "Standard output from command (cached or actual, only if include-stdout=true)"
 runs:
-  using: 'node20'
+  using: 'node24'
   main: '../../dist/apps/run-cache/main.js'
